@@ -10,7 +10,7 @@ Simply download `node_to_python.py`, and install it to Blender like other add-on
 ## Future
 * Expansion to Shader and Compositing nodes
 * Copy over referenced assets in the scene (Collections, Objects, Materials, Textures, etc.)
-* Automatically format code to be PIP compliant
+* Automatically format code to be PEP8 compliant
 
 ## Potential Issues
 * This should work on Unix-like systems (macOS, Linux), but I haven't tested it on Windows yet. If you use Windows, please let me know if you encounter any issues. 
