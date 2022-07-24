@@ -10,6 +10,16 @@ bl_info = {
 
 import bpy
 
+defaults = {'NodeSocketBool', 
+            'NodeSocketColor',
+            'NodeSocketFloat',
+            'NodeSocketInt',
+            'NodeSocketVector'}
+            
+values = {'NodeSocketInt',
+          'NodeSocketFloat',
+          'NodeSocketVector'}
+
 class NodeToPython(bpy.types.Operator):
     bl_idname = "object.node_to_python"
     bl_label = "Node to Python"
@@ -64,6 +74,21 @@ class NodeToPython(bpy.types.Operator):
                     for input in node.outputs:
                         if input.bl_idname != "NodeSocketVirtual":
                             file.write("\t"*(level+1) + f"{ng_name}.inputs.new(\"{input.bl_idname}\", \"{input.name}\")\n")
+                            if input.bl_idname in defaults:
+                                if input.bl_idname == 'NodeSocketColor':
+                                    color = node_group.inputs[input.name].default_value
+                                    dv = f"({color[0]}, {color[1]}, {color[2]}, {color[3]})"
+                                elif input.bl_idname == 'NodeSocketVector':
+                                    vector = node_group.inputs[input.name].default_value
+                                    dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                                else:
+                                    dv = node_group.inputs[input.name].default_value
+                                
+                                file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].default_value = {dv}\n")
+                                if input.bl_idname in values:
+                                    file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].min_value = {node_group.inputs[input.name].min_value}\n")
+                                    file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].max_value = {node_group.inputs[input.name].max_value}\n")
+                            file.write("\n")
                     file.write("\n")
                 if node.bl_idname == 'NodeGroupOutput':
                     file.write("\t"*(level+1) + f"#{ng_name} outputs\n")
