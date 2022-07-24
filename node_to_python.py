@@ -10,15 +10,26 @@ bl_info = {
 
 import bpy
 
-defaults = {'NodeSocketBool', 
-            'NodeSocketColor',
-            'NodeSocketFloat',
-            'NodeSocketInt',
-            'NodeSocketVector'}
-            
-values = {'NodeSocketInt',
-          'NodeSocketFloat',
-          'NodeSocketVector'}
+#node tree input sockets that have default properties
+default_sockets = {'NodeSocketBool', 
+                   'NodeSocketColor',
+                   'NodeSocketFloat',
+                   'NodeSocketInt',
+                   'NodeSocketVector'}
+
+#node tree input sockets that have min/max properties           
+value_sockets = {'NodeSocketInt',
+                 'NodeSocketFloat',
+                 'NodeSocketVector'}
+
+#node input sockets that are messy to set default values for
+dont_set_defaults = {'NodeSocketCollection',
+                     'NodeSocketGeometry',
+                     'NodeSocketImage',
+                     'NodeSocketMaterial'
+                     'NodeSocketObject',
+                     'NodeSocketTexture',
+                     'NodeSocketVirtual'}
 
 class NodeToPython(bpy.types.Operator):
     bl_idname = "object.node_to_python"
@@ -73,8 +84,9 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\t"*(level+1) + f"#{ng_name} inputs\n")
                     for input in node.outputs:
                         if input.bl_idname != "NodeSocketVirtual":
+                            file.write("\t"*(level+1) + f"#input {input.name}\n")
                             file.write("\t"*(level+1) + f"{ng_name}.inputs.new(\"{input.bl_idname}\", \"{input.name}\")\n")
-                            if input.bl_idname in defaults:
+                            if input.bl_idname in default_sockets:
                                 if input.bl_idname == 'NodeSocketColor':
                                     color = node_group.inputs[input.name].default_value
                                     dv = f"({color[0]}, {color[1]}, {color[2]}, {color[3]})"
@@ -85,7 +97,7 @@ class NodeToPython(bpy.types.Operator):
                                     dv = node_group.inputs[input.name].default_value
                                 
                                 file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].default_value = {dv}\n")
-                                if input.bl_idname in values:
+                                if input.bl_idname in value_sockets:
                                     file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].min_value = {node_group.inputs[input.name].min_value}\n")
                                     file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].max_value = {node_group.inputs[input.name].max_value}\n")
                             file.write("\n")
@@ -98,6 +110,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\n")
     
                 node_name = node.name.lower().replace(' ', '_')
+                file.write("\t"*(level+1) + f"#node {node.name}\n")
                 file.write("\t"*(level+1) + f"{node_name} = {ng_name}.nodes.new(\"{node.bl_idname}\")\n")
                 file.write("\t"*(level+1) + f"{node_name}.location = ({node.location.x}, {node.location.y})\n")
                 file.write("\t"*(level+1) + f"{node_name}.width, {node_name}.height = {node.width}, {node.height}\n")
@@ -105,17 +118,28 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\t"*(level+1) + f"{node_name}.label = \"{node.label}\"\n")
                 if node.bl_idname == 'GeometryNodeGroup':
                     file.write("\t"*(level+1) + f"{node_name}.node_tree = bpy.data.node_groups[\"{node.node_tree.name}\"]\n")
+                for input in node.inputs:
+                    if input.bl_idname not in dont_set_defaults:
+                        if input.bl_idname == 'NodeSocketColor':
+                            color = input.default_value
+                            dv = f"({color[0]}, {color[1]}, {color[2]}, {color[3]})"
+                        elif "Vector" in input.bl_idname:
+                            vector = input.default_value
+                            dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                        else:
+                            dv = input.default_value
+                        if dv is not None:
+                            file.write("\t"*(level+1) + f"{node_name}.inputs[\"{input.name}\"].default_value = {dv}\n")
+                
                 file.write("\n")
             
             file.write("\t"*(level + 1) + f"#initialize {ng_name} links\n")          
             for link in node_group.links:
                 input_node = link.from_node.name.lower().replace(' ', '_')
                 input_socket = link.from_socket.name
-                #input_idx = link.from_node.outputs.find(input_socket)
                 
                 output_node = link.to_node.name.lower().replace(' ', '_')
                 output_socket = link.to_socket.name
-                #output_idx = link.from_node.inputs.find(output_socket)
                 
                 file.write("\t"*(level+1) + f"{ng_name}.links.new({input_node}.outputs[\"{input_socket}\"], {output_node}.inputs[\"{output_socket}\"])\n")
             file.write("\n")
