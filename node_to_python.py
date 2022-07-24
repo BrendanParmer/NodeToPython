@@ -36,13 +36,10 @@ class NodeToPython(bpy.types.Operator):
     bl_label = "Node to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
-    ng_name: bpy.props.StringProperty(name="Node Group", default = "Poop", description="Name of the node group to convert into an add-on")
+    node_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
-        if self.ng_name not in bpy.data.node_groups:
-            print(f"Node group {self.ng_name} does not exist!")
-            return {'CANCELLED'}
-        ng = bpy.data.node_groups[self.ng_name]
+        ng = bpy.data.node_groups[self.node_group_name]
         ng_name = ng.name.lower().replace(' ', '_')
         class_name = ng.name.replace(" ", "")
         dir = bpy.path.abspath("//")
@@ -165,11 +162,10 @@ class NodeToPython(bpy.types.Operator):
         file.write("\tregister()")
         
         file.close()
-        
         return {'FINISHED'}
 
 def menu_func(self, context):
-    self.layout.operator(NodeToPython.bl_idname)
+    self.layout.operator(NodeToPython.bl_idname, text=NodeToPython.bl_label)
     
 def register():
     bpy.utils.register_class(NodeToPython)
