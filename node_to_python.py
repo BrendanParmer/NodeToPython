@@ -77,7 +77,7 @@ class NodeToPython(bpy.types.Operator):
             for node in node_group.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     process_node_group(node.node_tree, level + 1)
-                if node.bl_idname == 'NodeGroupInput':
+                elif node.bl_idname == 'NodeGroupInput':
                     file.write("\t"*(level+1) + f"#{ng_name} inputs\n")
                     for input in node.outputs:
                         if input.bl_idname != "NodeSocketVirtual":
@@ -99,13 +99,14 @@ class NodeToPython(bpy.types.Operator):
                                     file.write("\t"*(level+1) + f"{ng_name}.inputs[\"{input.name}\"].max_value = {node_group.inputs[input.name].max_value}\n")
                             file.write("\n")
                     file.write("\n")
-                if node.bl_idname == 'NodeGroupOutput':
+                elif node.bl_idname == 'NodeGroupOutput':
                     file.write("\t"*(level+1) + f"#{ng_name} outputs\n")
                     for output in node.inputs:
-                        if output.bl_idname != "NodeSocketVirtual":
+                        if output.bl_idname != 'NodeSocketVirtual':
                             file.write("\t"*(level+1) + f"{ng_name}.outputs.new(\"{output.bl_idname}\", \"{output.name}\")\n")
                     file.write("\n")
-    
+
+                #create node
                 node_name = node.name.lower().replace(' ', '_')
                 file.write("\t"*(level+1) + f"#node {node.name}\n")
                 file.write("\t"*(level+1) + f"{node_name} = {ng_name}.nodes.new(\"{node.bl_idname}\")\n")
@@ -113,8 +114,22 @@ class NodeToPython(bpy.types.Operator):
                 file.write("\t"*(level+1) + f"{node_name}.width, {node_name}.height = {node.width}, {node.height}\n")
                 if node.label:
                     file.write("\t"*(level+1) + f"{node_name}.label = \"{node.label}\"\n")
+
+                #special nodes
                 if node.bl_idname == 'GeometryNodeGroup':
                     file.write("\t"*(level+1) + f"{node_name}.node_tree = bpy.data.node_groups[\"{node.node_tree.name}\"]\n")
+                elif node.bl_idname == 'ShaderNodeValToRGB':
+                    color_ramp = node.color_ramp
+                    file.write("\n")
+                    file.write("\t"*(level+1) + f"{node_name}.color_ramp.color_mode = '{color_ramp.color_mode}'\n")
+                    file.write("\t"*(level+1) + f"{node_name}.color_ramp.hue_interpolation = '{color_ramp.hue_interpolation}'\n")
+                    file.write("\t"*(level+1) + f"{node_name}.color_ramp.interpolation = '{color_ramp.interpolation}'\n")
+                    file.write("\n")
+                    for i, element in enumerate(color_ramp.elements):
+                        file.write("\t"*(level+1) + f"{node_name}_cre_{i} = {node_name}.color_ramp.elements.new({element.position})\n")
+                        file.write("\t"*(level+1) + f"{node_name}_cre_{i}.alpha = {element.alpha}\n")
+                        file.write("\t"*(level+1) + f"{node_name}_cre_{i}.color = ({element.color[0]}, {element.color[1]}, {element.color[2]}, {element.color[3]})\n\n")
+                
                 for input in node.inputs:
                     if input.bl_idname not in dont_set_defaults:
                         if input.bl_idname == 'NodeSocketColor':
@@ -130,7 +145,8 @@ class NodeToPython(bpy.types.Operator):
                 
                 file.write("\n")
             
-            file.write("\t"*(level + 1) + f"#initialize {ng_name} links\n")          
+            if node_group.links:
+                file.write("\t"*(level + 1) + f"#initialize {ng_name} links\n")          
             for link in node_group.links:
                 input_node = link.from_node.name.lower().replace(' ', '_')
                 input_socket = link.from_socket.name
