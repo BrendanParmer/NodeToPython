@@ -139,7 +139,8 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\n")
 
                 #create node
-                node_name = node.name.lower().replace(' ', '_')
+                node_name = node.name.lower()
+                node_name = node_name.replace(' ', '_').replace('.', '_')
                 file.write(f"{inner}#node {node.name}\n")
                 file.write(f"{inner}{node_name} " +
                              f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n")
@@ -191,6 +192,8 @@ class NodeToPython(bpy.types.Operator):
                         elif "Vector" in input.bl_idname:
                             vector = input.default_value
                             dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                        elif input.bl_idname == 'NodeSocketString':
+                            dv = f"\"\""
                         else:
                             dv = input.default_value
                         if dv is not None:
