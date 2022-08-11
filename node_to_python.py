@@ -82,7 +82,10 @@ class NodeToPython(bpy.types.Operator):
             #initialize node group
             file.write(f"{outer}#initialize {ng_name} node group\n")
             file.write(f"{outer}def {ng_name}_node_group():\n")
-            file.write(f"{inner}{ng_name} = bpy.data.node_groups.new(type = \"GeometryNodeTree\", name = \"{node_group.name}\")\n")
+            file.write(f"{inner}{ng_name}" +
+                f"= bpy.data.node_groups.new(" +
+                f"type = \"GeometryNodeTree\"," +
+                f"name = \"{node_group.name}\")\n")
             file.write("\n")
 
             #initialize nodes
@@ -95,66 +98,105 @@ class NodeToPython(bpy.types.Operator):
                     for input in node.outputs:
                         if input.bl_idname != "NodeSocketVirtual":
                             file.write(f"{inner}#input {input.name}\n")
-                            file.write(f"{inner}{ng_name}.inputs.new(\"{input.bl_idname}\", \"{input.name}\")\n")
+                            file.write(f"{inner}{ng_name}.inputs.new" +
+                                f"(\"{input.bl_idname}\", \"{input.name}\")\n")
                             if input.bl_idname in default_sockets:
+                                socket = node_group.inputs[input.name]
                                 if input.bl_idname == 'NodeSocketColor':
-                                    color = node_group.inputs[input.name].default_value
-                                    dv = f"({color[0]}, {color[1]}, {color[2]}, {color[3]})"
+                                    col = socket.default_value
+                                    r, g, b, a = col[0], col[1], col[2], col[3]
+                                    dv = f"({r}, {g}, {b}, {a})"
                                 elif input.bl_idname == 'NodeSocketVector':
-                                    vector = node_group.inputs[input.name].default_value
-                                    dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                                    vec = socket.default_value
+                                    dv = f"({vec[0]}, {vec[1]}, {vec[2]})"
                                 else:
-                                    dv = node_group.inputs[input.name].default_value
+                                    dv = socket.default_value
                                 
-                                file.write(f"{inner}{ng_name}.inputs[\"{input.name}\"].default_value = {dv}\n")
+                                #default value
+                                file.write(f"{inner}{ng_name}" +
+                                             f".inputs[\"{input.name}\"]" + 
+                                             f".default_value = {dv}\n")
                                 if input.bl_idname in value_sockets:
-                                    file.write(f"{inner}{ng_name}.inputs[\"{input.name}\"].min_value = {node_group.inputs[input.name].min_value}\n")
-                                    file.write(f"{inner}{ng_name}.inputs[\"{input.name}\"].max_value = {node_group.inputs[input.name].max_value}\n")
+                                    #min value
+                                    file.write(f"{inner}{ng_name}" +
+                                                 f".inputs[\"{input.name}\"]" +
+                                                 f".min_value = " +
+                                                 f"{socket.min_value}\n")
+                                    #max value
+                                    file.write(f"{inner}{ng_name}" +
+                                                 f".inputs[\"{input.name}\"]" +
+                                                 f".max_value = " +
+                                                 f"{socket.max_value}\n")
                             file.write("\n")
                     file.write("\n")
                 elif node.bl_idname == 'NodeGroupOutput':
                     file.write(f"{inner}#{ng_name} outputs\n")
                     for output in node.inputs:
                         if output.bl_idname != 'NodeSocketVirtual':
-                            file.write(f"{inner}{ng_name}.outputs.new(\"{output.bl_idname}\", \"{output.name}\")\n")
+                            file.write(f"{inner}{ng_name}.outputs" +
+                                         f".new(\"{output.bl_idname}\", " +
+                                         f"\"{output.name}\")\n")
                     file.write("\n")
 
                 #create node
                 node_name = node.name.lower().replace(' ', '_')
                 file.write(f"{inner}#node {node.name}\n")
-                file.write(f"{inner}{node_name} = {ng_name}.nodes.new(\"{node.bl_idname}\")\n")
-                file.write(f"{inner}{node_name}.location = ({node.location.x}, {node.location.y})\n")
-                file.write(f"{inner}{node_name}.width, {node_name}.height = {node.width}, {node.height}\n")
+                file.write(f"{inner}{node_name} " +
+                             f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n")
+                file.write(f"{inner}{node_name}.location " + 
+                             f"= ({node.location.x}, {node.location.y})\n")
+                file.write(f"{inner}{node_name}.width, {node_name}.height " +
+                             f"= {node.width}, {node.height}\n")
                 if node.label:
                     file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
 
                 #special nodes
+                """
+                NTS: these aren't special
+                pretty much every node has something similar
+                you're gonna need to make some sort of dictionary with all 
+                the different quirky features for each node.
+                """
                 if node.bl_idname == 'GeometryNodeGroup':
-                    file.write(f"{inner}{node_name}.node_tree = bpy.data.node_groups[\"{node.node_tree.name}\"]\n")
+                    file.write(f"{inner}{node_name}.node_tree = " +
+                                 f"bpy.data.node_groups" +
+                                 f"[\"{node.node_tree.name}\"]\n")
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp = node.color_ramp
                     file.write("\n")
-                    file.write(f"{inner}{node_name}.color_ramp.color_mode = '{color_ramp.color_mode}'\n")
-                    file.write(f"{inner}{node_name}.color_ramp.hue_interpolation = '{color_ramp.hue_interpolation}'\n")
-                    file.write(f"{inner}{node_name}.color_ramp.interpolation = '{color_ramp.interpolation}'\n")
+                    file.write(f"{inner}{node_name}.color_ramp.color_mode = " +
+                                 f"\'{color_ramp.color_mode}\'\n")
+                    file.write(f"{inner}{node_name}.color_ramp" +
+                                 f".hue_interpolation = " +
+                                 f"\'{color_ramp.hue_interpolation}\'\n")
+                    file.write(f"{inner}{node_name}.color_ramp.interpolation" +
+                                 f" = '{color_ramp.interpolation}'\n")
                     file.write("\n")
                     for i, element in enumerate(color_ramp.elements):
-                        file.write(f"{inner}{node_name}_cre_{i} = {node_name}.color_ramp.elements.new({element.position})\n")
-                        file.write(f"{inner}{node_name}_cre_{i}.alpha = {element.alpha}\n")
-                        file.write(f"{inner}{node_name}_cre_{i}.color = ({element.color[0]}, {element.color[1]}, {element.color[2]}, {element.color[3]})\n\n")
+                        file.write(f"{inner}{node_name}_cre_{i} = " +
+                                     f"{node_name}.color_ramp.elements" + 
+                                     f".new({element.position})\n")
+                        file.write(f"{inner}{node_name}_cre_{i}.alpha = " + 
+                                     f"{element.alpha}\n")
+                        col = element.color
+                        r, g, b, a = col[0], col[1], col[2], col[3]
+                        file.write(f"{inner}{node_name}_cre_{i}.color = " +
+                                     f"({r}, {g}, {b}, {a})\n\n")
                 
                 for input in node.inputs:
                     if input.bl_idname not in dont_set_defaults:
                         if input.bl_idname == 'NodeSocketColor':
-                            color = input.default_value
-                            dv = f"({color[0]}, {color[1]}, {color[2]}, {color[3]})"
+                            col = input.default_value
+                            dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
                         elif "Vector" in input.bl_idname:
                             vector = input.default_value
                             dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
                         else:
                             dv = input.default_value
                         if dv is not None:
-                            file.write(f"{inner}{node_name}.inputs[\"{input.name}\"].default_value = {dv}\n")
+                            file.write(f"{inner}{node_name}" +
+                                         f".inputs[\"{input.name}\"]" +
+                                         f".default_value = {dv}\n")
                 
                 file.write("\n")
             
@@ -169,7 +211,9 @@ class NodeToPython(bpy.types.Operator):
                 output_node = link.to_node.name.lower().replace(' ', '_')
                 output_socket = link.to_socket.name
                 
-                file.write(f"{inner}{ng_name}.links.new({input_node}.outputs[\"{input_socket}\"], {output_node}.inputs[\"{output_socket}\"])\n")
+                file.write(f"{inner}{ng_name}.links.new({input_node}" +
+                             f".outputs[\"{input_socket}\"], " + 
+                             f"{output_node}.inputs[\"{output_socket}\"])\n")
             
             #create node group
             file.write("\n")
