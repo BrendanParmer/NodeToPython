@@ -251,10 +251,8 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
 
                 #special nodes
-                print(node.bl_idname)
                 if node.bl_idname in node_settings:
                     for setting in node_settings[node.bl_idname]:
-                        print(type(getattr(node, setting)))
                         attr = getattr(node, setting)
                         if type(attr) == str:
                             attr = f"\'{attr}\'"
@@ -286,7 +284,7 @@ class NodeToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_name}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
                 
-                for input in node.inputs:
+                for i, input in enumerate(node.inputs):
                     if input.bl_idname not in dont_set_defaults:
                         if input.bl_idname == 'NodeSocketColor':
                             col = input.default_value
@@ -299,8 +297,9 @@ class NodeToPython(bpy.types.Operator):
                         else:
                             dv = input.default_value
                         if dv is not None:
+                            file.write(f"{inner}#{input.identifier}\n")
                             file.write((f"{inner}{node_name}"
-                                        f".inputs[\"{input.name}\"]"
+                                        f".inputs[{i}]"
                                         f".default_value = {dv}\n"))
                 file.write("\n")
             
