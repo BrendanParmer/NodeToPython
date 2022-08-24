@@ -288,6 +288,7 @@ class NodeToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_name}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
                 elif node.bl_idname in curve_nodes:
+                    file.write(f"{inner}#mapping settings")
                     mapping = f"{inner}{node_name}.mapping"
 
                     extend = f"\'{node.mapping.extend}\'"
@@ -315,6 +316,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{mapping}.use_clip = {use_clip}\n")
 
                     for i, curve in enumerate(node.mapping.curves):
+                        file.write(f"{inner}#curve {i}")
                         curve_i = f"{node_name}_curve_{i}"
                         file.write((f"{inner}{curve_i} = "
                                     f"{node_name}.mapping.curves[{i}]\n"))
@@ -328,6 +330,8 @@ class NodeToPython(bpy.types.Operator):
 
                             handle = f"\'{point.handle_type}\'"
                             file.write(f"{point_j}.handle_type = {handle}\n")
+                    file.write(f"{inner}#update curve after changes")
+                    file.write(f"{mapping}.update()\n")
                 
                 for i, input in enumerate(node.inputs):
                     if input.bl_idname not in dont_set_defaults:
