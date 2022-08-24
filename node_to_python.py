@@ -141,11 +141,17 @@ class NodeToPython(bpy.types.Operator):
     node_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
+        if self.node_group_name not in bpy.data.node_groups:
+            return {'FINISHED'}
         ng = bpy.data.node_groups[self.node_group_name]
         ng_name = ng.name.lower().replace(' ', '_')
         class_name = ng.name.replace(" ", "")
         dir = bpy.path.abspath("//")
-        
+        if not dir:
+            self.report({'ERROR'}, 
+                        ("NodeToPython: Save your blend file before using "
+                        "NodeToPython!"))
+            return {'CANCELLED'}
         file = open(f"{dir}{ng_name}_addon.py", "w")
         
         """Sets up bl_info and imports Blender"""
