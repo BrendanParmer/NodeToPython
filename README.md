@@ -1,4 +1,10 @@
 # Node to Python
+<img 
+     src="https://github.com/BrendanParmer/NodeToPython/blob/main/img/ntp.jpg" 
+     alt="Node To Python" 
+     width = "400" 
+     height = "400"
+    >
 ## About
 A Blender add-on to create add-ons! This script will take your Geometry Node group and convert it into a legible Python script.
 
