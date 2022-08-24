@@ -129,6 +129,10 @@ node_settings = {
     "GeometryNodeVolumeToMesh" : ["resolution_mode"]
 }
 
+curve_nodes = {'ShaderNodeFloatCurve', 
+               'ShaderNodeVectorCurve', 
+               'ShaderNodeRGBCurve'}
+
 class NodeToPython(bpy.types.Operator):
     bl_idname = "object.node_to_python"
     bl_label = "Node to Python"
@@ -283,6 +287,47 @@ class NodeToPython(bpy.types.Operator):
                         r, g, b, a = col[0], col[1], col[2], col[3]
                         file.write((f"{inner}{node_name}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
+                elif node.bl_idname in curve_nodes:
+                    mapping = f"{inner}{node_name}.mapping"
+
+                    extend = f"\'{node.mapping.extend}\'"
+                    file.write(f"{mapping}.extend = {extend}\n")
+                    tone = f"\'{node.mapping.tone}\'"
+                    file.write(f"{mapping}.tone = {tone}\n")
+
+                    b_lvl = node.mapping.black_level
+                    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
+                    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+                    w_lvl = node.mapping.white_level
+                    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
+                    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
+
+                    min_x = node.mapping.clip_min_x
+                    file.write(f"{mapping}.clip_min_x = {min_x}\n")
+                    min_y = node.mapping.clip_min_y
+                    file.write(f"{mapping}.clip_min_y = {min_y}\n")
+                    max_x = node.mapping.clip_max_x
+                    file.write(f"{mapping}.clip_max_x = {max_x}\n")
+                    max_y = node.mapping.clip_max_y
+                    file.write(f"{mapping}.clip_max_y = {max_y}\n")
+
+                    use_clip = node.mapping.use_clip
+                    file.write(f"{mapping}.use_clip = {use_clip}\n")
+
+                    for i, curve in enumerate(node.mapping.curves):
+                        curve_i = f"{node_name}_curve_{i}"
+                        file.write((f"{inner}{curve_i} = "
+                                    f"{node_name}.mapping.curves[{i}]\n"))
+                        for j, point in enumerate(curve.points):
+                            point_j = f"{inner}{curve_i}_point_{j}"
+
+                            loc = point.location
+                            file.write((f"{point_j} = "
+                                        f"{curve_i}.points.new"
+                                        f"({loc[0]}, {loc[1]})\n"))
+
+                            handle = f"\'{point.handle_type}\'"
+                            file.write(f"{point_j}.handle_type = {handle}\n")
                 
                 for i, input in enumerate(node.inputs):
                     if input.bl_idname not in dont_set_defaults:
