@@ -147,7 +147,7 @@ class NodeToPython(bpy.types.Operator):
         ng_name = ng.name.lower().replace(' ', '_')
         class_name = ng.name.replace(" ", "")
         dir = bpy.path.abspath("//")
-        if not dir:
+        if not dir or dir == "":
             self.report({'ERROR'}, 
                         ("NodeToPython: Save your blend file before using "
                         "NodeToPython!"))
