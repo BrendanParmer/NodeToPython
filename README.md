@@ -12,6 +12,8 @@ It automatically handles node layout, default values, sub-node groups, naming, a
 
 I think Geometry Nodes is a powerful tool that's fairly accessible to people, and I wanted to create a lightweight, faster way of distributing them than just passing around blend files. It also makes scripting Geometry Nodes easier for add-on creators in cases when Python is needed, as you don't need to recreate the whole node tree from scratch just to add in functionality like a `for` loop or interfacing with other parts of the software. 
 
+NodeToPython is compatible with Blender 3.0-3.3
+
 ## Installation and Usage
 Download `node_to_python.py`, and install it to Blender like other add-ons. Then, go to `Object > Node to Python`, and type in the name of your node group. It will then save an add-on to where your blend file is stored.
 
