@@ -9,6 +9,7 @@ bl_info = {
 }
 
 import bpy
+import os
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
@@ -26,7 +27,7 @@ value_sockets = {'NodeSocketInt',
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
                      'NodeSocketImage',
-                     'NodeSocketMaterial'
+                     'NodeSocketMaterial',
                      'NodeSocketObject',
                      'NodeSocketTexture',
                      'NodeSocketVirtual'}
@@ -152,7 +153,10 @@ class NodeToPython(bpy.types.Operator):
                         ("NodeToPython: Save your blend file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
-        file = open(f"{dir}{ng_name}_addon.py", "w")
+        addon_dir = os.path.join(dir, "addons")
+        if not os.path.exists(addon_dir):
+            os.mkdir(addon_dir)
+        file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
         
         """Sets up bl_info and imports Blender"""
         def header():
