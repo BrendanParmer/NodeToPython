@@ -42,6 +42,9 @@ node_settings = {
 
     #color
     "ShaderNodeMixRGB" : ["blend_type", "use_clamp"],
+    "FunctionNodeCombineColor" : ["mode"],
+    "FunctionNodeSeparateColor" : ["mode"],
+
 
     #curve
     "GeometryNodeCurveToPoints" : ["mode"],
@@ -79,6 +82,7 @@ node_settings = {
     "GeometryNodeExtrudeMesh" : ["mode"],
     "GeometryNodeMeshBoolean" : ["operation"],
     "GeometryNodeMeshToPoints" : ["mode"],
+    "GeometryNodeMeshToVolume" : ["resolution_mode"],
     "GeometryNodeSubdivisionSurface" : ["uv_smooth", "boundary_smooth"],
     "GeometryNodeTriangulate" : ["quad_method", "ngon_method"],
     "GeometryNodeScaleElements" : ["domain", "scale_mode"],
@@ -116,11 +120,15 @@ node_settings = {
     "FunctionNodeCompare" : ["data_type", "operation", "mode"],
     "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
     "FunctionNodeFloatToInt" : ["rounding_mode"],
+    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
     "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
     "ShaderNodeMath" : ["operation", "use_clamp"],
     "FunctionNodeRandomValue" : ["data_type"],
     "FunctionNodeRotateEuler" : ["type", "space"],
     "GeometryNodeSwitch" : ["input_type"],
+
+    #uv
+    "GeometryNodeUVUnwrap" : ["method"],
 
     #vector
     "ShaderNodeVectorMath" : ["operation"],
