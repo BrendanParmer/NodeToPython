@@ -362,10 +362,12 @@ class NodeToPython(bpy.types.Operator):
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = link.from_node.name.lower().replace(' ', '_')
+                input_node = link.from_node.name.lower()
+                input_node = input_node.replace(' ', '_').replace('.', '_')
                 input_socket = link.from_socket.name
                 
-                output_node = link.to_node.name.lower().replace(' ', '_')
+                output_node = link.to_node.name.lower()
+                output_node = output_node.replace(' ', '_').replace('.', '_')
                 output_socket = link.to_socket.name
                 
                 file.write((f"{inner}{ng_name}.links.new({input_node}"
