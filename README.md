@@ -10,7 +10,10 @@ A Blender add-on to create add-ons! This script will take your Geometry Node gro
 
 It automatically handles node layout, default values, sub-node groups, naming, and more! 
 
-I think Geometry Nodes is a powerful tool that's fairly accessible to people, and I wanted to create a lightweight, faster way of distributing them than just passing around blend files. It also makes scripting Geometry Nodes easier for add-on creators in cases when Python is needed, as you don't need to recreate the whole node tree from scratch just to add in functionality like a `for` loop or interfacing with other parts of the software. 
+I think Geometry Nodes is a powerful tool that's fairly accessible to people, and I wanted to create a lightweight, faster way of distributing them than just passing around blend files. It also makes scripting Geometry Nodes easier for add-on creators in cases when Python is needed, as you don't need to recreate the whole node tree from scratch to do things like
+* `for` loops
+* different node trees for different versions or settings
+* interfacing with other parts of the software. 
 
 NodeToPython is compatible with Blender 3.0-3.3
 
