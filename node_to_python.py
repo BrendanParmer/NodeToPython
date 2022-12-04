@@ -12,8 +12,6 @@ bl_info = {
 """TODO: compositing node tree"""
 # https://blender.stackexchange.com/questions/62701/modify-nodes-in-compositing-nodetree-using-python
 
-"""TODO: shader node tree"""
-# bpy.data.materials["material name"]
 import bpy
 import os
 
@@ -222,14 +220,14 @@ class NodeToPython(bpy.types.Operator):
                     process_node_group(node.node_tree, level + 1)
                 elif node.bl_idname == 'NodeGroupInput':
                     file.write(f"{inner}#{ng_name} inputs\n")
-                    for input in node.outputs:
+                    for i, input in enumerate(node.outputs):
                         if input.bl_idname != "NodeSocketVirtual":
                             file.write(f"{inner}#input {input.name}\n")
                             file.write((f"{inner}{ng_name}.inputs.new"
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
                             if input.bl_idname in default_sockets:
-                                socket = node_group.inputs[input.name]
+                                socket = node_group.inputs[i]
                                 if input.bl_idname == 'NodeSocketColor':
                                     col = socket.default_value
                                     r, g, b, a = col[0], col[1], col[2], col[3]
@@ -242,17 +240,17 @@ class NodeToPython(bpy.types.Operator):
                                 
                                 #default value
                                 file.write((f"{inner}{ng_name}"
-                                            f".inputs[\"{input.name}\"]"
+                                            f".inputs[{i}]"
                                             f".default_value = {dv}\n"))
                                 if input.bl_idname in value_sockets:
                                     #min value
                                     file.write((f"{inner}{ng_name}"
-                                                f".inputs[\"{input.name}\"]"
+                                                f".inputs[{i}]"
                                                 f".min_value = "
                                                 f"{socket.min_value}\n"))
                                     #max value
                                     file.write((f"{inner}{ng_name}"
-                                                f".inputs[\"{input.name}\"]"
+                                                f".inputs[{i}]"
                                                 f".max_value = "
                                                 f"{socket.max_value}\n"))
                             file.write("\n")
@@ -383,15 +381,33 @@ class NodeToPython(bpy.types.Operator):
             for link in node_group.links:
                 input_node = link.from_node.name.lower()
                 input_node = input_node.replace(' ', '_').replace('.', '_')
-                input_socket = link.from_socket.name
+                input_socket = link.from_socket
+                
+                """
+                Blender's socket dictionary doesn't guarantee 
+                unique keys, which has caused much wailing and
+                gnashing of teeth. This is a quick fix that
+                doesn't run quick
+                """
+                for i, item in enumerate(link.from_node.outputs.items()):
+                    if item[1] == input_socket:
+                        input_idx = i
+                        break
                 
                 output_node = link.to_node.name.lower()
                 output_node = output_node.replace(' ', '_').replace('.', '_')
-                output_socket = link.to_socket.name
+                output_socket = link.to_socket
                 
+                for i, item in enumerate(link.to_node.inputs.items()):
+                    if item[1] == output_socket:
+                        output_idx = i
+                        break
+                
+                file.write((f"{inner}#{input_node}.{input_socket.name} "
+                            f"-> {output_node}.{output_socket.name}\n"))
                 file.write((f"{inner}{ng_name}.links.new({input_node}"
-                            f".outputs[\"{input_socket}\"], "
-                            f"{output_node}.inputs[\"{output_socket}\"])\n"))
+                            f".outputs[{input_idx}], "
+                            f"{output_node}.inputs[{output_idx}])\n"))
             
             #create node group
             file.write("\n")
