@@ -5,7 +5,9 @@
      width = "400" 
      height = "400"
     >
-
+    
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
+ 
 ## About
 A Blender add-on to create add-ons! This script will take your Geometry Node group and convert it into a legible Python script. 
 
