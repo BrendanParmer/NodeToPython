@@ -32,8 +32,7 @@ Download `node_to_python.py`, and install it to Blender like other add-ons. Then
 * Automatically format code to be PEP8 compliant
 
 ## Potential Issues
-* This should work on Unix-like systems (macOS, Linux), but I haven't tested it on Windows yet. If you use Windows, please let me know or create an issue.
-* Make sure all your group inputs and outputs have different names, or it won't be able to find the appropriate sockets (this is best practice anyways!)
+* This should work on Unix-like systems (macOS, Linux), but I haven't tested it on Windows yet. If you use Windows, please let me know if it does!
 * As of version 1.0.0, the add-on will not set default values for
     * Collections
     * Images
