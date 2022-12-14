@@ -18,7 +18,7 @@ I think Geometry Nodes is a powerful tool that's fairly accessible to people, an
 * different node trees for different versions or settings
 * interfacing with other parts of the software. 
 
-NodeToPython is compatible with Blender 3.0-3.3
+NodeToPython is compatible with Blender 3.0-3.4
 
 ## Supported Versions
 Blender 3.0 - 3.3
@@ -43,3 +43,14 @@ Download `node_to_python.py`, and install it to Blender like other add-ons. Then
     * Textures
 
     as they won't exist in every blend file. In the future, I may have the script automatically recreate these assets, espcially with materials. 
+
+## Bug Reports and Suggestions
+
+When submitting an issue, please include 
+
+* Your version of Blender
+* Your operating system
+* A short description of what you were trying to accomplish, or steps to reproduce the issue
+
+Suggestions for how to improve the add-on are more than welcome!
+
