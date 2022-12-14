@@ -21,9 +21,9 @@ I think Geometry Nodes is a powerful tool that's fairly accessible to people, an
 NodeToPython is compatible with Blender 3.0-3.4
 
 ## Supported Versions
-Blender 3.0 - 3.3
+Blender 3.0 - 3.4
 
-* By January 2023 I expect to support the new Geometry Nodes for the upcoming Blender 3.4 release and experimental support for nodes in the 3.5 beta.
+* Once the 3.5 beta drops, I'll start adding nodes from that release
 
 ## Installation and Usage
 Download `node_to_python.py`, and install it to Blender like other add-ons. Then, go to `Object > Node to Python`, and type in the name of your node group. It will then save an add-on to where your blend file is stored.
