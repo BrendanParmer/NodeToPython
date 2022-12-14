@@ -54,8 +54,10 @@ node_settings = {
     "GeometryNodeFillCurve"                 : ["mode"], 
     "GeometryNodeFilletCurve"               : ["mode"],
     "GeometryNodeResampleCurve"             : ["mode"],
-    "GeometryNodeSampleCurve"               : ["mode"],
+    "GeometryNodeSampleCurve"               : ["data_type", "mode",
+                                               "use_all_curves"],
     "GeometryNodeTrimCurve"                 : ["mode"],
+    "GeometryNodeSetCurveNormal"            : ["mode"],
     "GeometryNodeCurveHandleTypeSelection"  : ["mode", "handle_type"],
     "GeometryNodeSetCurveHandlePositions"   : ["mode"],
     "GeometryNodeCurveSetHandles"           : ["mode", "handle_type"],
@@ -74,6 +76,8 @@ node_settings = {
     "GeometryNodeProximity"         : ["target_element"],
     "GeometryNodeMergeByDistance"   : ["mode"],
     "GeometryNodeRaycast"           : ["data_type", "mapping"],
+    "GeometryNodeSampleIndex"       : ["data_type", "domain", "clamp"],
+    "GeometryNodeSampleNearest"     : ["domain"],
     "GeometryNodeSeparateGeometry"  : ["domain"],
 
     #input
@@ -86,6 +90,8 @@ node_settings = {
     "GeometryNodeMeshBoolean"           : ["operation"],
     "GeometryNodeMeshToPoints"          : ["mode"],
     "GeometryNodeMeshToVolume"          : ["resolution_mode"],
+    "GeometryNodeSampleNearestSurface"  : ["data_type"],
+    "GeometryNodeSampleUVSurface"       : ["data_type"],
     "GeometryNodeSubdivisionSurface"    : ["uv_smooth", "boundary_smooth"],
     "GeometryNodeTriangulate"           : ["quad_method", "ngon_method"],
     "GeometryNodeScaleElements"         : ["domain", "scale_mode"],
@@ -96,9 +102,13 @@ node_settings = {
     "GeometryNodeMeshCircle"    : ["fill_type"],
     "GeometryNodeMeshLine"      : ["mode"],
 
+    #output
+    "GeometryNodeViewer"    : ["domain"],
+    
     #point
-    "GeometryNodeDistributePointsOnFaces" : ["distribute_method"],
-    "GeometryNodePointsToVolume"          : ["resolution_mode"],
+    "GeometryNodeDistributePointsInVolume"  : ["mode"],
+    "GeometryNodeDistributePointsOnFaces"   : ["distribute_method"],
+    "GeometryNodePointsToVolume"            : ["resolution_mode"],
 
     #text
     "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
@@ -280,11 +290,12 @@ class NodeToPython(bpy.types.Operator):
                 #special nodes
                 if node.bl_idname in node_settings:
                     for setting in node_settings[node.bl_idname]:
-                        attr = getattr(node, setting)
-                        if type(attr) == str:
-                            attr = f"\'{attr}\'"
-                        file.write((f"{inner}{node_name}.{setting} = "
-                                    f"{attr}\n"))
+                        attr = getattr(node, setting, None)
+                        if attr:
+                            if type(attr) == str:
+                                attr = f"\'{attr}\'"
+                            file.write((f"{inner}{node_name}.{setting} "
+                                        f"= {attr}\n"))
                 elif node.bl_idname == 'GeometryNodeGroup':
                     file.write((f"{inner}{node_name}.node_tree = "
                                 f"bpy.data.node_groups"
