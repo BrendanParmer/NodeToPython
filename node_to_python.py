@@ -462,14 +462,62 @@ class NodeToPython(bpy.types.Operator):
         file.close()
         return {'FINISHED'}
 
+class NodeToPythonMenu(bpy.types.Menu):
+    bl_idname = "NodeToPythonMenu"
+    bl_label = ""
+
+    @classmethod
+    def poll(cls, context):
+        return not (False)
+
+    def draw(self, context):
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        
+        layout = self.layout.column_flow(columns=1)
+        layout.operator_context = "INVOKE_DEFAULT"
+        for i in range(len(geo_node_groups)):
+            op = layout.operator(NodeToPython.bl_idname, text=geo_node_groups[i].name)
+            op.node_group_name = geo_node_groups[i].name
+            
+class NodeToPythonPanel(bpy.types.Panel):
+    bl_label = 'Node To Python'
+    bl_idname = 'NodeToPythonPanel'
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_context = ''
+    bl_category = 'NodeToPython'
+
+    @classmethod
+    def poll(cls, context):
+        return not (False)
+
+    def draw_header(self, context):
+        layout = self.layout
+
+    def draw(self, context):
+        geo_node_groups_exist = len([node for node in bpy.data.node_groups if node.type == 'GEOMETRY']) > 0
+        menu_text = 'Nodes'
+        
+        layout = self.layout
+        col = layout.column()
+        row = col.row()
+        row.enabled = geo_node_groups_exist # Disables menu when len of geometry nodes is 0
+        row.alignment = 'Expand'.upper()
+        row.operator_context = "INVOKE_DEFAULT" if True else "EXEC_DEFAULT"
+        row.menu('NodeToPythonMenu', text=menu_text)
+
 def menu_func(self, context):
     self.layout.operator(NodeToPython.bl_idname, text=NodeToPython.bl_label)
     
 def register():
+    bpy.utils.register_class(NodeToPythonMenu)
+    bpy.utils.register_class(NodeToPythonPanel)
     bpy.utils.register_class(NodeToPython)
     bpy.types.VIEW3D_MT_object.append(menu_func)
     
 def unregister():
+    bpy.utils.unregister_class(NodeToPythonMenu)
+    bpy.utils.unregister_class(NodeToPythonPanel)
     bpy.utils.unregister_class(NodeToPython)
     bpy.types.VIEW3D_MT_object.remove(menu_func)
     
