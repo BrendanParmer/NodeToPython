@@ -2,15 +2,11 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 0, 0),
+    "version": (2, 0, 0),
     "blender": (3, 0, 0),
-    "location": "Object", 
-    "category": "Object",
+    "location": "Node", 
+    "category": "Node",
 }
-
-
-"""TODO: compositing node tree"""
-# https://blender.stackexchange.com/questions/62701/modify-nodes-in-compositing-nodetree-using-python
 
 import bpy
 import os
@@ -158,7 +154,7 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeRGBCurve'}
 
 class NodeToPython(bpy.types.Operator):
-    bl_idname = "object.node_to_python"
+    bl_idname = "node.node_to_python"
     bl_label = "Node to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -463,63 +459,60 @@ class NodeToPython(bpy.types.Operator):
         return {'FINISHED'}
 
 class NodeToPythonMenu(bpy.types.Menu):
-    bl_idname = "NodeToPythonMenu"
-    bl_label = ""
-
+    bl_idname = "NODE_MT_node_to_python"
+    bl_label = "Node To Python"
+    
     @classmethod
     def poll(cls, context):
-        return not (False)
+        return True
 
     def draw(self, context):
         geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
-        
+
         layout = self.layout.column_flow(columns=1)
-        layout.operator_context = "INVOKE_DEFAULT"
-        for i in range(len(geo_node_groups)):
-            op = layout.operator(NodeToPython.bl_idname, text=geo_node_groups[i].name)
-            op.node_group_name = geo_node_groups[i].name
+        layout.operator_context = 'INVOKE_DEFAULT'
+        for geo_ng in geo_node_groups:
+            op = layout.operator(NodeToPython.bl_idname, text=geo_ng.name)
+            op.node_group_name = geo_ng.name
             
 class NodeToPythonPanel(bpy.types.Panel):
-    bl_label = 'Node To Python'
-    bl_idname = 'NodeToPythonPanel'
+    bl_label = "Node To Python"
+    bl_idname = "NODE_PT_node_to_python"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
-    bl_category = 'NodeToPython'
+    bl_category = "NodeToPython"
 
     @classmethod
     def poll(cls, context):
-        return not (False)
-
+        return True
+    
     def draw_header(self, context):
         layout = self.layout
 
     def draw(self, context):
-        geo_node_groups_exist = len([node for node in bpy.data.node_groups if node.type == 'GEOMETRY']) > 0
-        menu_text = 'Nodes'
-        
         layout = self.layout
         col = layout.column()
         row = col.row()
-        row.enabled = geo_node_groups_exist # Disables menu when len of geometry nodes is 0
-        row.alignment = 'Expand'.upper()
-        row.operator_context = "INVOKE_DEFAULT" if True else "EXEC_DEFAULT"
-        row.menu('NodeToPythonMenu', text=menu_text)
+        
+        # Disables menu when len of geometry nodes is 0
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        geo_node_groups_exist = len(geo_node_groups) > 0
+        row.enabled = geo_node_groups_exist
+        
+        row.alignment = 'EXPAND'
+        row.operator_context = 'INVOKE_DEFAULT'
+        row.menu("NODE_MT_node_to_python", text="Geometry Node Groups")
 
-def menu_func(self, context):
-    self.layout.operator(NodeToPython.bl_idname, text=NodeToPython.bl_label)
+classes = [NodeToPythonMenu, NodeToPythonPanel, NodeToPython]
     
 def register():
-    bpy.utils.register_class(NodeToPythonMenu)
-    bpy.utils.register_class(NodeToPythonPanel)
-    bpy.utils.register_class(NodeToPython)
-    bpy.types.VIEW3D_MT_object.append(menu_func)
+    for cls in classes:
+        bpy.utils.register_class(cls)
     
 def unregister():
-    bpy.utils.unregister_class(NodeToPythonMenu)
-    bpy.utils.unregister_class(NodeToPythonPanel)
-    bpy.utils.unregister_class(NodeToPython)
-    bpy.types.VIEW3D_MT_object.remove(menu_func)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
     
 if __name__ == "__main__":
     register()
