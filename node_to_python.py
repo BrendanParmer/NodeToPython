@@ -2,15 +2,11 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 0, 0),
+    "version": (1, 2, 1),
     "blender": (3, 0, 0),
-    "location": "Object", 
-    "category": "Object",
+    "location": "Node", 
+    "category": "Node",
 }
-
-
-"""TODO: compositing node tree"""
-# https://blender.stackexchange.com/questions/62701/modify-nodes-in-compositing-nodetree-using-python
 
 import bpy
 import os
