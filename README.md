@@ -13,7 +13,7 @@ A Blender add-on to create add-ons! This script will take your Geometry Node gro
 
 It automatically handles node layout, default values, sub-node groups, naming, and more! 
 
-I think Geometry Nodes is a powerful tool that's fairly accessible to people. I wanted to make scripting node groups easier for add-on creators in cases when Python is needed, as you don't need to recreate the whole node tree from scratch to do things like
+I think Geometry Nodes is a powerful tool that's fairly accessible to people, and I wanted to create a lightweight, faster way of distributing them than just passing around blend files. It also makes scripting Geometry Nodes easier for add-on creators in cases when Python is needed, as you don't need to recreate the whole node tree from scratch to do things like
 * `for` loops
 * different node trees for different versions or settings
 * interfacing with other parts of the software. 
@@ -34,14 +34,15 @@ Download `node_to_python.py`, and install it to Blender like other add-ons. Then
 * Automatically format code to be PEP8 compliant
 
 ## Potential Issues
-* As of version 1.2.1, the add-on will not set default values for
+* This should work on Unix-like systems (macOS, Linux), but I haven't tested it on Windows yet. If you use Windows, please let me know if it does!
+* As of version 1.0.0, the add-on will not set default values for
     * Collections
     * Images
     * Materials
     * Objects
     * Textures
 
-    as they won't exist in every blend file. I plan on implementing these soon.
+    as they won't exist in every blend file. In the future, I may have the script automatically recreate these assets, espcially with materials. 
 
 ## Bug Reports and Suggestions
 
@@ -50,8 +51,6 @@ When submitting an issue, please include
 * Your version of Blender
 * Your operating system
 * A short description of what you were trying to accomplish, or steps to reproduce the issue
-
-If you don't mind sharing a blend file, that helps a lot!
 
 Suggestions for how to improve the add-on are more than welcome!
 
