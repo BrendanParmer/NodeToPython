@@ -153,6 +153,9 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}
 
+def cleanup_string(string: str):
+    return string.lower().replace(' ', '_').replace('.', '_')
+
 class NodeToPython(bpy.types.Operator):
     bl_idname = "node.node_to_python"
     bl_label = "Node to Python"
@@ -164,8 +167,8 @@ class NodeToPython(bpy.types.Operator):
         if self.node_group_name not in bpy.data.node_groups:
             return {'FINISHED'}
         ng = bpy.data.node_groups[self.node_group_name]
-        ng_name = ng.name.lower().replace(' ', '_')
-        class_name = ng.name.replace(" ", "")
+        ng_name = cleanup_string(ng.name)
+        class_name = ng.name.replace(" ", "").replace('.', "")
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
             self.report({'ERROR'}, 
@@ -205,7 +208,7 @@ class NodeToPython(bpy.types.Operator):
         file.write("\tdef execute(self, context):\n")
 
         def process_node_group(node_group, level):
-            ng_name = node_group.name.lower().replace(' ', '_')
+            ng_name = cleanup_string(node_group.name)
                 
             outer = "\t"*level       #outer indentation
             inner = "\t"*(level + 1) #inner indentation
@@ -271,8 +274,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\n")
 
                 #create node
-                node_name = node.name.lower()
-                node_name = node_name.replace(' ', '_').replace('.', '_')
+                node_name = cleanup_string(node.name)
                 file.write(f"{inner}#node {node.name}\n")
                 file.write((f"{inner}{node_name} "
                             f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
@@ -387,8 +389,7 @@ class NodeToPython(bpy.types.Operator):
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = link.from_node.name.lower()
-                input_node = input_node.replace(' ', '_').replace('.', '_')
+                input_node = cleanup_string(link.from_node.name)
                 input_socket = link.from_socket
                 
                 """
@@ -402,8 +403,7 @@ class NodeToPython(bpy.types.Operator):
                         input_idx = i
                         break
                 
-                output_node = link.to_node.name.lower()
-                output_node = output_node.replace(' ', '_').replace('.', '_')
+                output_node = cleanup_string(link.to_node.name)
                 output_socket = link.to_socket
                 
                 for i, item in enumerate(link.to_node.inputs.items()):
