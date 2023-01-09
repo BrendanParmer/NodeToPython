@@ -320,7 +320,7 @@ class NodeToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_name}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
                 elif node.bl_idname in curve_nodes:
-                    file.write(f"{inner}#mapping settings")
+                    file.write(f"{inner}#mapping settings\n")
                     mapping = f"{inner}{node_name}.mapping"
 
                     extend = f"\'{node.mapping.extend}\'"
@@ -348,7 +348,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{mapping}.use_clip = {use_clip}\n")
 
                     for i, curve in enumerate(node.mapping.curves):
-                        file.write(f"{inner}#curve {i}")
+                        file.write(f"{inner}#curve {i}\n")
                         curve_i = f"{node_name}_curve_{i}"
                         file.write((f"{inner}{curve_i} = "
                                     f"{node_name}.mapping.curves[{i}]\n"))
@@ -476,7 +476,7 @@ class NodeToPythonMenu(bpy.types.Menu):
             op.node_group_name = geo_ng.name
             
 class NodeToPythonPanel(bpy.types.Panel):
-    bl_label = "Node To Python"
+    bl_label = "Geometry Nodes to Python"
     bl_idname = "NODE_PT_node_to_python"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'

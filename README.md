@@ -41,6 +41,9 @@ Download `node_to_python.py`, and install it to Blender like other add-ons. Then
     * Materials
     * Objects
     * Textures
+    * Scripts
+    * IES
+    * Filepaths
 
     as they won't exist in every blend file. In the future, I may have the script automatically recreate these assets, espcially with materials. 
 

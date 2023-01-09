@@ -1,5 +1,18 @@
 import bpy
+import mathutils
 import os
+
+#node tree input sockets that have default properties
+default_sockets = {'NodeSocketBool', 
+                   'NodeSocketColor',
+                   'NodeSocketFloat',
+                   'NodeSocketInt',
+                   'NodeSocketVector'}
+
+#node tree input sockets that have min/max properties           
+value_sockets = {'NodeSocketInt',
+                 'NodeSocketFloat',
+                 'NodeSocketVector'}
 
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
@@ -11,9 +24,81 @@ dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketTexture',
                      'NodeSocketVirtual'}
 
+node_settings = {
+    #input
+    "ShaderNodeAmbientOcclusion" : ["samples", "inside", "only_local"],
+    "ShaderNodeAttribute" : ["attribute_type", "attribute_name"],
+    "ShaderNodeBevel" : ["samples"],
+    "ShaderNodeVertexColor" : ["layer_name"],
+    "ShaderNodeTangent" : ["direction_type", "axis"],
+    "ShaderNodeTexCoord" : ["from_instancer"],
+    "ShaderNodeUVMap" : ["from_instancer", "uv_map"],
+    "ShaderNodeWireframe" : ["use_pixel_size"],
+
+    #output
+    "ShaderNodeOutputAOV" : ["name"],
+    "ShaderNodeOutputMaterial" : ["target"],
+
+    #shader
+    "ShaderNodeBsdfGlass" : ["distribution"],
+    "ShaderNodeBsdfGlossy" : ["distribution"],
+    "ShaderNodeBsdfPrincipled" : ["distribution", "subsurface_method"],
+    "ShaderNodeBsdfRefraction" : ["distribution"],
+    "ShaderNodeSubsurfaceScattering" : ["falloff"],
+
+    #texture
+    "ShaderNodeTexBrick" : ["offset", "offset_frequency", "squash", "squash_frequency"],
+    "ShaderNodeTexEnvironment" : ["interpolation", "projection", "image_user.frame_duration", "image_user.frame_start", "image_user.frame_offset", "image_user.use_cyclic", "image_user.use_auto_refresh"],
+    "ShaderNodeTexGradient" : ["gradient_type"],
+    "ShaderNodeTexIES" : ["mode"],
+    "ShaderNodeTexImage" : ["interpolation", "projection", "projection_blend", 
+                            "extension"],
+    "ShaderNodeTexMagic" : ["turbulence_depth"],
+    "ShaderNodeTexMusgrave" : ["musgrave_dimensions", "musgrave_type"],
+    "ShaderNodeTexNoise" : ["noise_dimensions"],
+    "ShaderNodeTexPointDensity" : ["point_source", "space", "radius", 
+                                    "interpolation", "resolution", 
+                                    "vertex_color_source"],
+    "ShaderNodeTexSky" : ["sky_type", "sun_direction", "turbidity",
+                            "ground_albedo", "sun_disc", "sun_elevation", 
+                            "sun_rotation", "altitude", "air_density", 
+                            "dust_density", "ozone_density"],
+    "ShaderNodeTexVoronoi" : ["voronoi_dimensions", "feature", "distance"],
+    "ShaderNodeTexWave" : ["wave_type", "rings_direction", "wave_profile"],
+    "ShaderNodeTexWhiteNoise" : ["noise_dimensions"],
+
+    #color
+    "ShaderNodeMix" : ["data_type", "clamp_factor", "factor_mode", "blend_type",
+                        "clamp_result"],
+
+    #vector
+    "ShaderNodeBump" : ["invert"],
+    "ShaderNodeDisplacement" : ["space"],
+    "ShaderNodeMapping" : ["vector_type"],
+    "ShaderNodeNormalMap" : ["space", "uv_map"],
+    "ShaderNodeVectorDisplacement" : ["space"],
+    "ShaderNodeVectorRotate" : ["rotation_type", "invert"],
+    "ShaderNodeVectorTransform" : ["vector_type", "convert_from", "convert_to"],
+    
+    #converter
+    "ShaderNodeClamp" : ["clamp_type"],
+    "ShaderNodeCombineColor" : ["mode"],
+    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"],
+    "ShaderNodeMath" : ["operation", "use_clamp"],
+    "ShaderNodeSeparateColor" : ["mode"],
+    "ShaderNodeVectorMath" : ["operation"]
+}
+
 curve_nodes = {'ShaderNodeFloatCurve', 
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}   
+
+def clean_string(string: str):
+    bad_chars = [' ', '.', '/']
+    clean_str = string.lower()
+    for char in bad_chars:
+        clean_str = clean_str.replace(char, '_')
+    return clean_str
 
 class MaterialToPython(bpy.types.Operator):
     bl_idname = "node.material_to_python"
@@ -28,7 +113,7 @@ class MaterialToPython(bpy.types.Operator):
         
         #set up addon file
         ng = bpy.data.materials[self.material_name].node_tree
-        ng_name = ng.name.lower().replace(' ', '_')
+        ng_name = clean_string(self.material_name)
         class_name = ng.name.replace(" ", "")
         
         dir = bpy.path.abspath("//")
@@ -45,7 +130,7 @@ class MaterialToPython(bpy.types.Operator):
         """Sets up bl_info and imports Blender"""
         def header():
             file.write("bl_info = {\n")
-            file.write(f"\t\"name\" : \"{ng.name}\",\n")
+            file.write(f"\t\"name\" : \"{self.material_name}\",\n")
             file.write("\t\"author\" : \"Node To Python\",\n")
             file.write("\t\"version\" : (1, 0, 0),\n")
             file.write(f"\t\"blender\" : {bpy.app.version},\n")
@@ -61,7 +146,7 @@ class MaterialToPython(bpy.types.Operator):
         def init_class():
             file.write(f"class {class_name}(bpy.types.Operator):\n")
             file.write(f"\tbl_idname = \"object.{ng_name}\"\n")
-            file.write(f"\tbl_label = \"{ng.name}\"\n")
+            file.write(f"\tbl_label = \"{self.material_name}\"\n")
             file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
             file.write("\n")
         init_class()
@@ -69,7 +154,9 @@ class MaterialToPython(bpy.types.Operator):
         file.write("\tdef execute(self, context):\n")
 
         def process_mat_node_group(node_group, level):
-            ng_name = node_group.name.lower().replace(' ', '_')
+            ng_name = clean_string(node_group.name)
+            if level == 2:
+                ng_name = clean_string(self.material_name)
 
             outer = "\t"*level
             inner = "\t"*(level + 1)
@@ -79,54 +166,155 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"{outer}def {ng_name}_node_group():\n")
             file.write((f"{inner}{ng_name}"
                     f"= bpy.data.node_groups.new("
-                    f"type = \"ShaderNodeGroup\", "
+                    f"type = \"ShaderNodeTree\", "
                     f"name = \"{node_group.name}\")\n"))
             file.write("\n")
 
             #initialize nodes
             file.write(f"{inner}#initialize {ng_name} nodes\n")
 
+            """
+            The bl_idname for AOV output nodes is the name field.
+            I've been using these for the variable names, but if you don't name
+            the AOV node it just doesn't assign anything, so we need to do it
+            manually.
+            """
+            unnamed_index = 0
             for node in node_group.nodes:
                 if node.bl_idname == 'ShaderNodeGroup':
                     process_mat_node_group(node.node_tree, level + 1)
                 #create node
-                node_name = node.name.lower()
-                node_name = node_name.replace(' ', '_').replace('.', '_')
+                node_name = clean_string(node.name)
+                if node_name == "":
+                    node_name = f"node_{unnamed_index}"
+                    unnamed_index += 1
+                
                 file.write(f"{inner}#node {node.name}\n")
                 file.write((f"{inner}{node_name} "
-                        f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
+                            f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
                 file.write((f"{inner}{node_name}.location "
-                        f"= ({node.location.x}, {node.location.y})\n"))
+                            f"= ({node.location.x}, {node.location.y})\n"))
                 file.write((f"{inner}{node_name}.width, {node_name}.height "
-                        f"= {node.width}, {node.height}\n"))
+                            f"= {node.width}, {node.height}\n"))
                 if node.label:
                     file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
+                
+                #special nodes
+                if node.bl_idname in node_settings:
+                    for setting in node_settings[node.bl_idname]:
+                        attr = getattr(node, setting, None)
+                        if attr:
+                            if type(attr) == str:
+                                attr = f"\'{attr}\'"
+                            if type(attr) == mathutils.Vector:
+                                attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
+                            file.write((f"{inner}{node_name}.{setting} "
+                                        f"= {attr}\n"))
+                elif node.bl_idname == 'ShaderNodeGroup':
+                    file.write((f"{inner}{node_name}.node_tree = "
+                                f"bpy.data.node_groups"
+                                f"[\"{node.node_tree.name}\"]\n"))
+                elif node.bl_idname == 'ShaderNodeValToRGB':
+                    color_ramp = node.color_ramp
+                    file.write("\n")
+                    file.write((f"{inner}{node_name}.color_ramp.color_mode = "
+                                f"\'{color_ramp.color_mode}\'\n"))
+                    file.write((f"{inner}{node_name}.color_ramp"
+                                f".hue_interpolation = "
+                                f"\'{color_ramp.hue_interpolation}\'\n"))
+                    file.write((f"{inner}{node_name}.color_ramp.interpolation "
+                                f"= '{color_ramp.interpolation}'\n"))
+                    file.write("\n")
+                    for i, element in enumerate(color_ramp.elements):
+                        file.write((f"{inner}{node_name}_cre_{i} = "
+                                    f"{node_name}.color_ramp.elements"
+                                    f".new({element.position})\n"))
+                        file.write((f"{inner}{node_name}_cre_{i}.alpha = "
+                                    f"{element.alpha}\n"))
+                        col = element.color
+                        r, g, b, a = col[0], col[1], col[2], col[3]
+                        file.write((f"{inner}{node_name}_cre_{i}.color = "
+                                    f"({r}, {g}, {b}, {a})\n\n"))
+                elif node.bl_idname in curve_nodes:
+                    file.write(f"{inner}#mapping settings\n")
+                    mapping = f"{inner}{node_name}.mapping"
 
-                for i, input in enumerate(node.inputs):
-                    if input.bl_idname not in dont_set_defaults:
-                        dv = None
-                        if input.bl_idname == 'NodeSocketColor':
-                            col = input.default_value
-                            dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
-                        elif "Vector" in input.bl_idname:
-                            vector = input.default_value
-                            dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
-                        elif input.bl_idname == 'NodeSocketString':
-                            dv = f"\"\""
-                        else:
-                            dv = input.default_value
-                        if dv is not None:
-                            file.write(f"{inner}#{input.identifier}\n")
-                            file.write((f"{inner}{node_name}"
-                                        f".inputs[{i}]"
-                                        f".default_value = {dv}\n"))
+                    extend = f"\'{node.mapping.extend}\'"
+                    file.write(f"{mapping}.extend = {extend}\n")
+                    tone = f"\'{node.mapping.tone}\'"
+                    file.write(f"{mapping}.tone = {tone}\n")
+
+                    b_lvl = node.mapping.black_level
+                    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
+                    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+                    w_lvl = node.mapping.white_level
+                    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
+                    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
+
+                    min_x = node.mapping.clip_min_x
+                    file.write(f"{mapping}.clip_min_x = {min_x}\n")
+                    min_y = node.mapping.clip_min_y
+                    file.write(f"{mapping}.clip_min_y = {min_y}\n")
+                    max_x = node.mapping.clip_max_x
+                    file.write(f"{mapping}.clip_max_x = {max_x}\n")
+                    max_y = node.mapping.clip_max_y
+                    file.write(f"{mapping}.clip_max_y = {max_y}\n")
+
+                    use_clip = node.mapping.use_clip
+                    file.write(f"{mapping}.use_clip = {use_clip}\n")
+
+                    for i, curve in enumerate(node.mapping.curves):
+                        file.write(f"{inner}#curve {i}\n")
+                        curve_i = f"{node_name}_curve_{i}"
+                        file.write((f"{inner}{curve_i} = "
+                                    f"{node_name}.mapping.curves[{i}]\n"))
+                        for j, point in enumerate(curve.points):
+                            point_j = f"{inner}{curve_i}_point_{j}"
+
+                            loc = point.location
+                            file.write((f"{point_j} = "
+                                        f"{curve_i}.points.new"
+                                        f"({loc[0]}, {loc[1]})\n"))
+
+                            handle = f"\'{point.handle_type}\'"
+                            file.write(f"{point_j}.handle_type = {handle}\n")
+                    file.write(f"{inner}#update curve after changes")
+                    file.write(f"{mapping}.update()\n")
+
+                if node.bl_idname != 'NodeReroute':
+                    def default_value(i, socket, list_name):
+                        if socket.bl_idname not in dont_set_defaults:
+                            dv = None
+                            if socket.bl_idname == 'NodeSocketColor':
+                                col = socket.default_value
+                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
+                            elif "Vector" in socket.bl_idname:
+                                vector = socket.default_value
+                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                            elif socket.bl_idname == 'NodeSocketString':
+                                dv = f"\"\""
+                            else:
+                                dv = socket.default_value
+                            if dv is not None:
+                                file.write(f"{inner}#{socket.identifier}\n")
+                                file.write((f"{inner}{node_name}"
+                                            f".{list_name}[{i}]"
+                                            f".default_value = {dv}\n"))  
+                    for i, input in enumerate(node.inputs):
+                        default_value(i, input, "inputs")
+                    """
+                    TODO: some shader nodes require you set the default value in the output.
+                    this will need to be handled case by case it looks like though
+
+                    for i, output in enumerate(node.outputs):
+                        default_value(i, output, "outputs")
+                    """
 
             #initialize links
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = link.from_node.name.lower()
-                input_node = input_node.replace(' ', '_').replace('.', '_')
+                input_node = clean_string(link.from_node.name)
                 input_socket = link.from_socket
                 
                 """
@@ -140,8 +328,7 @@ class MaterialToPython(bpy.types.Operator):
                         input_idx = i
                         break
                 
-                output_node = link.to_node.name.lower()
-                output_node = output_node.replace(' ', '_').replace('.', '_')
+                output_node = clean_string(link.to_node.name)
                 output_socket = link.to_socket
                 
                 for i, item in enumerate(link.to_node.inputs.items()):
@@ -191,9 +378,24 @@ class MaterialToPython(bpy.types.Operator):
         file.close()
         return {'FINISHED'}
 
-class NodeToPythonPanel(bpy.types.Panel):
-    bl_label = "Node To Python"
-    bl_idname = "NODE_PT_node_to_python"
+class SelectMaterialMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_npt_mat_selection"
+    bl_label = "Select Material"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        layout = self.layout.column_flow(columns=1)
+        layout.operator_context = 'INVOKE_DEFAULT'
+        for mat in bpy.data.materials:
+            op = layout.operator(MaterialToPython.bl_idname, text=mat.name)
+            op.material_name = mat.name
+    
+class MaterialToPythonPanel(bpy.types.Panel):
+    bl_label = "Material to Python"
+    bl_idname = "NODE_PT_mat_to_python"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
@@ -208,19 +410,18 @@ class NodeToPythonPanel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        col = layout.column()
-        row = col.row()
+        row = layout.row()
         
-        # Disables menu when len of geometry nodes is 0
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
-        geo_node_groups_exist = len(geo_node_groups) > 0
-        row.enabled = geo_node_groups_exist
+        # Disables menu when there are no materials
+        materials = [mat for mat in bpy.data.materials]
+        materials_exist = len(materials) > 0
+        row.enabled = materials_exist
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_node_to_python", text="Geometry Node Groups")
+        row.menu("NODE_MT_npt_mat_selection", text="Materials")
 
-classes = [NodeToPythonMenu, NodeToPythonPanel, NodeToPython]
+classes = [MaterialToPythonPanel, MaterialToPython]
     
 def register():
     for cls in classes:
