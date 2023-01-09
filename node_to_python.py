@@ -2,15 +2,11 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 0, 0),
+    "version": (2, 0, 0),
     "blender": (3, 0, 0),
-    "location": "Object", 
-    "category": "Object",
+    "location": "Node", 
+    "category": "Node",
 }
-
-
-"""TODO: compositing node tree"""
-# https://blender.stackexchange.com/questions/62701/modify-nodes-in-compositing-nodetree-using-python
 
 import bpy
 import os
@@ -158,7 +154,7 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeRGBCurve'}
 
 class NodeToPython(bpy.types.Operator):
-    bl_idname = "object.node_to_python"
+    bl_idname = "node.node_to_python"
     bl_label = "Node to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -367,23 +363,24 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{inner}#update curve after changes")
                     file.write(f"{mapping}.update()\n")
                 
-                for i, input in enumerate(node.inputs):
-                    if input.bl_idname not in dont_set_defaults:
-                        if input.bl_idname == 'NodeSocketColor':
-                            col = input.default_value
-                            dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
-                        elif "Vector" in input.bl_idname:
-                            vector = input.default_value
-                            dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
-                        elif input.bl_idname == 'NodeSocketString':
-                            dv = f"\"\""
-                        else:
-                            dv = input.default_value
-                        if dv is not None:
-                            file.write(f"{inner}#{input.identifier}\n")
-                            file.write((f"{inner}{node_name}"
-                                        f".inputs[{i}]"
-                                        f".default_value = {dv}\n"))
+                if node.bl_idname != 'NodeReroute':
+                    for i, input in enumerate(node.inputs):
+                        if input.bl_idname not in dont_set_defaults:
+                            if input.bl_idname == 'NodeSocketColor':
+                                col = input.default_value
+                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
+                            elif "Vector" in input.bl_idname:
+                                vector = input.default_value
+                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                            elif input.bl_idname == 'NodeSocketString':
+                                dv = f"\"\""
+                            else:
+                                dv = input.default_value
+                            if dv is not None:
+                                file.write(f"{inner}#{input.identifier}\n")
+                                file.write((f"{inner}{node_name}"
+                                            f".inputs[{i}]"
+                                            f".default_value = {dv}\n"))
                 file.write("\n")
             
             #initialize links
@@ -461,16 +458,61 @@ class NodeToPython(bpy.types.Operator):
         file.close()
         return {'FINISHED'}
 
-def menu_func(self, context):
-    self.layout.operator(NodeToPython.bl_idname, text=NodeToPython.bl_label)
+class NodeToPythonMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_node_to_python"
+    bl_label = "Node To Python"
+    
+    @classmethod
+    def poll(cls, context):
+        return True
+
+    def draw(self, context):
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+
+        layout = self.layout.column_flow(columns=1)
+        layout.operator_context = 'INVOKE_DEFAULT'
+        for geo_ng in geo_node_groups:
+            op = layout.operator(NodeToPython.bl_idname, text=geo_ng.name)
+            op.node_group_name = geo_ng.name
+            
+class NodeToPythonPanel(bpy.types.Panel):
+    bl_label = "Node To Python"
+    bl_idname = "NODE_PT_node_to_python"
+    bl_space_type = 'NODE_EDITOR'
+    bl_region_type = 'UI'
+    bl_context = ''
+    bl_category = "NodeToPython"
+
+    @classmethod
+    def poll(cls, context):
+        return True
+    
+    def draw_header(self, context):
+        layout = self.layout
+
+    def draw(self, context):
+        layout = self.layout
+        col = layout.column()
+        row = col.row()
+        
+        # Disables menu when len of geometry nodes is 0
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        geo_node_groups_exist = len(geo_node_groups) > 0
+        row.enabled = geo_node_groups_exist
+        
+        row.alignment = 'EXPAND'
+        row.operator_context = 'INVOKE_DEFAULT'
+        row.menu("NODE_MT_node_to_python", text="Geometry Node Groups")
+
+classes = [NodeToPythonMenu, NodeToPythonPanel, NodeToPython]
     
 def register():
-    bpy.utils.register_class(NodeToPython)
-    bpy.types.VIEW3D_MT_object.append(menu_func)
+    for cls in classes:
+        bpy.utils.register_class(cls)
     
 def unregister():
-    bpy.utils.unregister_class(NodeToPython)
-    bpy.types.VIEW3D_MT_object.remove(menu_func)
+    for cls in classes:
+        bpy.utils.unregister_class(cls)
     
 if __name__ == "__main__":
     register()
