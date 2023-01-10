@@ -2,6 +2,12 @@ import bpy
 import mathutils
 import os
 
+if "bpy" in locals():
+    import importlib
+    importlib.reload(utils)
+else:
+    from . import utils
+
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
                    'NodeSocketColor',
@@ -93,13 +99,6 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}   
 
-def clean_string(string: str):
-    bad_chars = [' ', '.', '/']
-    clean_str = string.lower()
-    for char in bad_chars:
-        clean_str = clean_str.replace(char, '_')
-    return clean_str
-
 class MaterialToPython(bpy.types.Operator):
     bl_idname = "node.material_to_python"
     bl_label =  "Material to Python"
@@ -113,7 +112,7 @@ class MaterialToPython(bpy.types.Operator):
         
         #set up addon file
         ng = bpy.data.materials[self.material_name].node_tree
-        ng_name = clean_string(self.material_name)
+        ng_name = utils.clean_string(self.material_name)
         class_name = ng.name.replace(" ", "")
         
         dir = bpy.path.abspath("//")
@@ -154,9 +153,9 @@ class MaterialToPython(bpy.types.Operator):
         file.write("\tdef execute(self, context):\n")
 
         def process_mat_node_group(node_group, level):
-            ng_name = clean_string(node_group.name)
+            ng_name = utils.clean_string(node_group.name)
             if level == 2:
-                ng_name = clean_string(self.material_name)
+                ng_name = utils.clean_string(self.material_name)
 
             outer = "\t"*level
             inner = "\t"*(level + 1)
@@ -184,7 +183,7 @@ class MaterialToPython(bpy.types.Operator):
                 if node.bl_idname == 'ShaderNodeGroup':
                     process_mat_node_group(node.node_tree, level + 1)
                 #create node
-                node_name = clean_string(node.name)
+                node_name = utils.clean_string(node.name)
                 if node_name == "":
                     node_name = f"node_{unnamed_index}"
                     unnamed_index += 1
@@ -314,7 +313,7 @@ class MaterialToPython(bpy.types.Operator):
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = clean_string(link.from_node.name)
+                input_node = utils.clean_string(link.from_node.name)
                 input_socket = link.from_socket
                 
                 """
@@ -328,7 +327,7 @@ class MaterialToPython(bpy.types.Operator):
                         input_idx = i
                         break
                 
-                output_node = clean_string(link.to_node.name)
+                output_node = utils.clean_string(link.to_node.name)
                 output_socket = link.to_socket
                 
                 for i, item in enumerate(link.to_node.inputs.items()):

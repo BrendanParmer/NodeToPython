@@ -11,6 +11,12 @@ bl_info = {
 import bpy
 import os
 
+if "bpy" in locals():
+    import importlib
+    importlib.reload(utils)
+else:
+    from . import utils
+
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
                    'NodeSocketColor',
@@ -150,9 +156,6 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}
 
-def cleanup_string(string: str):
-    return string.lower().replace(' ', '_').replace('.', '_')
-
 class GeoNodesToPython(bpy.types.Operator):
     bl_idname = "node.geo_nodes_to_python"
     bl_label = "Geo Node to Python"
@@ -164,7 +167,7 @@ class GeoNodesToPython(bpy.types.Operator):
         if self.node_group_name not in bpy.data.node_groups:
             return {'FINISHED'}
         ng = bpy.data.node_groups[self.node_group_name]
-        ng_name = cleanup_string(ng.name)
+        ng_name = utils.clean_string(ng.name)
         class_name = ng.name.replace(" ", "").replace('.', "")
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
@@ -205,7 +208,7 @@ class GeoNodesToPython(bpy.types.Operator):
         file.write("\tdef execute(self, context):\n")
 
         def process_node_group(node_group, level):
-            ng_name = cleanup_string(node_group.name)
+            ng_name = utils.clean_string(node_group.name)
                 
             outer = "\t"*level       #outer indentation
             inner = "\t"*(level + 1) #inner indentation
@@ -271,7 +274,7 @@ class GeoNodesToPython(bpy.types.Operator):
                     file.write("\n")
 
                 #create node
-                node_name = cleanup_string(node.name)
+                node_name = utils.clean_string(node.name)
                 file.write(f"{inner}#node {node.name}\n")
                 file.write((f"{inner}{node_name} "
                             f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
@@ -386,7 +389,7 @@ class GeoNodesToPython(bpy.types.Operator):
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = cleanup_string(link.from_node.name)
+                input_node = utils.clean_string(link.from_node.name)
                 input_socket = link.from_socket
                 
                 """
@@ -400,7 +403,7 @@ class GeoNodesToPython(bpy.types.Operator):
                         input_idx = i
                         break
                 
-                output_node = cleanup_string(link.to_node.name)
+                output_node = utils.clean_string(link.to_node.name)
                 output_socket = link.to_socket
                 
                 for i, item in enumerate(link.to_node.inputs.items()):
