@@ -11,11 +11,7 @@ bl_info = {
 import bpy
 import os
 
-if "bpy" in locals():
-    import importlib
-    importlib.reload(utils)
-else:
-    from . import utils
+import utils
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
