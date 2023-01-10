@@ -11,7 +11,7 @@ bl_info = {
 import bpy
 import os
 
-import utils
+from . import utils
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
@@ -358,7 +358,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
                             handle = f"\'{point.handle_type}\'"
                             file.write(f"{point_j}.handle_type = {handle}\n")
-                    file.write(f"{inner}#update curve after changes")
+                    file.write(f"{inner}#update curve after changes\n")
                     file.write(f"{mapping}.update()\n")
                 
                 if node.bl_idname != 'NodeReroute':
