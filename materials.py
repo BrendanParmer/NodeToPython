@@ -413,7 +413,7 @@ class MaterialToPythonPanel(bpy.types.Panel):
         row = layout.row()
         
         # Disables menu when there are no materials
-        materials = [mat for mat in bpy.data.materials]
+        materials = bpy.data.materials
         materials_exist = len(materials) > 0
         row.enabled = materials_exist
         
@@ -421,7 +421,8 @@ class MaterialToPythonPanel(bpy.types.Panel):
         row.operator_context = 'INVOKE_DEFAULT'
         row.menu("NODE_MT_npt_mat_selection", text="Materials")
 
-classes = [MaterialToPythonPanel, MaterialToPython]
+"""
+classes = [MaterialToPythonPanel, MaterialToPython, SelectMaterialMenu]
     
 def register():
     for cls in classes:
@@ -433,3 +434,4 @@ def unregister():
     
 if __name__ == "__main__":
     register()
+"""

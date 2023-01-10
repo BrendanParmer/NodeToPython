@@ -32,13 +32,13 @@ dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketTexture',
                      'NodeSocketVirtual'}
 
-node_settings = {
+geo_node_settings = {
     #attribute
-    "GeometryNodeAttributeStatistic"    : ["data_type", "domain"],
-    "GeometryNodeCaptureAttribute"      : ["data_type", "domain"],
-    "GeometryNodeAttributeDomainSize"   : ["component"],
-    "GeometryNodeStoreNamedAttribute"   : ["data_type", "domain"],
-    "GeometryNodeAttributeTransfer"     : ["data_type", "mapping"],
+    "GeometryNodeAttributeStatistic" : ["data_type", "domain"],
+    "GeometryNodeCaptureAttribute" : ["data_type", "domain"],
+    "GeometryNodeAttributeDomainSize" : ["component"],
+    "GeometryNodeStoreNamedAttribute" : ["data_type", "domain"],
+    "GeometryNodeAttributeTransfer" : ["data_type", "mapping"],
 
     #color
     "ShaderNodeMixRGB"          : ["blend_type", "use_clamp"],
@@ -46,104 +46,101 @@ node_settings = {
     "FunctionNodeSeparateColor" : ["mode"],
 
     #curve
-    "GeometryNodeCurveToPoints"             : ["mode"],
-    "GeometryNodeFillCurve"                 : ["mode"], 
-    "GeometryNodeFilletCurve"               : ["mode"],
-    "GeometryNodeResampleCurve"             : ["mode"],
-    "GeometryNodeSampleCurve"               : ["data_type", "mode",
-                                               "use_all_curves"],
-    "GeometryNodeTrimCurve"                 : ["mode"],
-    "GeometryNodeSetCurveNormal"            : ["mode"],
-    "GeometryNodeCurveHandleTypeSelection"  : ["mode", "handle_type"],
-    "GeometryNodeSetCurveHandlePositions"   : ["mode"],
-    "GeometryNodeCurveSetHandles"           : ["mode", "handle_type"],
-    "GeometryNodeCurveSplineType"           : ["spline_type"],
+    "GeometryNodeCurveToPoints" : ["mode"],
+    "GeometryNodeFillCurve" : ["mode"], 
+    "GeometryNodeFilletCurve" : ["mode"],
+    "GeometryNodeResampleCurve" : ["mode"],
+    "GeometryNodeSampleCurve" : ["data_type", "mode", "use_all_curves"],
+    "GeometryNodeTrimCurve" : ["mode"],
+    "GeometryNodeSetCurveNormal" : ["mode"],
+    "GeometryNodeCurveHandleTypeSelection" : ["mode", "handle_type"],
+    "GeometryNodeSetCurveHandlePositions" : ["mode"],
+    "GeometryNodeCurveSetHandles" : ["mode", "handle_type"],
+    "GeometryNodeCurveSplineType" : ["spline_type"],
 
     #curve primitives
-    "GeometryNodeCurveArc"                      : ["mode"],
-    "GeometryNodeCurvePrimitiveBezierSegment"   : ["mode"],
-    "GeometryNodeCurvePrimitiveCircle"          : ["mode"],
-    "GeometryNodeCurvePrimitiveLine"            : ["mode"],
-    "GeometryNodeCurvePrimitiveQuadrilateral"   : ["mode"],
+    "GeometryNodeCurveArc" : ["mode"],
+    "GeometryNodeCurvePrimitiveBezierSegment" : ["mode"],
+    "GeometryNodeCurvePrimitiveCircle" : ["mode"],
+    "GeometryNodeCurvePrimitiveLine" : ["mode"],
+    "GeometryNodeCurvePrimitiveQuadrilateral" : ["mode"],
 
     #geometry
-    "GeometryNodeDeleteGeometry"    : ["domain", "mode"],
+    "GeometryNodeDeleteGeometry" : ["domain", "mode"],
     "GeometryNodeDuplicateElements" : ["domain"],
-    "GeometryNodeProximity"         : ["target_element"],
-    "GeometryNodeMergeByDistance"   : ["mode"],
-    "GeometryNodeRaycast"           : ["data_type", "mapping"],
-    "GeometryNodeSampleIndex"       : ["data_type", "domain", "clamp"],
-    "GeometryNodeSampleNearest"     : ["domain"],
-    "GeometryNodeSeparateGeometry"  : ["domain"],
+    "GeometryNodeProximity" : ["target_element"],
+    "GeometryNodeMergeByDistance" : ["mode"],
+    "GeometryNodeRaycast" : ["data_type", "mapping"],
+    "GeometryNodeSampleIndex" : ["data_type", "domain", "clamp"],
+    "GeometryNodeSampleNearest" : ["domain"],
+    "GeometryNodeSeparateGeometry" : ["domain"],
 
     #input
-    "GeometryNodeCollectionInfo"        : ["transform_space"],
-    "GeometryNodeObjectInfo"            : ["transform_space"],
-    "GeometryNodeInputNamedAttribute"   : ["data_type"],
+    "GeometryNodeCollectionInfo" : ["transform_space"],
+    "GeometryNodeObjectInfo" : ["transform_space"],
+    "GeometryNodeInputNamedAttribute" : ["data_type"],
 
     #mesh
-    "GeometryNodeExtrudeMesh"           : ["mode"],
-    "GeometryNodeMeshBoolean"           : ["operation"],
-    "GeometryNodeMeshToPoints"          : ["mode"],
-    "GeometryNodeMeshToVolume"          : ["resolution_mode"],
-    "GeometryNodeSampleNearestSurface"  : ["data_type"],
-    "GeometryNodeSampleUVSurface"       : ["data_type"],
-    "GeometryNodeSubdivisionSurface"    : ["uv_smooth", "boundary_smooth"],
-    "GeometryNodeTriangulate"           : ["quad_method", "ngon_method"],
-    "GeometryNodeScaleElements"         : ["domain", "scale_mode"],
+    "GeometryNodeExtrudeMesh" : ["mode"],
+    "GeometryNodeMeshBoolean" : ["operation"],
+    "GeometryNodeMeshToPoints" : ["mode"],
+    "GeometryNodeMeshToVolume" : ["resolution_mode"],
+    "GeometryNodeSampleNearestSurface" : ["data_type"],
+    "GeometryNodeSampleUVSurface" : ["data_type"],
+    "GeometryNodeSubdivisionSurface" : ["uv_smooth", "boundary_smooth"],
+    "GeometryNodeTriangulate" : ["quad_method", "ngon_method"],
+    "GeometryNodeScaleElements" : ["domain", "scale_mode"],
 
     #mesh primitives
-    "GeometryNodeMeshCone"      : ["fill_type"],
-    "GeometryNodeMeshCylinder"  : ["fill_type"],
-    "GeometryNodeMeshCircle"    : ["fill_type"],
-    "GeometryNodeMeshLine"      : ["mode"],
+    "GeometryNodeMeshCone" : ["fill_type"],
+    "GeometryNodeMeshCylinder" : ["fill_type"],
+    "GeometryNodeMeshCircle" : ["fill_type"],
+    "GeometryNodeMeshLine" : ["mode"],
 
     #output
-    "GeometryNodeViewer"    : ["domain"],
+    "GeometryNodeViewer" : ["domain"],
     
     #point
-    "GeometryNodeDistributePointsInVolume"  : ["mode"],
-    "GeometryNodeDistributePointsOnFaces"   : ["distribute_method"],
-    "GeometryNodePointsToVolume"            : ["resolution_mode"],
+    "GeometryNodeDistributePointsInVolume" : ["mode"],
+    "GeometryNodeDistributePointsOnFaces" : ["distribute_method"],
+    "GeometryNodePointsToVolume" : ["resolution_mode"],
 
     #text
     "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
                                     "pivot_mode"],
     
     #texture
-    "ShaderNodeTexBrick"        : ["offset", "offset_frequency", "squash", 
-                                   "squash_frequency"],
-    "ShaderNodeTexGradient"     : ["gradient_type"],
-    "GeometryNodeImageTexture"  : ["interpolation", "extension"],
-    "ShaderNodeTexMagic"        : ["turbulence_depth"],
-    "ShaderNodeTexNoise"        : ["noise_dimensions"],
-    "ShaderNodeTexVoronoi"      : ["voronoi_dimensions", "feature", "distance"],
-    "ShaderNodeTexWave"         : ["wave_type", "bands_direction", 
-                                   "wave_profile"],
-    "ShaderNodeTexWhiteNoise"   : ["noise_dimensions"],
+    "ShaderNodeTexBrick" : ["offset", "offset_frequency", "squash", 
+                            "squash_frequency"],
+    "ShaderNodeTexGradient" : ["gradient_type"],
+    "GeometryNodeImageTexture" : ["interpolation", "extension"],
+    "ShaderNodeTexMagic" : ["turbulence_depth"],
+    "ShaderNodeTexNoise" : ["noise_dimensions"],
+    "ShaderNodeTexVoronoi" : ["voronoi_dimensions", "feature", "distance"],
+    "ShaderNodeTexWave" : ["wave_type", "bands_direction", "wave_profile"],
+    "ShaderNodeTexWhiteNoise" : ["noise_dimensions"],
 
     #utilities
-    "GeometryNodeAccumulateField"       : ["data_type", "domain"],
-    "FunctionNodeAlignEulerToVector"    : ["axis", "pivot_axis"],
-    "FunctionNodeBooleanMath"           : ["operation"],
-    "ShaderNodeClamp"                   : ["clamp_type"],
-    "FunctionNodeCompare"               : ["data_type", "operation", "mode"],
-    "GeometryNodeFieldAtIndex"          : ["data_type", "domain"],
-    "FunctionNodeFloatToInt"            : ["rounding_mode"],
-    "GeometryNodeFieldOnDomain"         : ["data_type", "domain" ],
-    "ShaderNodeMapRange"                : ["data_type", "interpolation_type", 
-                                           "clamp"], 
-    "ShaderNodeMath"                    : ["operation", "use_clamp"],
-    "FunctionNodeRandomValue"           : ["data_type"],
-    "FunctionNodeRotateEuler"           : ["type", "space"],
-    "GeometryNodeSwitch"                : ["input_type"],
+    "GeometryNodeAccumulateField" : ["data_type", "domain"],
+    "FunctionNodeAlignEulerToVector" : ["axis", "pivot_axis"],
+    "FunctionNodeBooleanMath" : ["operation"],
+    "ShaderNodeClamp" : ["clamp_type"],
+    "FunctionNodeCompare" : ["data_type", "operation", "mode"],
+    "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
+    "FunctionNodeFloatToInt" : ["rounding_mode"],
+    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
+    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
+    "ShaderNodeMath" : ["operation", "use_clamp"],
+    "FunctionNodeRandomValue" : ["data_type"],
+    "FunctionNodeRotateEuler" : ["type", "space"],
+    "GeometryNodeSwitch" : ["input_type"],
 
     #uv
     "GeometryNodeUVUnwrap" : ["method"],
 
     #vector
-    "ShaderNodeVectorMath"      : ["operation"],
-    "ShaderNodeVectorRotate"    : ["rotation_type", "invert"],
+    "ShaderNodeVectorMath" : ["operation"],
+    "ShaderNodeVectorRotate" : ["rotation_type", "invert"],
 
     #volume
     "GeometryNodeVolumeToMesh" : ["resolution_mode"]
@@ -156,9 +153,9 @@ curve_nodes = {'ShaderNodeFloatCurve',
 def cleanup_string(string: str):
     return string.lower().replace(' ', '_').replace('.', '_')
 
-class NodeToPython(bpy.types.Operator):
-    bl_idname = "node.node_to_python"
-    bl_label = "Node to Python"
+class GeoNodesToPython(bpy.types.Operator):
+    bl_idname = "node.geo_nodes_to_python"
+    bl_label = "Geo Node to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
     node_group_name: bpy.props.StringProperty(name="Node Group")
@@ -286,8 +283,8 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
 
                 #special nodes
-                if node.bl_idname in node_settings:
-                    for setting in node_settings[node.bl_idname]:
+                if node.bl_idname in geo_node_settings:
+                    for setting in geo_node_settings[node.bl_idname]:
                         attr = getattr(node, setting, None)
                         if attr:
                             if type(attr) == str:
@@ -458,26 +455,27 @@ class NodeToPython(bpy.types.Operator):
         file.close()
         return {'FINISHED'}
 
-class NodeToPythonMenu(bpy.types.Menu):
-    bl_idname = "NODE_MT_node_to_python"
-    bl_label = "Node To Python"
+class SelectGeoNodesMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_ntp_geo_nodes_selection"
+    bl_label = "Select Geo Nodes"
     
     @classmethod
     def poll(cls, context):
         return True
 
     def draw(self, context):
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
-
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
+
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+
         for geo_ng in geo_node_groups:
-            op = layout.operator(NodeToPython.bl_idname, text=geo_ng.name)
+            op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)
             op.node_group_name = geo_ng.name
             
-class NodeToPythonPanel(bpy.types.Panel):
+class GeoNodesToPythonPanel(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"
-    bl_idname = "NODE_PT_node_to_python"
+    bl_idname = "NODE_PT_geo_nodes_to_python"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
@@ -496,15 +494,17 @@ class NodeToPythonPanel(bpy.types.Panel):
         row = col.row()
         
         # Disables menu when len of geometry nodes is 0
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        geo_node_groups = [node 
+                            for node in bpy.data.node_groups 
+                            if node.type == 'GEOMETRY']
         geo_node_groups_exist = len(geo_node_groups) > 0
         row.enabled = geo_node_groups_exist
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_node_to_python", text="Geometry Node Groups")
-
-classes = [NodeToPythonMenu, NodeToPythonPanel, NodeToPython]
+        row.menu("NODE_MT_ntp_geo_nodes_selection", text="Geometry Nodes")
+"""
+classes = [SelectGeoNodesMenu, GeoNodesToPythonPanel, GeoNodesToPython]
     
 def register():
     for cls in classes:
@@ -516,3 +516,4 @@ def unregister():
     
 if __name__ == "__main__":
     register()
+"""
