@@ -222,7 +222,8 @@ class GeoNodesToPython(bpy.types.Operator):
             file.write(f"{inner}#initialize {ng_name} nodes\n")
             for node in node_group.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
-                    process_node_group(node.node_tree, level + 1)
+                    if node.node_tree is not None:
+                        process_node_group(node.node_tree, level + 1)
                 elif node.bl_idname == 'NodeGroupInput':
                     file.write(f"{inner}#{ng_name} inputs\n")
                     for i, input in enumerate(node.outputs):
@@ -291,9 +292,10 @@ class GeoNodesToPython(bpy.types.Operator):
                             file.write((f"{inner}{node_name}.{setting} "
                                         f"= {attr}\n"))
                 elif node.bl_idname == 'GeometryNodeGroup':
-                    file.write((f"{inner}{node_name}.node_tree = "
-                                f"bpy.data.node_groups"
-                                f"[\"{node.node_tree.name}\"]\n"))
+                    if node.node_tree is not None:
+                        file.write((f"{inner}{node_name}.node_tree = "
+                                    f"bpy.data.node_groups"
+                                    f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp = node.color_ramp
                     file.write("\n")
