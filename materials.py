@@ -2,7 +2,7 @@ import bpy
 import mathutils
 import os
 
-import .utils
+import utils
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
