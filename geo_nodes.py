@@ -11,6 +11,8 @@ bl_info = {
 import bpy
 import os
 
+from . import utils
+
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
                    'NodeSocketColor',
@@ -32,13 +34,13 @@ dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketTexture',
                      'NodeSocketVirtual'}
 
-node_settings = {
+geo_node_settings = {
     #attribute
-    "GeometryNodeAttributeStatistic"    : ["data_type", "domain"],
-    "GeometryNodeCaptureAttribute"      : ["data_type", "domain"],
-    "GeometryNodeAttributeDomainSize"   : ["component"],
-    "GeometryNodeStoreNamedAttribute"   : ["data_type", "domain"],
-    "GeometryNodeAttributeTransfer"     : ["data_type", "mapping"],
+    "GeometryNodeAttributeStatistic" : ["data_type", "domain"],
+    "GeometryNodeCaptureAttribute" : ["data_type", "domain"],
+    "GeometryNodeAttributeDomainSize" : ["component"],
+    "GeometryNodeStoreNamedAttribute" : ["data_type", "domain"],
+    "GeometryNodeAttributeTransfer" : ["data_type", "mapping"],
 
     #color
     "ShaderNodeMixRGB"          : ["blend_type", "use_clamp"],
@@ -46,104 +48,101 @@ node_settings = {
     "FunctionNodeSeparateColor" : ["mode"],
 
     #curve
-    "GeometryNodeCurveToPoints"             : ["mode"],
-    "GeometryNodeFillCurve"                 : ["mode"], 
-    "GeometryNodeFilletCurve"               : ["mode"],
-    "GeometryNodeResampleCurve"             : ["mode"],
-    "GeometryNodeSampleCurve"               : ["data_type", "mode",
-                                               "use_all_curves"],
-    "GeometryNodeTrimCurve"                 : ["mode"],
-    "GeometryNodeSetCurveNormal"            : ["mode"],
-    "GeometryNodeCurveHandleTypeSelection"  : ["mode", "handle_type"],
-    "GeometryNodeSetCurveHandlePositions"   : ["mode"],
-    "GeometryNodeCurveSetHandles"           : ["mode", "handle_type"],
-    "GeometryNodeCurveSplineType"           : ["spline_type"],
+    "GeometryNodeCurveToPoints" : ["mode"],
+    "GeometryNodeFillCurve" : ["mode"], 
+    "GeometryNodeFilletCurve" : ["mode"],
+    "GeometryNodeResampleCurve" : ["mode"],
+    "GeometryNodeSampleCurve" : ["data_type", "mode", "use_all_curves"],
+    "GeometryNodeTrimCurve" : ["mode"],
+    "GeometryNodeSetCurveNormal" : ["mode"],
+    "GeometryNodeCurveHandleTypeSelection" : ["mode", "handle_type"],
+    "GeometryNodeSetCurveHandlePositions" : ["mode"],
+    "GeometryNodeCurveSetHandles" : ["mode", "handle_type"],
+    "GeometryNodeCurveSplineType" : ["spline_type"],
 
     #curve primitives
-    "GeometryNodeCurveArc"                      : ["mode"],
-    "GeometryNodeCurvePrimitiveBezierSegment"   : ["mode"],
-    "GeometryNodeCurvePrimitiveCircle"          : ["mode"],
-    "GeometryNodeCurvePrimitiveLine"            : ["mode"],
-    "GeometryNodeCurvePrimitiveQuadrilateral"   : ["mode"],
+    "GeometryNodeCurveArc" : ["mode"],
+    "GeometryNodeCurvePrimitiveBezierSegment" : ["mode"],
+    "GeometryNodeCurvePrimitiveCircle" : ["mode"],
+    "GeometryNodeCurvePrimitiveLine" : ["mode"],
+    "GeometryNodeCurvePrimitiveQuadrilateral" : ["mode"],
 
     #geometry
-    "GeometryNodeDeleteGeometry"    : ["domain", "mode"],
+    "GeometryNodeDeleteGeometry" : ["domain", "mode"],
     "GeometryNodeDuplicateElements" : ["domain"],
-    "GeometryNodeProximity"         : ["target_element"],
-    "GeometryNodeMergeByDistance"   : ["mode"],
-    "GeometryNodeRaycast"           : ["data_type", "mapping"],
-    "GeometryNodeSampleIndex"       : ["data_type", "domain", "clamp"],
-    "GeometryNodeSampleNearest"     : ["domain"],
-    "GeometryNodeSeparateGeometry"  : ["domain"],
+    "GeometryNodeProximity" : ["target_element"],
+    "GeometryNodeMergeByDistance" : ["mode"],
+    "GeometryNodeRaycast" : ["data_type", "mapping"],
+    "GeometryNodeSampleIndex" : ["data_type", "domain", "clamp"],
+    "GeometryNodeSampleNearest" : ["domain"],
+    "GeometryNodeSeparateGeometry" : ["domain"],
 
     #input
-    "GeometryNodeCollectionInfo"        : ["transform_space"],
-    "GeometryNodeObjectInfo"            : ["transform_space"],
-    "GeometryNodeInputNamedAttribute"   : ["data_type"],
+    "GeometryNodeCollectionInfo" : ["transform_space"],
+    "GeometryNodeObjectInfo" : ["transform_space"],
+    "GeometryNodeInputNamedAttribute" : ["data_type"],
 
     #mesh
-    "GeometryNodeExtrudeMesh"           : ["mode"],
-    "GeometryNodeMeshBoolean"           : ["operation"],
-    "GeometryNodeMeshToPoints"          : ["mode"],
-    "GeometryNodeMeshToVolume"          : ["resolution_mode"],
-    "GeometryNodeSampleNearestSurface"  : ["data_type"],
-    "GeometryNodeSampleUVSurface"       : ["data_type"],
-    "GeometryNodeSubdivisionSurface"    : ["uv_smooth", "boundary_smooth"],
-    "GeometryNodeTriangulate"           : ["quad_method", "ngon_method"],
-    "GeometryNodeScaleElements"         : ["domain", "scale_mode"],
+    "GeometryNodeExtrudeMesh" : ["mode"],
+    "GeometryNodeMeshBoolean" : ["operation"],
+    "GeometryNodeMeshToPoints" : ["mode"],
+    "GeometryNodeMeshToVolume" : ["resolution_mode"],
+    "GeometryNodeSampleNearestSurface" : ["data_type"],
+    "GeometryNodeSampleUVSurface" : ["data_type"],
+    "GeometryNodeSubdivisionSurface" : ["uv_smooth", "boundary_smooth"],
+    "GeometryNodeTriangulate" : ["quad_method", "ngon_method"],
+    "GeometryNodeScaleElements" : ["domain", "scale_mode"],
 
     #mesh primitives
-    "GeometryNodeMeshCone"      : ["fill_type"],
-    "GeometryNodeMeshCylinder"  : ["fill_type"],
-    "GeometryNodeMeshCircle"    : ["fill_type"],
-    "GeometryNodeMeshLine"      : ["mode"],
+    "GeometryNodeMeshCone" : ["fill_type"],
+    "GeometryNodeMeshCylinder" : ["fill_type"],
+    "GeometryNodeMeshCircle" : ["fill_type"],
+    "GeometryNodeMeshLine" : ["mode"],
 
     #output
-    "GeometryNodeViewer"    : ["domain"],
+    "GeometryNodeViewer" : ["domain"],
     
     #point
-    "GeometryNodeDistributePointsInVolume"  : ["mode"],
-    "GeometryNodeDistributePointsOnFaces"   : ["distribute_method"],
-    "GeometryNodePointsToVolume"            : ["resolution_mode"],
+    "GeometryNodeDistributePointsInVolume" : ["mode"],
+    "GeometryNodeDistributePointsOnFaces" : ["distribute_method"],
+    "GeometryNodePointsToVolume" : ["resolution_mode"],
 
     #text
     "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
                                     "pivot_mode"],
     
     #texture
-    "ShaderNodeTexBrick"        : ["offset", "offset_frequency", "squash", 
-                                   "squash_frequency"],
-    "ShaderNodeTexGradient"     : ["gradient_type"],
-    "GeometryNodeImageTexture"  : ["interpolation", "extension"],
-    "ShaderNodeTexMagic"        : ["turbulence_depth"],
-    "ShaderNodeTexNoise"        : ["noise_dimensions"],
-    "ShaderNodeTexVoronoi"      : ["voronoi_dimensions", "feature", "distance"],
-    "ShaderNodeTexWave"         : ["wave_type", "bands_direction", 
-                                   "wave_profile"],
-    "ShaderNodeTexWhiteNoise"   : ["noise_dimensions"],
+    "ShaderNodeTexBrick" : ["offset", "offset_frequency", "squash", 
+                            "squash_frequency"],
+    "ShaderNodeTexGradient" : ["gradient_type"],
+    "GeometryNodeImageTexture" : ["interpolation", "extension"],
+    "ShaderNodeTexMagic" : ["turbulence_depth"],
+    "ShaderNodeTexNoise" : ["noise_dimensions"],
+    "ShaderNodeTexVoronoi" : ["voronoi_dimensions", "feature", "distance"],
+    "ShaderNodeTexWave" : ["wave_type", "bands_direction", "wave_profile"],
+    "ShaderNodeTexWhiteNoise" : ["noise_dimensions"],
 
     #utilities
-    "GeometryNodeAccumulateField"       : ["data_type", "domain"],
-    "FunctionNodeAlignEulerToVector"    : ["axis", "pivot_axis"],
-    "FunctionNodeBooleanMath"           : ["operation"],
-    "ShaderNodeClamp"                   : ["clamp_type"],
-    "FunctionNodeCompare"               : ["data_type", "operation", "mode"],
-    "GeometryNodeFieldAtIndex"          : ["data_type", "domain"],
-    "FunctionNodeFloatToInt"            : ["rounding_mode"],
-    "GeometryNodeFieldOnDomain"         : ["data_type", "domain" ],
-    "ShaderNodeMapRange"                : ["data_type", "interpolation_type", 
-                                           "clamp"], 
-    "ShaderNodeMath"                    : ["operation", "use_clamp"],
-    "FunctionNodeRandomValue"           : ["data_type"],
-    "FunctionNodeRotateEuler"           : ["type", "space"],
-    "GeometryNodeSwitch"                : ["input_type"],
+    "GeometryNodeAccumulateField" : ["data_type", "domain"],
+    "FunctionNodeAlignEulerToVector" : ["axis", "pivot_axis"],
+    "FunctionNodeBooleanMath" : ["operation"],
+    "ShaderNodeClamp" : ["clamp_type"],
+    "FunctionNodeCompare" : ["data_type", "operation", "mode"],
+    "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
+    "FunctionNodeFloatToInt" : ["rounding_mode"],
+    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
+    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
+    "ShaderNodeMath" : ["operation", "use_clamp"],
+    "FunctionNodeRandomValue" : ["data_type"],
+    "FunctionNodeRotateEuler" : ["type", "space"],
+    "GeometryNodeSwitch" : ["input_type"],
 
     #uv
     "GeometryNodeUVUnwrap" : ["method"],
 
     #vector
-    "ShaderNodeVectorMath"      : ["operation"],
-    "ShaderNodeVectorRotate"    : ["rotation_type", "invert"],
+    "ShaderNodeVectorMath" : ["operation"],
+    "ShaderNodeVectorRotate" : ["rotation_type", "invert"],
 
     #volume
     "GeometryNodeVolumeToMesh" : ["resolution_mode"]
@@ -153,9 +152,9 @@ curve_nodes = {'ShaderNodeFloatCurve',
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}
 
-class NodeToPython(bpy.types.Operator):
-    bl_idname = "node.node_to_python"
-    bl_label = "Node to Python"
+class GeoNodesToPython(bpy.types.Operator):
+    bl_idname = "node.geo_nodes_to_python"
+    bl_label = "Geo Node to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
     node_group_name: bpy.props.StringProperty(name="Node Group")
@@ -164,8 +163,8 @@ class NodeToPython(bpy.types.Operator):
         if self.node_group_name not in bpy.data.node_groups:
             return {'FINISHED'}
         ng = bpy.data.node_groups[self.node_group_name]
-        ng_name = ng.name.lower().replace(' ', '_')
-        class_name = ng.name.replace(" ", "")
+        ng_name = utils.clean_string(ng.name)
+        class_name = ng.name.replace(" ", "").replace('.', "")
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
             self.report({'ERROR'}, 
@@ -205,7 +204,7 @@ class NodeToPython(bpy.types.Operator):
         file.write("\tdef execute(self, context):\n")
 
         def process_node_group(node_group, level):
-            ng_name = node_group.name.lower().replace(' ', '_')
+            ng_name = utils.clean_string(node_group.name)
                 
             outer = "\t"*level       #outer indentation
             inner = "\t"*(level + 1) #inner indentation
@@ -223,7 +222,8 @@ class NodeToPython(bpy.types.Operator):
             file.write(f"{inner}#initialize {ng_name} nodes\n")
             for node in node_group.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
-                    process_node_group(node.node_tree, level + 1)
+                    if node.node_tree is not None:
+                        process_node_group(node.node_tree, level + 1)
                 elif node.bl_idname == 'NodeGroupInput':
                     file.write(f"{inner}#{ng_name} inputs\n")
                     for i, input in enumerate(node.outputs):
@@ -271,8 +271,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write("\n")
 
                 #create node
-                node_name = node.name.lower()
-                node_name = node_name.replace(' ', '_').replace('.', '_')
+                node_name = utils.clean_string(node.name)
                 file.write(f"{inner}#node {node.name}\n")
                 file.write((f"{inner}{node_name} "
                             f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
@@ -284,8 +283,8 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
 
                 #special nodes
-                if node.bl_idname in node_settings:
-                    for setting in node_settings[node.bl_idname]:
+                if node.bl_idname in geo_node_settings:
+                    for setting in geo_node_settings[node.bl_idname]:
                         attr = getattr(node, setting, None)
                         if attr:
                             if type(attr) == str:
@@ -293,9 +292,10 @@ class NodeToPython(bpy.types.Operator):
                             file.write((f"{inner}{node_name}.{setting} "
                                         f"= {attr}\n"))
                 elif node.bl_idname == 'GeometryNodeGroup':
-                    file.write((f"{inner}{node_name}.node_tree = "
-                                f"bpy.data.node_groups"
-                                f"[\"{node.node_tree.name}\"]\n"))
+                    if node.node_tree is not None:
+                        file.write((f"{inner}{node_name}.node_tree = "
+                                    f"bpy.data.node_groups"
+                                    f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp = node.color_ramp
                     file.write("\n")
@@ -318,7 +318,7 @@ class NodeToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_name}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
                 elif node.bl_idname in curve_nodes:
-                    file.write(f"{inner}#mapping settings")
+                    file.write(f"{inner}#mapping settings\n")
                     mapping = f"{inner}{node_name}.mapping"
 
                     extend = f"\'{node.mapping.extend}\'"
@@ -346,7 +346,7 @@ class NodeToPython(bpy.types.Operator):
                     file.write(f"{mapping}.use_clip = {use_clip}\n")
 
                     for i, curve in enumerate(node.mapping.curves):
-                        file.write(f"{inner}#curve {i}")
+                        file.write(f"{inner}#curve {i}\n")
                         curve_i = f"{node_name}_curve_{i}"
                         file.write((f"{inner}{curve_i} = "
                                     f"{node_name}.mapping.curves[{i}]\n"))
@@ -360,7 +360,7 @@ class NodeToPython(bpy.types.Operator):
 
                             handle = f"\'{point.handle_type}\'"
                             file.write(f"{point_j}.handle_type = {handle}\n")
-                    file.write(f"{inner}#update curve after changes")
+                    file.write(f"{inner}#update curve after changes\n")
                     file.write(f"{mapping}.update()\n")
                 
                 if node.bl_idname != 'NodeReroute':
@@ -387,8 +387,7 @@ class NodeToPython(bpy.types.Operator):
             if node_group.links:
                 file.write(f"{inner}#initialize {ng_name} links\n")     
             for link in node_group.links:
-                input_node = link.from_node.name.lower()
-                input_node = input_node.replace(' ', '_').replace('.', '_')
+                input_node = utils.clean_string(link.from_node.name)
                 input_socket = link.from_socket
                 
                 """
@@ -402,8 +401,7 @@ class NodeToPython(bpy.types.Operator):
                         input_idx = i
                         break
                 
-                output_node = link.to_node.name.lower()
-                output_node = output_node.replace(' ', '_').replace('.', '_')
+                output_node = utils.clean_string(link.to_node.name)
                 output_socket = link.to_socket
                 
                 for i, item in enumerate(link.to_node.inputs.items()):
@@ -458,26 +456,27 @@ class NodeToPython(bpy.types.Operator):
         file.close()
         return {'FINISHED'}
 
-class NodeToPythonMenu(bpy.types.Menu):
-    bl_idname = "NODE_MT_node_to_python"
-    bl_label = "Node To Python"
+class SelectGeoNodesMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_ntp_geo_nodes_selection"
+    bl_label = "Select Geo Nodes"
     
     @classmethod
     def poll(cls, context):
         return True
 
     def draw(self, context):
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
-
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
+
+        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+
         for geo_ng in geo_node_groups:
-            op = layout.operator(NodeToPython.bl_idname, text=geo_ng.name)
+            op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)
             op.node_group_name = geo_ng.name
             
-class NodeToPythonPanel(bpy.types.Panel):
-    bl_label = "Node To Python"
-    bl_idname = "NODE_PT_node_to_python"
+class GeoNodesToPythonPanel(bpy.types.Panel):
+    bl_label = "Geometry Nodes to Python"
+    bl_idname = "NODE_PT_geo_nodes_to_python"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
@@ -496,23 +495,12 @@ class NodeToPythonPanel(bpy.types.Panel):
         row = col.row()
         
         # Disables menu when len of geometry nodes is 0
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        geo_node_groups = [node 
+                            for node in bpy.data.node_groups 
+                            if node.type == 'GEOMETRY']
         geo_node_groups_exist = len(geo_node_groups) > 0
         row.enabled = geo_node_groups_exist
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_node_to_python", text="Geometry Node Groups")
-
-classes = [NodeToPythonMenu, NodeToPythonPanel, NodeToPython]
-    
-def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
-    
-def unregister():
-    for cls in classes:
-        bpy.utils.unregister_class(cls)
-    
-if __name__ == "__main__":
-    register()
+        row.menu("NODE_MT_ntp_geo_nodes_selection", text="Geometry Nodes")
