@@ -177,10 +177,10 @@ class MaterialToPython(bpy.types.Operator):
                             dv = None
                             if socket.bl_idname == 'NodeSocketColor':
                                 col = socket.default_value
-                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
+                                dv = utils.vec4_to_py_str(col)
                             elif "Vector" in socket.bl_idname:
-                                vector = socket.default_value
-                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
+                                vec = socket.default_value
+                                dv = utils.vec3_to_py_str(vec)
                             elif socket.bl_idname == 'NodeSocketString':
                                 dv = f"\"\""
                             else:

@@ -18,6 +18,54 @@ def clean_string(string: str) -> str:
     clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string.lower())
     return clean_str
 
+def enum_to_py_str(enum: str) -> str:
+    """
+    Converts an enum into a string usuable in the add-on
+
+    Parameters:
+    enum (str): enum to be converted
+
+    Returns:
+    (str): converted string
+    """
+    return f"\'{enum}\'"
+    
+def str_to_py_str(string: str) -> str:
+    """
+    Converts a regular string into one usuable in the add-on
+
+    Parameters:
+    string (str): string to be converted
+
+    Returns:
+    (str): converted string
+    """
+    return f"\"{string}\""
+
+def vec3_to_py_str(vec: mathutils.Vector) -> str:
+    """
+    Converts a 3D vector to a string usable by the add-on
+
+    Parameters:
+    vec (mathutils.Vector): a 3d vector
+
+    Returns:
+    (str): string version
+    """
+    return f"({vec[0]}, {vec[1]}, {vec[2]})"
+
+def vec4_to_py_str(vec: mathutils.Vector) -> str:
+    """
+    Converts a 4D vector to a string usable by the add-on
+
+    Parameters:
+    vec (mathutils.Vector): a 4d vector
+
+    Returns:
+    (str): string version
+    """
+    return f"({vec[0]}, {vec[1]}, {vec[2]}, {vec[3]})"
+
 def create_header(file: TextIO, node_tree: bpy.types.NodeTree):
     """
     Sets up the bl_info and imports the Blender API
@@ -166,7 +214,8 @@ def color_ramp_settings(node: bpy.types.Node, file: TextIO, inner: str,
         file.write((f"{inner}{node_var}_cre_{i}.color = "
                     f"({r}, {g}, {b}, {a})\n\n"))
 
-def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var: str):
+def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, 
+                        node_var: str):
     """
     Sets defaults for Float, Vector, and Color curves
 
@@ -229,3 +278,19 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping}.update()\n")
 
+def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict, 
+                        file: TextIO, inner: str, node_var: str):
+    for i, input in enumerate(node.inputs):
+        if input.bl_idname not in dont_set_defaults:
+            if input.bl_idname == 'NodeSocketColor':
+                dv = vec4_to_py_str(input.default_value)
+            elif "Vector" in input.bl_idname:
+                dv = vec3_to_py_str(input.default_value)
+            elif input.bl_idname == 'NodeSocketString':
+                dv = f"\"{input.default_value}\""
+            else:
+                dv = input.default_value
+            if dv is not None:
+                file.write(f"{inner}#{input.identifier}\n")
+                file.write((f"{inner}{node_var}.inputs[{i}].default_value = "
+                            f"{dv}\n"))
