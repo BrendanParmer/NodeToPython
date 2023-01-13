@@ -127,7 +127,7 @@ class MaterialToPython(bpy.types.Operator):
         
         node_trees = {}
 
-        def process_node_group(node_tree, level):
+        def process_mat_node_group(node_tree, level):
             ng_name = utils.clean_string(node_tree.name)
             ng_label = node_tree.name
 
@@ -158,7 +158,7 @@ class MaterialToPython(bpy.types.Operator):
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_node_group(node_nt, level + 1)
+                        process_mat_node_group(node_nt, level + 1)
                         node_trees.add(node_nt)
                 
                 node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
@@ -182,38 +182,14 @@ class MaterialToPython(bpy.types.Operator):
             
             file.write(f"\n{outer}{ng_name}_node_group()\n\n")
                 
-        process_node_group(ng, 2)
+        process_mat_node_group(ng, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
 
-        """Create the function that adds the addon to the menu"""
-        def create_menu_func():
-            file.write("def menu_func(self, context):\n")
-            file.write(f"\tself.layout.operator({class_name}.bl_idname)\n")
-            file.write("\n")
-        create_menu_func()
-
-        """Create the register function"""
-        def create_register():
-            file.write("def register():\n")
-            file.write(f"\tbpy.utils.register_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
-            file.write("\n")
-        create_register()
-
-        """Create the unregister function"""
-        def create_unregister():
-            file.write("def unregister():\n")
-            file.write(f"\tbpy.utils.unregister_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
-            file.write("\n")
-        create_unregister()
-
-        """Create the main function"""
-        def create_main():
-            file.write("if __name__ == \"__main__\":\n")
-            file.write("\tregister()")
-        create_main()
+        utils.create_menu_func(file, class_name)
+        utils.create_register_func(file, class_name)
+        utils.create_unregister_func(file, class_name)
+        utils.create_main_func(file, class_name)
 
         file.close()
         return {'FINISHED'}

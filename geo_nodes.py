@@ -340,34 +340,10 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         
-        """Create the function that adds the addon to the menu"""
-        def create_menu_func():
-            file.write("def menu_func(self, context):\n")
-            file.write(f"\tself.layout.operator({class_name}.bl_idname)\n")
-            file.write("\n")
-        create_menu_func()
-
-        """Create the register function"""
-        def create_register():
-            file.write("def register():\n")
-            file.write(f"\tbpy.utils.register_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
-            file.write("\n")
-        create_register()
-
-        """Create the unregister function"""
-        def create_unregister():
-            file.write("def unregister():\n")
-            file.write(f"\tbpy.utils.unregister_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
-            file.write("\n")
-        create_unregister()
-
-        """Create the main function"""
-        def create_main():
-            file.write("if __name__ == \"__main__\":\n")
-            file.write("\tregister()")
-        create_main()
+        utils.create_menu_func(file, class_name)
+        utils.create_register_func(file, class_name)
+        utils.create_unregister_func(file, class_name)
+        utils.create_main_func(file, class_name)
         
         file.close()
         return {'FINISHED'}

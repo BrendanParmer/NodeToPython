@@ -299,6 +299,16 @@ def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict,
 
 def init_links(node_tree: bpy.types.NodeTree, file: TextIO, inner: str, 
                 node_tree_var: str):
+    """
+    Create all the links between nodes
+
+    Parameters:
+    node_tree (bpy.types.NodeTree): node tree we're copying
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    node_tree_var (str): variable name we're using for the copied node tree
+    """
+
     if node_tree.links:
         file.write(f"{inner}#initialize {node_tree_var} links\n")     
     for link in node_tree.links:
@@ -330,3 +340,52 @@ def init_links(node_tree: bpy.types.NodeTree, file: TextIO, inner: str,
                     f".outputs[{input_idx}], "
                     f"{output_node}.inputs[{output_idx}])\n"))
 
+def create_menu_func(file: TextIO, name: str):
+    """
+    Creates the menu function
+
+    Parameters:
+    file (TextIO): file we're generating the add-on into
+    name (str): name of the generated operator class
+    """
+
+    file.write("def menu_func(self, context):\n")
+    file.write(f"\tself.layout.operator({name}.bl_idname)\n")
+    file.write("\n")
+
+def create_register_func(file: TextIO, name: str):
+    """
+    Creates the register function
+
+    Parameters:
+    file (TextIO): file we're generating the add-on into
+    name (str): name of the generated operator class
+    """
+    file.write("def register():\n")
+    file.write(f"\tbpy.utils.register_class({name})\n")
+    file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
+    file.write("\n")
+
+def create_unregister_func(file: TextIO, name: str):
+    """
+    Creates the unregister function
+
+    Parameters:
+    file (TextIO): file we're generating the add-on into
+    name (str): name of the generated operator class
+    """
+    file.write("def unregister():\n")
+    file.write(f"\tbpy.utils.unregister_class({name})\n")
+    file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
+    file.write("\n")
+
+def create_main_func(file: TextIO, name: str):
+    """
+    Creates the main function
+
+    Parameters:
+    file (TextIO): file we're generating the add-on into
+    name (str): name of the generated operator class
+    """
+    file.write("if __name__ == \"__main__\":\n")
+    file.write("\tregister()")
