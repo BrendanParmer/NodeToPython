@@ -306,7 +306,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
                 unnamed_idx = 0
                 #create node
-                node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name)
+                node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
                 
                 #special nodes
                 if node.bl_idname in geo_node_settings:

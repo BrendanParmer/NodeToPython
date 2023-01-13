@@ -1,4 +1,5 @@
 import bpy
+import re
 from typing import TextIO, Tuple
 
 def clean_string(string: str) -> str:
@@ -12,11 +13,8 @@ def clean_string(string: str) -> str:
     str: The input string with nasty characters converted to underscores
     """
 
-    bad_chars = [' ', '.', '/']
     clean_str = string.lower()
-    for char in bad_chars:
-        clean_str = clean_str.replace(char, '_')
-    return clean_str
+    return re.sub(r"[^a-zA-Z0-9_]", '_', clean_str)
 
 def create_header(file: TextIO, node_tree: bpy.types.NodeTree):
     """
@@ -86,7 +84,7 @@ def create_node(node: bpy.types.Node, file: TextIO, inner: str, node_tree_var: s
 
     Returns:
     node_var (str): variable name for the node
-    unnamed_idx (int): unnamed index. if a node doesn't have a name, this will be used 
+    unnamed_idx (int): unnamed index. if a node doesn't have a name, this will be used to give it a variable name
     """
 
     file.write(f"{inner}#node {node.name}\n")
