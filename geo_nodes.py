@@ -320,24 +320,8 @@ class GeoNodesToPython(bpy.types.Operator):
                 elif node.bl_idname in curve_nodes:
                     utils.curve_node_settings(node, file, inner, node_var)
                 
-                if node.bl_idname != 'NodeReroute':
-                    for i, input in enumerate(node.inputs):
-                        if input.bl_idname not in dont_set_defaults:
-                            if input.bl_idname == 'NodeSocketColor':
-                                col = input.default_value
-                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
-                            elif "Vector" in input.bl_idname:
-                                vector = input.default_value
-                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
-                            elif input.bl_idname == 'NodeSocketString':
-                                dv = f"\"\""
-                            else:
-                                dv = input.default_value
-                            if dv is not None:
-                                file.write(f"{inner}#{input.identifier}\n")
-                                file.write((f"{inner}{node_var}"
-                                            f".inputs[{i}]"
-                                            f".default_value = {dv}\n"))
+                utils.set_input_defaults(node, dont_set_defaults, file, inner, 
+                                         node_var)
                 file.write("\n")
             
             #initialize links

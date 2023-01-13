@@ -171,34 +171,8 @@ class MaterialToPython(bpy.types.Operator):
                 elif node.bl_idname in curve_nodes:
                     utils.curve_node_settings(node, file, inner, node_var)
 
-                if node.bl_idname != 'NodeReroute':
-                    def default_value(i, socket, list_name):
-                        if socket.bl_idname not in dont_set_defaults:
-                            dv = None
-                            if socket.bl_idname == 'NodeSocketColor':
-                                col = socket.default_value
-                                dv = utils.vec4_to_py_str(col)
-                            elif "Vector" in socket.bl_idname:
-                                vec = socket.default_value
-                                dv = utils.vec3_to_py_str(vec)
-                            elif socket.bl_idname == 'NodeSocketString':
-                                dv = f"\"\""
-                            else:
-                                dv = socket.default_value
-                            if dv is not None:
-                                file.write(f"{inner}#{socket.identifier}\n")
-                                file.write((f"{inner}{node_var}"
-                                            f".{list_name}[{i}]"
-                                            f".default_value = {dv}\n"))  
-                    for i, input in enumerate(node.inputs):
-                        default_value(i, input, "inputs")
-                    """
-                    TODO: some shader nodes require you set the default value in the output.
-                    this will need to be handled case by case it looks like though
-
-                    for i, output in enumerate(node.outputs):
-                        default_value(i, output, "outputs")
-                    """
+                utils.set_input_defaults(node, dont_set_defaults, file, inner, 
+                                         node_var)
 
             #initialize links
             if node_group.links:

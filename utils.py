@@ -280,17 +280,18 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str,
 
 def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict, 
                         file: TextIO, inner: str, node_var: str):
-    for i, input in enumerate(node.inputs):
-        if input.bl_idname not in dont_set_defaults:
-            if input.bl_idname == 'NodeSocketColor':
-                dv = vec4_to_py_str(input.default_value)
-            elif "Vector" in input.bl_idname:
-                dv = vec3_to_py_str(input.default_value)
-            elif input.bl_idname == 'NodeSocketString':
-                dv = f"\"{input.default_value}\""
-            else:
-                dv = input.default_value
-            if dv is not None:
-                file.write(f"{inner}#{input.identifier}\n")
-                file.write((f"{inner}{node_var}.inputs[{i}].default_value = "
-                            f"{dv}\n"))
+    if node.bl_idname != 'NodeReroute':
+        for i, input in enumerate(node.inputs):
+            if input.bl_idname not in dont_set_defaults:
+                if input.bl_idname == 'NodeSocketColor':
+                    default_val = vec4_to_py_str(input.default_value)
+                elif "Vector" in input.bl_idname:
+                    default_val = vec3_to_py_str(input.default_value)
+                elif input.bl_idname == 'NodeSocketString':
+                    default_val = str_to_py_str(input.default_value)
+                else:
+                    default_val = input.default_value
+                if default_val is not None:
+                    file.write(f"{inner}#{input.identifier}\n")
+                    file.write((f"{inner}{node_var}.inputs[{i}].default_value"
+                                f" = {default_val}\n"))
