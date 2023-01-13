@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 2, 2),
+    "version": (1, 2, 4),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
@@ -222,12 +222,14 @@ class NodeToPython(bpy.types.Operator):
                         f"name = \"{node_group.name}\")\n"))
             file.write("\n")
 
+            inputs_set = False
+            
             #initialize nodes
             file.write(f"{inner}#initialize {ng_name} nodes\n")
             for node in node_group.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     process_node_group(node.node_tree, level + 1)
-                elif node.bl_idname == 'NodeGroupInput':
+                elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
                     file.write(f"{inner}#{ng_name} inputs\n")
                     for i, input in enumerate(node.outputs):
                         if input.bl_idname != "NodeSocketVirtual":
@@ -264,6 +266,7 @@ class NodeToPython(bpy.types.Operator):
                                                 f"{socket.max_value}\n"))
                             file.write("\n")
                     file.write("\n")
+                    inputs_set = True
                 elif node.bl_idname == 'NodeGroupOutput':
                     file.write(f"{inner}#{ng_name} outputs\n")
                     for output in node.inputs:
