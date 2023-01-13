@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 2, 2),
+    "version": (1, 2, 4),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
@@ -222,12 +222,14 @@ class NodeToPython(bpy.types.Operator):
                         f"name = \"{node_group.name}\")\n"))
             file.write("\n")
 
+            inputs_set = False
+            
             #initialize nodes
             file.write(f"{inner}#initialize {ng_name} nodes\n")
             for node in node_group.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     process_node_group(node.node_tree, level + 1)
-                elif node.bl_idname == 'NodeGroupInput':
+                elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
                     file.write(f"{inner}#{ng_name} inputs\n")
                     for i, input in enumerate(node.outputs):
                         if input.bl_idname != "NodeSocketVirtual":
@@ -235,8 +237,8 @@ class NodeToPython(bpy.types.Operator):
                             file.write((f"{inner}{ng_name}.inputs.new"
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
-                            if input.bl_idname in default_sockets:
-                                socket = node_group.inputs[i]
+                            socket = node_group.inputs[i]
+                            if input.bl_idname in default_sockets:  
                                 if input.bl_idname == 'NodeSocketColor':
                                     col = socket.default_value
                                     r, g, b, a = col[0], col[1], col[2], col[3]
@@ -251,19 +253,42 @@ class NodeToPython(bpy.types.Operator):
                                 file.write((f"{inner}{ng_name}"
                                             f".inputs[{i}]"
                                             f".default_value = {dv}\n"))
-                                if input.bl_idname in value_sockets:
-                                    #min value
+
+                                #min value
+                                if hasattr(socket, "min_value"):
                                     file.write((f"{inner}{ng_name}"
                                                 f".inputs[{i}]"
                                                 f".min_value = "
                                                 f"{socket.min_value}\n"))
-                                    #max value
+                                #max value
+                                if hasattr(socket, "max_value"):
                                     file.write((f"{inner}{ng_name}"
                                                 f".inputs[{i}]"
                                                 f".max_value = "
                                                 f"{socket.max_value}\n"))
+                            #default attribute name
+                            if hasattr(socket, "default_attribute_name"):
+                                if socket.default_attribute_name != "":
+                                    file.write((f"{inner}{ng_name}"
+                                                f".inputs[{i}]"
+                                                f".default_attribute_name = \""
+                                                f"{socket.default_attribute_name}"
+                                                f"\"\n"))
+                            #description
+                            if socket.description != "":
+                                file.write((f"{inner}{ng_name}"
+                                            f".inputs[{i}]"
+                                            f".description = "
+                                            f"\"{socket.description}\"\n"))
+                            #hide value
+                            if socket.hide_value is True:
+                                file.write((f"{inner}{ng_name}"
+                                            f".inputs[{i}]"
+                                            f".hide_value = "
+                                            f"{socket.hide_value}\n"))
                             file.write("\n")
                     file.write("\n")
+                    inputs_set = True
                 elif node.bl_idname == 'NodeGroupOutput':
                     file.write(f"{inner}#{ng_name} outputs\n")
                     for output in node.inputs:
