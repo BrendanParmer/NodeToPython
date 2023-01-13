@@ -1,8 +1,7 @@
 import bpy
-import mathutils
 import os
 
-from . import utils
+from .utils import *
 
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
@@ -92,16 +91,16 @@ class MaterialToPython(bpy.types.Operator):
 
     def execute(self, context):
         #find node group to replicate
-        ng = bpy.data.materials[self.material_name].node_tree
-        if ng is None:
+        nt = bpy.data.materials[self.material_name].node_tree
+        if nt is None:
             self.report({'ERROR'},
                         ("NodeToPython: This doesn't seem to be a valid "
                             "material. Is Use Nodes selected?"))
             return {'CANCELLED'}
 
         #set up names to use in generated addon
-        ng_name = utils.clean_string(self.material_name)
-        class_name = ng.name.replace(" ", "")
+        mat_var = clean_string(self.material_name)
+        class_name = nt.name.replace(" ", "")
         
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
@@ -112,10 +111,10 @@ class MaterialToPython(bpy.types.Operator):
         addon_dir = os.path.join(dir, "addons")
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
+        file = open(f"{addon_dir}/{mat_var}_addon.py", "w")
 
-        utils.create_header(file, ng)  
-        utils.init_operator(file, class_name, ng_name, self.material_name)
+        create_header(file, nt)  
+        init_operator(file, class_name, mat_var, self.material_name)
 
         file.write("\tdef execute(self, context):\n")
 
@@ -125,33 +124,33 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"\t\tmat.use_nodes = True\n")
         create_material()
         
-        node_trees = {}
+        node_trees = set()
 
         def process_mat_node_group(node_tree, level):
-            ng_name = utils.clean_string(node_tree.name)
-            ng_label = node_tree.name
+            nt_var = clean_string(node_tree.name)
+            nt_name = node_tree.name
 
             if level == 2: #outermost node group
-                ng_name = utils.clean_string(self.material_name)
-                ng_label = self.material_name
+                nt_var = clean_string(self.material_name)
+                nt_name = self.material_name
 
-            outer, inner = utils.make_indents(level)
+            outer, inner = make_indents(level)
 
             #initialize node group
-            file.write(f"{outer}#initialize {ng_name} node group\n")
-            file.write(f"{outer}def {ng_name}_node_group():\n")
+            file.write(f"{outer}#initialize {nt_var} node group\n")
+            file.write(f"{outer}def {nt_var}_node_group():\n")
 
             if level == 2: #outermost node group
-                file.write(f"{inner}{ng_name} = mat.node_tree\n")
+                file.write(f"{inner}{nt_var} = mat.node_tree\n")
             else:
-                file.write((f"{inner}{ng_name}"
+                file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
                         f"type = \"ShaderNodeTree\", "
-                        f"name = \"{ng_label}\")\n"))
+                        f"name = \"{nt_name}\")\n"))
                 file.write("\n")
 
             #initialize nodes
-            file.write(f"{inner}#initialize {ng_name} nodes\n")
+            file.write(f"{inner}#initialize {nt_var} nodes\n")
 
             unnamed_idx = 0
             for node in node_tree.nodes:
@@ -161,9 +160,9 @@ class MaterialToPython(bpy.types.Operator):
                         process_mat_node_group(node_nt, level + 1)
                         node_trees.add(node_nt)
                 
-                node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
+                node_var, unnamed_idx = create_node(node, file, inner, nt_var, unnamed_idx)
                 
-                utils.set_settings_defaults(node, node_settings, file, inner, node_var)
+                set_settings_defaults(node, node_settings, file, inner, node_var)
 
                 if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:
@@ -171,25 +170,25 @@ class MaterialToPython(bpy.types.Operator):
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
-                    utils.color_ramp_settings(node, file, inner, node_var)
+                    color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
-                    utils.curve_node_settings(node, file, inner, node_var)
+                    curve_node_settings(node, file, inner, node_var)
 
-                utils.set_input_defaults(node, dont_set_defaults, file, inner, 
+                set_input_defaults(node, dont_set_defaults, file, inner, 
                                          node_var)
 
-            utils.init_links(node_tree, file, inner, ng_name)
+            init_links(node_tree, file, inner, nt_var)
             
-            file.write(f"\n{outer}{ng_name}_node_group()\n\n")
+            file.write(f"\n{outer}{nt_var}_node_group()\n\n")
                 
-        process_mat_node_group(ng, 2)
+        process_mat_node_group(nt, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
 
-        utils.create_menu_func(file, class_name)
-        utils.create_register_func(file, class_name)
-        utils.create_unregister_func(file, class_name)
-        utils.create_main_func(file, class_name)
+        create_menu_func(file, class_name)
+        create_register_func(file, class_name)
+        create_unregister_func(file, class_name)
+        create_main_func(file)
 
         file.close()
         return {'FINISHED'}

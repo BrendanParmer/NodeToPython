@@ -1,17 +1,7 @@
-bl_info = {
-    "name": "Node to Python", 
-    "description": "Convert Geometry Node Groups to a Python add-on",
-    "author": "Brendan Parmer",
-    "version": (2, 0, 0),
-    "blender": (3, 0, 0),
-    "location": "Node", 
-    "category": "Node",
-}
-
 import bpy
 import os
 
-from . import utils
+from .utils import *
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
@@ -156,11 +146,11 @@ class GeoNodesToPython(bpy.types.Operator):
     
     def execute(self, context):
         #find node group to replicate
-        ng = bpy.data.node_groups[self.geo_nodes_group_name]
+        nt = bpy.data.node_groups[self.geo_nodes_group_name]
 
         #set up names to use in generated addon
-        ng_name = utils.clean_string(ng.name)
-        class_name = ng.name.replace(" ", "").replace('.', "")
+        nt_var = clean_string(nt.name)
+        class_name = nt.name.replace(" ", "").replace('.', "")
 
         #find base directory to save new addon
         dir = bpy.path.abspath("//")
@@ -174,20 +164,20 @@ class GeoNodesToPython(bpy.types.Operator):
         addon_dir = os.path.join(dir, "addons")
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
+        file = open(f"{addon_dir}/{nt_var}_addon.py", "w")
         
-        utils.create_header(file, ng)
-        utils.init_operator(file, class_name, ng_name, ng.name)
+        create_header(file, nt)
+        init_operator(file, class_name, nt_var, nt.name)
 
         file.write("\tdef execute(self, context):\n")
 
         #set to keep track of already created node trees
-        node_trees = {}
+        node_trees = set()
 
         def process_geo_nodes_group(node_tree, level):
-            node_tree_var = utils.clean_string(node_tree.name)
+            node_tree_var = clean_string(node_tree.name)
                 
-            outer, inner = utils.make_indents(level)
+            outer, inner = make_indents(level)
 
             #initialize node group
             file.write(f"{outer}#initialize {node_tree_var} node group\n")
@@ -311,11 +301,11 @@ class GeoNodesToPython(bpy.types.Operator):
 
                 unnamed_idx = 0
                 #create node
-                node_var, unnamed_idx = utils.create_node(node, file, inner, 
+                node_var, unnamed_idx = create_node(node, file, inner, 
                                                             node_tree_var, 
                                                             unnamed_idx)
                 
-                utils.set_settings_defaults(node, geo_node_settings, file, 
+                set_settings_defaults(node, geo_node_settings, file, 
                                             inner, node_var)
                 
                 if node.bl_idname == 'GeometryNodeGroup':
@@ -324,27 +314,27 @@ class GeoNodesToPython(bpy.types.Operator):
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
-                    utils.color_ramp_settings(node, file, inner, node_var)
+                    color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
-                    utils.curve_node_settings(node, file, inner, node_var)
+                    curve_node_settings(node, file, inner, node_var)
                 
-                utils.set_input_defaults(node, dont_set_defaults, file, inner, 
+                set_input_defaults(node, dont_set_defaults, file, inner, 
                                          node_var)
             
-            utils.init_links(node_tree, file, inner, node_tree_var)
+            init_links(node_tree, file, inner, node_tree_var)
             
             #create node group
             file.write(f"\n{outer}{node_tree_var}_node_group()\n\n")
         
-        process_geo_nodes_group(ng, 2)
+        process_geo_nodes_group(nt, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         
-        utils.create_menu_func(file, class_name)
-        utils.create_register_func(file, class_name)
-        utils.create_unregister_func(file, class_name)
-        utils.create_main_func(file, class_name)
-        
+        create_menu_func(file, class_name)
+        create_register_func(file, class_name)
+        create_unregister_func(file, class_name)
+        create_main_func(file)
+
         file.close()
         return {'FINISHED'}
 
@@ -364,7 +354,7 @@ class SelectGeoNodesMenu(bpy.types.Menu):
 
         for geo_ng in geo_node_groups:
             op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)
-            op.node_group_name = geo_ng.name
+            op.geo_nodes_group_name = geo_ng.name
             
 class GeoNodesToPythonPanel(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"

@@ -42,7 +42,7 @@ def str_to_py_str(string: str) -> str:
     """
     return f"\"{string}\""
 
-def vec3_to_py_str(vec: mathutils.Vector) -> str:
+def vec3_to_py_str(vec) -> str:
     """
     Converts a 3D vector to a string usable by the add-on
 
@@ -54,7 +54,7 @@ def vec3_to_py_str(vec: mathutils.Vector) -> str:
     """
     return f"({vec[0]}, {vec[1]}, {vec[2]})"
 
-def vec4_to_py_str(vec: mathutils.Vector) -> str:
+def vec4_to_py_str(vec) -> str:
     """
     Converts a 4D vector to a string usable by the add-on
 
@@ -66,7 +66,7 @@ def vec4_to_py_str(vec: mathutils.Vector) -> str:
     """
     return f"({vec[0]}, {vec[1]}, {vec[2]}, {vec[3]})"
 
-def create_header(file: TextIO, node_tree: bpy.types.NodeTree):
+def create_header(file: TextIO, node_tree):
     """
     Sets up the bl_info and imports the Blender API
 
@@ -122,8 +122,8 @@ def make_indents(level: int) -> Tuple[str, str]:
     inner = "\t"*(level + 1)
     return outer, inner
 
-def create_node(node: bpy.types.Node, file: TextIO, inner: str, 
-                node_tree_var: str, unnamed_idx: int = 0) -> Tuple[str, int]:
+def create_node(node, file: TextIO, inner: str, node_tree_var: str, 
+                unnamed_idx: int = 0) -> Tuple[str, int]:
     """
     Initializes a new node with location, dimension, and label info
 
@@ -160,8 +160,8 @@ def create_node(node: bpy.types.Node, file: TextIO, inner: str,
 
     return node_var, unnamed_idx
 
-def set_settings_defaults(node: bpy.types.Node, settings: dict, file: TextIO, 
-                            inner: str, node_var: str):
+def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
+                            node_var: str):
     """
     Sets the defaults for any settings a node may have
 
@@ -183,7 +183,7 @@ def set_settings_defaults(node: bpy.types.Node, settings: dict, file: TextIO,
                 file.write((f"{inner}{node_var}.{setting} "
                             f"= {attr}\n"))
 
-def color_ramp_settings(node: bpy.types.Node, file: TextIO, inner: str, 
+def color_ramp_settings(node, file: TextIO, inner: str, 
                     node_var: str):
     """
     node (bpy.types.Node): node object we're copying settings from
@@ -214,8 +214,7 @@ def color_ramp_settings(node: bpy.types.Node, file: TextIO, inner: str,
         file.write((f"{inner}{node_var}_cre_{i}.color = "
                     f"({r}, {g}, {b}, {a})\n\n"))
 
-def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, 
-                        node_var: str):
+def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     """
     Sets defaults for Float, Vector, and Color curves
 
@@ -278,8 +277,8 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str,
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping}.update()\n")
 
-def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict, 
-                        file: TextIO, inner: str, node_var: str):
+def set_input_defaults(node, dont_set_defaults: dict, file: TextIO, inner: str, 
+                        node_var: str):
     if node.bl_idname != 'NodeReroute':
         for i, input in enumerate(node.inputs):
             if input.bl_idname not in dont_set_defaults:
@@ -297,8 +296,7 @@ def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict,
                                 f" = {default_val}\n"))
     file.write("\n")
 
-def init_links(node_tree: bpy.types.NodeTree, file: TextIO, inner: str, 
-                node_tree_var: str):
+def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str):
     """
     Create all the links between nodes
 
@@ -379,13 +377,12 @@ def create_unregister_func(file: TextIO, name: str):
     file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
     file.write("\n")
 
-def create_main_func(file: TextIO, name: str):
+def create_main_func(file: TextIO):
     """
     Creates the main function
 
     Parameters:
     file (TextIO): file we're generating the add-on into
-    name (str): name of the generated operator class
     """
     file.write("if __name__ == \"__main__\":\n")
     file.write("\tregister()")
