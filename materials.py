@@ -125,9 +125,11 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"\t\tmat.use_nodes = True\n")
         create_material()
         
-        def process_mat_node_group(node_group, level):
-            ng_name = utils.clean_string(node_group.name)
-            ng_label = node_group.name
+        node_trees = {}
+
+        def process_node_group(node_tree, level):
+            ng_name = utils.clean_string(node_tree.name)
+            ng_label = node_tree.name
 
             if level == 2: #outermost node group
                 ng_name = utils.clean_string(self.material_name)
@@ -152,10 +154,12 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"{inner}#initialize {ng_name} nodes\n")
 
             unnamed_idx = 0
-            for node in node_group.nodes:
+            for node in node_tree.nodes:
                 if node.bl_idname == 'ShaderNodeGroup':
-                    if node.node_tree is not None:
-                        process_mat_node_group(node.node_tree, level + 1)
+                    node_nt = node.node_tree
+                    if node_nt is not None and node_nt not in node_trees:
+                        process_node_group(node_nt, level + 1)
+                        node_trees.add(node_nt)
                 
                 node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
                 
@@ -174,41 +178,11 @@ class MaterialToPython(bpy.types.Operator):
                 utils.set_input_defaults(node, dont_set_defaults, file, inner, 
                                          node_var)
 
-            #initialize links
-            if node_group.links:
-                file.write(f"{inner}#initialize {ng_name} links\n")     
-            for link in node_group.links:
-                input_node = utils.clean_string(link.from_node.name)
-                input_socket = link.from_socket
-                
-                """
-                Blender's socket dictionary doesn't guarantee 
-                unique keys, which has caused much wailing and
-                gnashing of teeth. This is a quick fix that
-                doesn't run quick
-                """
-                for i, item in enumerate(link.from_node.outputs.items()):
-                    if item[1] == input_socket:
-                        input_idx = i
-                        break
-                
-                output_node = utils.clean_string(link.to_node.name)
-                output_socket = link.to_socket
-                
-                for i, item in enumerate(link.to_node.inputs.items()):
-                    if item[1] == output_socket:
-                        output_idx = i
-                        break
-                
-                file.write((f"{inner}#{input_node}.{input_socket.name} "
-                            f"-> {output_node}.{output_socket.name}\n"))
-                file.write((f"{inner}{ng_name}.links.new({input_node}"
-                            f".outputs[{input_idx}], "
-                            f"{output_node}.inputs[{output_idx}])\n"))
+            utils.init_links(node_tree, file, inner, ng_name)
             
-            file.write(f"{outer}{ng_name}_node_group()\n")
+            file.write(f"\n{outer}{ng_name}_node_group()\n\n")
                 
-        process_mat_node_group(ng, 2)
+        process_node_group(ng, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
 

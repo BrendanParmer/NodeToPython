@@ -181,38 +181,43 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.write("\tdef execute(self, context):\n")
 
-        def process_node_group(node_group, level):
-            ng_name = utils.clean_string(node_group.name)
+        #set to keep track of already created node trees
+        node_trees = {}
+
+        def process_geo_nodes_group(node_tree, level):
+            node_tree_var = utils.clean_string(node_tree.name)
                 
             outer, inner = utils.make_indents(level)
 
             #initialize node group
-            file.write(f"{outer}#initialize {ng_name} node group\n")
-            file.write(f"{outer}def {ng_name}_node_group():\n")
-            file.write((f"{inner}{ng_name}"
+            file.write(f"{outer}#initialize {node_tree_var} node group\n")
+            file.write(f"{outer}def {node_tree_var}_node_group():\n")
+            file.write((f"{inner}{node_tree_var}"
                         f"= bpy.data.node_groups.new("
                         f"type = \"GeometryNodeTree\", "
-                        f"name = \"{node_group.name}\")\n"))
+                        f"name = \"{node_tree.name}\")\n"))
             file.write("\n")
 
             inputs_set = False
             outputs_set = False
 
             #initialize nodes
-            file.write(f"{inner}#initialize {ng_name} nodes\n")
-            for node in node_group.nodes:
+            file.write(f"{inner}#initialize {node_tree_var} nodes\n")
+            for node in node_tree.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
-                    if node.node_tree is not None:
-                        process_node_group(node.node_tree, level + 1)
+                    node_nt = node.node_tree
+                    if node_nt is not None and node_nt not in node_trees:
+                        process_geo_nodes_group(node_nt, level + 1)
+                        node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-                    file.write(f"{inner}#{ng_name} inputs\n")
+                    file.write(f"{inner}#{node_tree_var} inputs\n")
                     for i, input in enumerate(node.outputs):
                         if input.bl_idname != "NodeSocketVirtual":
                             file.write(f"{inner}#input {input.name}\n")
-                            file.write((f"{inner}{ng_name}.inputs.new"
+                            file.write((f"{inner}{node_tree_var}.inputs.new"
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
-                            socket = node_group.inputs[i]
+                            socket = node_tree.inputs[i]
                             if input.bl_idname in default_sockets:  
                                 if input.bl_idname == 'NodeSocketColor':
                                     col = socket.default_value
@@ -225,39 +230,39 @@ class GeoNodesToPython(bpy.types.Operator):
                                     dv = socket.default_value
                                 
                                 #default value
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".default_value = {dv}\n"))
 
                                 #min value
                                 if hasattr(socket, "min_value"):
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".min_value = "
                                                 f"{socket.min_value}\n"))
                                 #max value
                                 if hasattr(socket, "max_value"):
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".max_value = "
                                                 f"{socket.max_value}\n"))
                             #default attribute name
                             if hasattr(socket, "default_attribute_name"):
                                 if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".default_attribute_name = \""
                                                 f"{socket.default_attribute_name}"
                                                 f"\"\n"))
                             #description
                             if socket.description != "":
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".description = "
                                             f"\"{socket.description}\"\n"))
                             #hide value
                             if socket.hide_value is True:
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
@@ -266,23 +271,23 @@ class GeoNodesToPython(bpy.types.Operator):
                     inputs_set = True
 
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-                    file.write(f"{inner}#{ng_name} outputs\n")
+                    file.write(f"{inner}#{node_tree_var} outputs\n")
                     for i, output in enumerate(node.inputs):
                         if output.bl_idname != 'NodeSocketVirtual':
-                            file.write((f"{inner}{ng_name}.outputs"
+                            file.write((f"{inner}{node_tree_var}.outputs"
                                         f".new(\"{output.bl_idname}\", "
                                         f"\"{output.name}\")\n"))
                             
-                            socket = node_group.outputs[i]
+                            socket = node_tree.outputs[i]
                             #description
                             if socket.description != "":
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".description = "
                                             f"\"{socket.description}\"\n"))
                             #hide value
                             if socket.hide_value is True:
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
@@ -290,14 +295,14 @@ class GeoNodesToPython(bpy.types.Operator):
                             #default attribute name
                             if hasattr(socket, "default_attribute_name"):
                                 if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".outputs[{i}]"
                                                 f".default_attribute_name = \""
                                                 f"{socket.default_attribute_name}"
                                                 f"\"\n"))
                             #attribute domain
                             if hasattr(socket, "attribute_domain"):
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".attribute_domain = "
                                             f"\'{socket.attribute_domain}\'\n"))             
@@ -306,9 +311,12 @@ class GeoNodesToPython(bpy.types.Operator):
 
                 unnamed_idx = 0
                 #create node
-                node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
+                node_var, unnamed_idx = utils.create_node(node, file, inner, 
+                                                            node_tree_var, 
+                                                            unnamed_idx)
                 
-                utils.set_settings_defaults(node, geo_node_settings, file, inner, node_var)
+                utils.set_settings_defaults(node, geo_node_settings, file, 
+                                            inner, node_var)
                 
                 if node.bl_idname == 'GeometryNodeGroup':
                     if node.node_tree is not None:
@@ -322,46 +330,13 @@ class GeoNodesToPython(bpy.types.Operator):
                 
                 utils.set_input_defaults(node, dont_set_defaults, file, inner, 
                                          node_var)
-                file.write("\n")
             
-            #initialize links
-            if node_group.links:
-                file.write(f"{inner}#initialize {ng_name} links\n")     
-            for link in node_group.links:
-                input_node = utils.clean_string(link.from_node.name)
-                input_socket = link.from_socket
-                
-                """
-                Blender's socket dictionary doesn't guarantee 
-                unique keys, which has caused much wailing and
-                gnashing of teeth. This is a quick fix that
-                doesn't run quick
-                """
-                for i, item in enumerate(link.from_node.outputs.items()):
-                    if item[1] == input_socket:
-                        input_idx = i
-                        break
-                
-                output_node = utils.clean_string(link.to_node.name)
-                output_socket = link.to_socket
-                
-                for i, item in enumerate(link.to_node.inputs.items()):
-                    if item[1] == output_socket:
-                        output_idx = i
-                        break
-                
-                file.write((f"{inner}#{input_node}.{input_socket.name} "
-                            f"-> {output_node}.{output_socket.name}\n"))
-                file.write((f"{inner}{ng_name}.links.new({input_node}"
-                            f".outputs[{input_idx}], "
-                            f"{output_node}.inputs[{output_idx}])\n"))
+            utils.init_links(node_tree, file, inner, node_tree_var)
             
             #create node group
-            file.write("\n")
-            file.write(f"{outer}{ng_name}_node_group()\n")
-            file.write("\n")    
+            file.write(f"\n{outer}{node_tree_var}_node_group()\n\n")
         
-        process_node_group(ng, 2)
+        process_geo_nodes_group(ng, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         

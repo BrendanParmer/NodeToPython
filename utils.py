@@ -295,3 +295,38 @@ def set_input_defaults(node: bpy.typesNode, dont_set_defaults: dict,
                     file.write(f"{inner}#{input.identifier}\n")
                     file.write((f"{inner}{node_var}.inputs[{i}].default_value"
                                 f" = {default_val}\n"))
+    file.write("\n")
+
+def init_links(node_tree: bpy.types.NodeTree, file: TextIO, inner: str, 
+                node_tree_var: str):
+    if node_tree.links:
+        file.write(f"{inner}#initialize {node_tree_var} links\n")     
+    for link in node_tree.links:
+        input_node = clean_string(link.from_node.name)
+        input_socket = link.from_socket
+        
+        """
+        Blender's socket dictionary doesn't guarantee 
+        unique keys, which has caused much wailing and
+        gnashing of teeth. This is a quick fix that
+        doesn't run quick
+        """
+        for i, item in enumerate(link.from_node.outputs.items()):
+            if item[1] == input_socket:
+                input_idx = i
+                break
+        
+        output_node = clean_string(link.to_node.name)
+        output_socket = link.to_socket
+        
+        for i, item in enumerate(link.to_node.inputs.items()):
+            if item[1] == output_socket:
+                output_idx = i
+                break
+        
+        file.write((f"{inner}#{input_node}.{input_socket.name} "
+                    f"-> {output_node}.{output_socket.name}\n"))
+        file.write((f"{inner}{node_tree_var}.links.new({input_node}"
+                    f".outputs[{input_idx}], "
+                    f"{output_node}.inputs[{output_idx}])\n"))
+
