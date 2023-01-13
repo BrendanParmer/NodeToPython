@@ -303,15 +303,30 @@ class NodeToPython(bpy.types.Operator):
                             #description
                             if socket.description != "":
                                 file.write((f"{inner}{ng_name}"
-                                            f".inputs[{i}]"
+                                            f".outputs[{i}]"
                                             f".description = "
                                             f"\"{socket.description}\"\n"))
                             #hide value
                             if socket.hide_value is True:
                                 file.write((f"{inner}{ng_name}"
-                                            f".inputs[{i}]"
+                                            f".outputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
+
+                            #default attribute name
+                            if hasattr(socket, "default_attribute_name"):
+                                if socket.default_attribute_name != "":
+                                    file.write((f"{inner}{ng_name}"
+                                                f".outputs[{i}]"
+                                                f".default_attribute_name = \""
+                                                f"{socket.default_attribute_name}"
+                                                f"\"\n"))
+                            #attribute domain
+                            if hasattr(socket, "attribute_domain"):
+                                file.write((f"{inner}{ng_name}"
+                                            f".outputs[{i}]"
+                                            f".attribute_domain = "
+                                            f"\'{socket.attribute_domain}\'\n"))
                             
                     file.write("\n")
                     outputs_set = True
