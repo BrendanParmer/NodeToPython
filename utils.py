@@ -181,18 +181,23 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var
     file.write(f"{inner}#mapping settings\n")
     mapping = f"{inner}{node_var}.mapping"
 
+    #extend
     extend = f"\'{node.mapping.extend}\'"
     file.write(f"{mapping}.extend = {extend}\n")
+    #tone
     tone = f"\'{node.mapping.tone}\'"
     file.write(f"{mapping}.tone = {tone}\n")
 
+    #black level
     b_lvl = node.mapping.black_level
     b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
     file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+    #white level
     w_lvl = node.mapping.white_level
     w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
     file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
 
+    #minima and maxima
     min_x = node.mapping.clip_min_x
     file.write(f"{mapping}.clip_min_x = {min_x}\n")
     min_y = node.mapping.clip_min_y
@@ -202,6 +207,7 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var
     max_y = node.mapping.clip_max_y
     file.write(f"{mapping}.clip_max_y = {max_y}\n")
 
+    #use_clip
     use_clip = node.mapping.use_clip
     file.write(f"{mapping}.use_clip = {use_clip}\n")
 
@@ -209,15 +215,12 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var
     for i, curve in enumerate(node.mapping.curves):
         file.write(f"{inner}#curve {i}\n")
         curve_i = f"{node_var}_curve_{i}"
-        file.write((f"{inner}{curve_i} = "
-                    f"{node_var}.mapping.curves[{i}]\n"))
+        file.write((f"{inner}{curve_i} = {node_var}.mapping.curves[{i}]\n"))
         for j, point in enumerate(curve.points):
             point_j = f"{inner}{curve_i}_point_{j}"
 
             loc = point.location
-            file.write((f"{point_j} = "
-                        f"{curve_i}.points.new"
-                        f"({loc[0]}, {loc[1]})\n"))
+            file.write((f"{point_j} = {curve_i}.points.new({loc[0]}, {loc[1]})\n"))
 
             handle = f"\'{point.handle_type}\'"
             file.write(f"{point_j}.handle_type = {handle}\n")
@@ -225,3 +228,4 @@ def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var
     #update curve
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping}.update()\n")
+
