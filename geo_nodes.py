@@ -20,11 +20,6 @@ default_sockets = {'NodeSocketBool',
                    'NodeSocketInt',
                    'NodeSocketVector'}
 
-#node tree input sockets that have min/max properties           
-value_sockets = {'NodeSocketInt',
-                 'NodeSocketFloat',
-                 'NodeSocketVector'}
-
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',

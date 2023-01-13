@@ -4,18 +4,6 @@ import os
 
 from . import utils
 
-#node tree input sockets that have default properties
-default_sockets = {'NodeSocketBool', 
-                   'NodeSocketColor',
-                   'NodeSocketFloat',
-                   'NodeSocketInt',
-                   'NodeSocketVector'}
-
-#node tree input sockets that have min/max properties           
-value_sockets = {'NodeSocketInt',
-                 'NodeSocketFloat',
-                 'NodeSocketVector'}
-
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
