@@ -290,7 +290,7 @@ class NodeToPython(bpy.types.Operator):
                             file.write("\n")
                     file.write("\n")
                     inputs_set = True
-
+                    
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
                     file.write(f"{inner}#{ng_name} outputs\n")
                     for i, output in enumerate(node.inputs):
