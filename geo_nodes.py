@@ -298,6 +298,8 @@ class GeoNodesToPython(bpy.types.Operator):
                                             f"\'{socket.attribute_domain}\'\n"))             
                     file.write("\n")
                     outputs_set = True
+                elif node.bl_idname == 'NodeFrame':
+                    continue
 
                 unnamed_idx = 0
                 #create node

@@ -159,6 +159,8 @@ class MaterialToPython(bpy.types.Operator):
                     if node_nt is not None and node_nt not in node_trees:
                         process_mat_node_group(node_nt, level + 1)
                         node_trees.add(node_nt)
+                elif node.bl_idname == 'NodeFrame':
+                    continue
                 
                 node_var, unnamed_idx = create_node(node, file, inner, nt_var, unnamed_idx)
                 
