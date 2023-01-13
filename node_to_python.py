@@ -223,7 +223,8 @@ class NodeToPython(bpy.types.Operator):
             file.write("\n")
 
             inputs_set = False
-            
+            outputs_set = False
+
             #initialize nodes
             file.write(f"{inner}#initialize {ng_name} nodes\n")
             for node in node_group.nodes:
@@ -289,14 +290,31 @@ class NodeToPython(bpy.types.Operator):
                             file.write("\n")
                     file.write("\n")
                     inputs_set = True
-                elif node.bl_idname == 'NodeGroupOutput':
+
+                elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
                     file.write(f"{inner}#{ng_name} outputs\n")
-                    for output in node.inputs:
+                    for i, output in enumerate(node.inputs):
                         if output.bl_idname != 'NodeSocketVirtual':
                             file.write((f"{inner}{ng_name}.outputs"
                                         f".new(\"{output.bl_idname}\", "
                                         f"\"{output.name}\")\n"))
+                            
+                            socket = node_group.outputs[i]
+                            #description
+                            if socket.description != "":
+                                file.write((f"{inner}{ng_name}"
+                                            f".inputs[{i}]"
+                                            f".description = "
+                                            f"\"{socket.description}\"\n"))
+                            #hide value
+                            if socket.hide_value is True:
+                                file.write((f"{inner}{ng_name}"
+                                            f".inputs[{i}]"
+                                            f".hide_value = "
+                                            f"{socket.hide_value}\n"))
+                            
                     file.write("\n")
+                    outputs_set = True
 
                 #create node
                 node_name = cleanup_string(node.name)
