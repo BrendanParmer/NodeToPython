@@ -121,7 +121,7 @@ def set_settings_defaults(node: bpy.types.Node, settings: dict, file: TextIO,
     node (bpy.types.Node): the node object we're copying settings from
     settings (dict): a predefined dictionary of all settings every node has
     file (TextIO): file we're generating the add-on into
-    inner (str): indentation level
+    inner (str): indentation
     node_var (str): name of the variable we're using for the node in our add-on
     """
     if node.bl_idname in settings:
@@ -134,3 +134,94 @@ def set_settings_defaults(node: bpy.types.Node, settings: dict, file: TextIO,
                     attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
                 file.write((f"{inner}{node_var}.{setting} "
                             f"= {attr}\n"))
+
+def color_ramp_settings(node: bpy.types.Node, file: TextIO, inner: str, 
+                    node_var: str):
+    """
+    node (bpy.types.Node): node object we're copying settings from
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    node_var (str): name of the variable we're using for the color ramp
+    """
+
+    color_ramp = node.color_ramp
+    #settings
+    file.write((f"{inner}{node_var}.color_ramp.color_mode = "
+                f"\'{color_ramp.color_mode}\'\n"))
+    file.write((f"{inner}{node_var}.color_ramp.hue_interpolation = "
+                f"\'{color_ramp.hue_interpolation}\'\n"))
+    file.write((f"{inner}{node_var}.color_ramp.interpolation "
+                f"= '{color_ramp.interpolation}'\n"))
+    file.write("\n")
+
+    #key points
+    for i, element in enumerate(color_ramp.elements):
+        file.write((f"{inner}{node_var}_cre_{i} = "
+                    f"{node_var}.color_ramp.elements"
+                    f".new({element.position})\n"))
+        file.write((f"{inner}{node_var}_cre_{i}.alpha = "
+                    f"{element.alpha}\n"))
+        col = element.color
+        r, g, b, a = col[0], col[1], col[2], col[3]
+        file.write((f"{inner}{node_var}_cre_{i}.color = "
+                    f"({r}, {g}, {b}, {a})\n\n"))
+
+def curve_node_settings(node: bpy.types.Node, file: TextIO, inner: str, node_var: str):
+    """
+    Sets defaults for Float, Vector, and Color curves
+
+    Parameters:
+    node (bpy.types.Node): curve node we're copying settings from
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    node_var (str): variable name for the add-on's curve node
+    """
+
+    #mapping settings
+    file.write(f"{inner}#mapping settings\n")
+    mapping = f"{inner}{node_var}.mapping"
+
+    extend = f"\'{node.mapping.extend}\'"
+    file.write(f"{mapping}.extend = {extend}\n")
+    tone = f"\'{node.mapping.tone}\'"
+    file.write(f"{mapping}.tone = {tone}\n")
+
+    b_lvl = node.mapping.black_level
+    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
+    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+    w_lvl = node.mapping.white_level
+    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
+    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
+
+    min_x = node.mapping.clip_min_x
+    file.write(f"{mapping}.clip_min_x = {min_x}\n")
+    min_y = node.mapping.clip_min_y
+    file.write(f"{mapping}.clip_min_y = {min_y}\n")
+    max_x = node.mapping.clip_max_x
+    file.write(f"{mapping}.clip_max_x = {max_x}\n")
+    max_y = node.mapping.clip_max_y
+    file.write(f"{mapping}.clip_max_y = {max_y}\n")
+
+    use_clip = node.mapping.use_clip
+    file.write(f"{mapping}.use_clip = {use_clip}\n")
+
+    #create curves
+    for i, curve in enumerate(node.mapping.curves):
+        file.write(f"{inner}#curve {i}\n")
+        curve_i = f"{node_var}_curve_{i}"
+        file.write((f"{inner}{curve_i} = "
+                    f"{node_var}.mapping.curves[{i}]\n"))
+        for j, point in enumerate(curve.points):
+            point_j = f"{inner}{curve_i}_point_{j}"
+
+            loc = point.location
+            file.write((f"{point_j} = "
+                        f"{curve_i}.points.new"
+                        f"({loc[0]}, {loc[1]})\n"))
+
+            handle = f"\'{point.handle_type}\'"
+            file.write(f"{point_j}.handle_type = {handle}\n")
+    
+    #update curve
+    file.write(f"{inner}#update curve after changes\n")
+    file.write(f"{mapping}.update()\n")
