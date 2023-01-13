@@ -91,16 +91,15 @@ class MaterialToPython(bpy.types.Operator):
     material_name: bpy.props.StringProperty(name="Node Group")
 
     def execute(self, context):
-        if self.material_name not in bpy.data.materials:
-            return {'FINISHED'}
-        
-        #set up addon file
+        #find node group to replicate
         ng = bpy.data.materials[self.material_name].node_tree
         if ng is None:
             self.report({'ERROR'},
                         ("NodeToPython: This doesn't seem to be a valid "
                             "material. Is Use Nodes selected?"))
             return {'CANCELLED'}
+
+        #set up names to use in generated addon
         ng_name = utils.clean_string(self.material_name)
         class_name = ng.name.replace(" ", "")
         
@@ -115,20 +114,7 @@ class MaterialToPython(bpy.types.Operator):
             os.mkdir(addon_dir)
         file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
 
-        """Sets up bl_info and imports Blender"""
-        def header():
-            file.write("bl_info = {\n")
-            file.write(f"\t\"name\" : \"{self.material_name}\",\n")
-            file.write("\t\"author\" : \"Node To Python\",\n")
-            file.write("\t\"version\" : (1, 0, 0),\n")
-            file.write(f"\t\"blender\" : {bpy.app.version},\n")
-            file.write("\t\"location\" : \"Object\",\n")
-            file.write("\t\"category\" : \"Object\"\n")
-            file.write("}\n")
-            file.write("\n")
-            file.write("import bpy\n")
-            file.write("\n")
-        header()    
+        utils.create_header(file, ng)  
 
         """Creates the class and its variables"""
         def init_class():

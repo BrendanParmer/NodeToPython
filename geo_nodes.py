@@ -149,42 +149,35 @@ curve_nodes = {'ShaderNodeFloatCurve',
 
 class GeoNodesToPython(bpy.types.Operator):
     bl_idname = "node.geo_nodes_to_python"
-    bl_label = "Geo Node to Python"
+    bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
-    node_group_name: bpy.props.StringProperty(name="Node Group")
+    geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
-        if self.node_group_name not in bpy.data.node_groups:
-            return {'FINISHED'}
-        ng = bpy.data.node_groups[self.node_group_name]
+        #find node group to replicate
+        ng = bpy.data.node_groups[self.geo_nodes_group_name]
+
+        #set up names to use in generated addon
         ng_name = utils.clean_string(ng.name)
         class_name = ng.name.replace(" ", "").replace('.', "")
+
+        #find base directory to save new addon
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
             self.report({'ERROR'}, 
                         ("NodeToPython: Save your blend file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
+
+        #save in /addons/ subdirectory
         addon_dir = os.path.join(dir, "addons")
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
         file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
         
-        """Sets up bl_info and imports Blender"""
-        def header():
-            file.write("bl_info = {\n")
-            file.write(f"\t\"name\" : \"{ng.name}\",\n")
-            file.write("\t\"author\" : \"Node To Python\",\n")
-            file.write("\t\"version\" : (1, 0, 0),\n")
-            file.write(f"\t\"blender\" : {bpy.app.version},\n")
-            file.write("\t\"location\" : \"Object\",\n")
-            file.write("\t\"category\" : \"Object\"\n")
-            file.write("}\n")
-            file.write("\n")
-            file.write("import bpy\n")
-            file.write("\n")
-        header()
+        #Sets up bl_info and imports the Blender API
+        utils.create_header(file, ng)
 
         """Creates the class and its variables"""
         def init_class():
@@ -195,7 +188,7 @@ class GeoNodesToPython(bpy.types.Operator):
             file.write("\n")
         init_class()
 
-        """Construct the execute function"""
+        #Construct the execute function
         file.write("\tdef execute(self, context):\n")
 
         def process_node_group(node_group, level):
