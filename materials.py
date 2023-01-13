@@ -115,15 +115,7 @@ class MaterialToPython(bpy.types.Operator):
         file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
 
         utils.create_header(file, ng)  
-
-        """Creates the class and its variables"""
-        def init_class():
-            file.write(f"class {class_name}(bpy.types.Operator):\n")
-            file.write(f"\tbl_idname = \"object.{ng_name}\"\n")
-            file.write(f"\tbl_label = \"{self.material_name}\"\n")
-            file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
-            file.write("\n")
-        init_class()
+        utils.init_operator(file, class_name, ng_name, self.material_name)
 
         file.write("\tdef execute(self, context):\n")
 
@@ -141,8 +133,7 @@ class MaterialToPython(bpy.types.Operator):
                 ng_name = utils.clean_string(self.material_name)
                 ng_label = self.material_name
 
-            outer = "\t"*level
-            inner = "\t"*(level + 1)
+            outer, inner = utils.make_indents(level)
 
             #initialize node group
             file.write(f"{outer}#initialize {ng_name} node group\n")
@@ -160,32 +151,13 @@ class MaterialToPython(bpy.types.Operator):
             #initialize nodes
             file.write(f"{inner}#initialize {ng_name} nodes\n")
 
-            """
-            The bl_idname for AOV output nodes is the name field.
-            I've been using these for the variable names, but if you don't name
-            the AOV node it just doesn't assign anything, so we need to do it
-            manually.
-            """
-            unnamed_index = 0
+            unnamed_idx = 0
             for node in node_group.nodes:
                 if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:
                         process_mat_node_group(node.node_tree, level + 1)
-                #create node
-                node_name = utils.clean_string(node.name)
-                if node_name == "":
-                    node_name = f"node_{unnamed_index}"
-                    unnamed_index += 1
                 
-                file.write(f"{inner}#node {node.name}\n")
-                file.write((f"{inner}{node_name} "
-                            f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
-                file.write((f"{inner}{node_name}.location "
-                            f"= ({node.location.x}, {node.location.y})\n"))
-                file.write((f"{inner}{node_name}.width, {node_name}.height "
-                            f"= {node.width}, {node.height}\n"))
-                if node.label:
-                    file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
+                node_name, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
                 
                 #special nodes
                 if node.bl_idname in node_settings:
