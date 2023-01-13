@@ -157,48 +157,39 @@ class MaterialToPython(bpy.types.Operator):
                     if node.node_tree is not None:
                         process_mat_node_group(node.node_tree, level + 1)
                 
-                node_name, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
+                node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
                 
-                #special nodes
-                if node.bl_idname in node_settings:
-                    for setting in node_settings[node.bl_idname]:
-                        attr = getattr(node, setting, None)
-                        if attr:
-                            if type(attr) == str:
-                                attr = f"\'{attr}\'"
-                            if type(attr) == mathutils.Vector:
-                                attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
-                            file.write((f"{inner}{node_name}.{setting} "
-                                        f"= {attr}\n"))
-                elif node.bl_idname == 'ShaderNodeGroup':
+                utils.set_settings_defaults(node, node_settings, file, inner, node_var)
+
+                if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:
-                        file.write((f"{inner}{node_name}.node_tree = "
+                        file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp = node.color_ramp
                     file.write("\n")
-                    file.write((f"{inner}{node_name}.color_ramp.color_mode = "
+                    file.write((f"{inner}{node_var}.color_ramp.color_mode = "
                                 f"\'{color_ramp.color_mode}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp"
+                    file.write((f"{inner}{node_var}.color_ramp"
                                 f".hue_interpolation = "
                                 f"\'{color_ramp.hue_interpolation}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp.interpolation "
+                    file.write((f"{inner}{node_var}.color_ramp.interpolation "
                                 f"= '{color_ramp.interpolation}'\n"))
                     file.write("\n")
                     for i, element in enumerate(color_ramp.elements):
-                        file.write((f"{inner}{node_name}_cre_{i} = "
-                                    f"{node_name}.color_ramp.elements"
+                        file.write((f"{inner}{node_var}_cre_{i} = "
+                                    f"{node_var}.color_ramp.elements"
                                     f".new({element.position})\n"))
-                        file.write((f"{inner}{node_name}_cre_{i}.alpha = "
+                        file.write((f"{inner}{node_var}_cre_{i}.alpha = "
                                     f"{element.alpha}\n"))
                         col = element.color
                         r, g, b, a = col[0], col[1], col[2], col[3]
-                        file.write((f"{inner}{node_name}_cre_{i}.color = "
+                        file.write((f"{inner}{node_var}_cre_{i}.color = "
                                     f"({r}, {g}, {b}, {a})\n\n"))
                 elif node.bl_idname in curve_nodes:
                     file.write(f"{inner}#mapping settings\n")
-                    mapping = f"{inner}{node_name}.mapping"
+                    mapping = f"{inner}{node_var}.mapping"
 
                     extend = f"\'{node.mapping.extend}\'"
                     file.write(f"{mapping}.extend = {extend}\n")
@@ -226,9 +217,9 @@ class MaterialToPython(bpy.types.Operator):
 
                     for i, curve in enumerate(node.mapping.curves):
                         file.write(f"{inner}#curve {i}\n")
-                        curve_i = f"{node_name}_curve_{i}"
+                        curve_i = f"{node_var}_curve_{i}"
                         file.write((f"{inner}{curve_i} = "
-                                    f"{node_name}.mapping.curves[{i}]\n"))
+                                    f"{node_var}.mapping.curves[{i}]\n"))
                         for j, point in enumerate(curve.points):
                             point_j = f"{inner}{curve_i}_point_{j}"
 
@@ -258,7 +249,7 @@ class MaterialToPython(bpy.types.Operator):
                                 dv = socket.default_value
                             if dv is not None:
                                 file.write(f"{inner}#{socket.identifier}\n")
-                                file.write((f"{inner}{node_name}"
+                                file.write((f"{inner}{node_var}"
                                             f".{list_name}[{i}]"
                                             f".default_value = {dv}\n"))  
                     for i, input in enumerate(node.inputs):

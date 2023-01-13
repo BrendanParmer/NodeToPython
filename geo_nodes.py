@@ -308,16 +308,9 @@ class GeoNodesToPython(bpy.types.Operator):
                 #create node
                 node_var, unnamed_idx = utils.create_node(node, file, inner, ng_name, unnamed_idx)
                 
-                #special nodes
-                if node.bl_idname in geo_node_settings:
-                    for setting in geo_node_settings[node.bl_idname]:
-                        attr = getattr(node, setting, None)
-                        if attr:
-                            if type(attr) == str:
-                                attr = f"\'{attr}\'"
-                            file.write((f"{inner}{node_var}.{setting} "
-                                        f"= {attr}\n"))
-                elif node.bl_idname == 'GeometryNodeGroup':
+                utils.set_settings_defaults(node, geo_node_settings, file, inner, node_var)
+                
+                if node.bl_idname == 'GeometryNodeGroup':
                     if node.node_tree is not None:
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"

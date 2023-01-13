@@ -1,4 +1,6 @@
 import bpy
+import mathutils
+
 import re
 from typing import TextIO, Tuple
 
@@ -10,11 +12,11 @@ def clean_string(string: str) -> str:
     string (str): The input string
     
     Returns:
-    str: The input string with nasty characters converted to underscores
+    clean_str: The input string with nasty characters converted to underscores
     """
 
-    clean_str = string.lower()
-    return re.sub(r"[^a-zA-Z0-9_]", '_', clean_str)
+    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string.lower())
+    return clean_str
 
 def create_header(file: TextIO, node_tree: bpy.types.NodeTree):
     """
@@ -72,7 +74,8 @@ def make_indents(level: int) -> Tuple[str, str]:
     inner = "\t"*(level + 1)
     return outer, inner
 
-def create_node(node: bpy.types.Node, file: TextIO, inner: str, node_tree_var: str, unnamed_idx: int = 0) -> Tuple[str, int]:
+def create_node(node: bpy.types.Node, file: TextIO, inner: str, 
+                node_tree_var: str, unnamed_idx: int = 0) -> Tuple[str, int]:
     """
     Initializes a new node with location, dimension, and label info
 
@@ -108,3 +111,26 @@ def create_node(node: bpy.types.Node, file: TextIO, inner: str, node_tree_var: s
         file.write(f"{inner}{node_var}.label = \"{node.label}\"\n")
 
     return node_var, unnamed_idx
+
+def set_settings_defaults(node: bpy.types.Node, settings: dict, file: TextIO, 
+                            inner: str, node_var: str):
+    """
+    Sets the defaults for any settings a node may have
+
+    Parameters:
+    node (bpy.types.Node): the node object we're copying settings from
+    settings (dict): a predefined dictionary of all settings every node has
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation level
+    node_var (str): name of the variable we're using for the node in our add-on
+    """
+    if node.bl_idname in settings:
+        for setting in settings[node.bl_idname]:
+            attr = getattr(node, setting, None)
+            if attr:
+                if type(attr) == str:
+                    attr = f"\'{attr}\'"
+                if type(attr) == mathutils.Vector:
+                    attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
+                file.write((f"{inner}{node_var}.{setting} "
+                            f"= {attr}\n"))
