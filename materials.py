@@ -1,20 +1,7 @@
 import bpy
-import mathutils
 import os
 
-from . import utils
-
-#node tree input sockets that have default properties
-default_sockets = {'NodeSocketBool', 
-                   'NodeSocketColor',
-                   'NodeSocketFloat',
-                   'NodeSocketInt',
-                   'NodeSocketVector'}
-
-#node tree input sockets that have min/max properties           
-value_sockets = {'NodeSocketInt',
-                 'NodeSocketFloat',
-                 'NodeSocketVector'}
+from .utils import *
 
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
@@ -103,18 +90,17 @@ class MaterialToPython(bpy.types.Operator):
     material_name: bpy.props.StringProperty(name="Node Group")
 
     def execute(self, context):
-        if self.material_name not in bpy.data.materials:
-            return {'FINISHED'}
-        
-        #set up addon file
-        ng = bpy.data.materials[self.material_name].node_tree
-        if ng is None:
+        #find node group to replicate
+        nt = bpy.data.materials[self.material_name].node_tree
+        if nt is None:
             self.report({'ERROR'},
                         ("NodeToPython: This doesn't seem to be a valid "
                             "material. Is Use Nodes selected?"))
             return {'CANCELLED'}
-        ng_name = utils.clean_string(self.material_name)
-        class_name = ng.name.replace(" ", "")
+
+        #set up names to use in generated addon
+        mat_var = clean_string(self.material_name)
+        class_name = nt.name.replace(" ", "")
         
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
@@ -125,31 +111,10 @@ class MaterialToPython(bpy.types.Operator):
         addon_dir = os.path.join(dir, "addons")
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
+        file = open(f"{addon_dir}/{mat_var}_addon.py", "w")
 
-        """Sets up bl_info and imports Blender"""
-        def header():
-            file.write("bl_info = {\n")
-            file.write(f"\t\"name\" : \"{self.material_name}\",\n")
-            file.write("\t\"author\" : \"Node To Python\",\n")
-            file.write("\t\"version\" : (1, 0, 0),\n")
-            file.write(f"\t\"blender\" : {bpy.app.version},\n")
-            file.write("\t\"location\" : \"Object\",\n")
-            file.write("\t\"category\" : \"Object\"\n")
-            file.write("}\n")
-            file.write("\n")
-            file.write("import bpy\n")
-            file.write("\n")
-        header()    
-
-        """Creates the class and its variables"""
-        def init_class():
-            file.write(f"class {class_name}(bpy.types.Operator):\n")
-            file.write(f"\tbl_idname = \"object.{ng_name}\"\n")
-            file.write(f"\tbl_label = \"{self.material_name}\"\n")
-            file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
-            file.write("\n")
-        init_class()
+        create_header(file, nt)  
+        init_operator(file, class_name, mat_var, self.material_name)
 
         file.write("\tdef execute(self, context):\n")
 
@@ -159,238 +124,71 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"\t\tmat.use_nodes = True\n")
         create_material()
         
-        def process_mat_node_group(node_group, level):
-            ng_name = utils.clean_string(node_group.name)
-            ng_label = node_group.name
+        node_trees = set()
+
+        def process_mat_node_group(node_tree, level):
+            nt_var = clean_string(node_tree.name)
+            nt_name = node_tree.name
 
             if level == 2: #outermost node group
-                ng_name = utils.clean_string(self.material_name)
-                ng_label = self.material_name
+                nt_var = clean_string(self.material_name)
+                nt_name = self.material_name
 
-            outer = "\t"*level
-            inner = "\t"*(level + 1)
+            outer, inner = make_indents(level)
 
             #initialize node group
-            file.write(f"{outer}#initialize {ng_name} node group\n")
-            file.write(f"{outer}def {ng_name}_node_group():\n")
+            file.write(f"{outer}#initialize {nt_var} node group\n")
+            file.write(f"{outer}def {nt_var}_node_group():\n")
 
             if level == 2: #outermost node group
-                file.write(f"{inner}{ng_name} = mat.node_tree\n")
+                file.write(f"{inner}{nt_var} = mat.node_tree\n")
             else:
-                file.write((f"{inner}{ng_name}"
+                file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
                         f"type = \"ShaderNodeTree\", "
-                        f"name = \"{ng_label}\")\n"))
+                        f"name = \"{nt_name}\")\n"))
                 file.write("\n")
 
             #initialize nodes
-            file.write(f"{inner}#initialize {ng_name} nodes\n")
+            file.write(f"{inner}#initialize {nt_var} nodes\n")
 
-            """
-            The bl_idname for AOV output nodes is the name field.
-            I've been using these for the variable names, but if you don't name
-            the AOV node it just doesn't assign anything, so we need to do it
-            manually.
-            """
-            unnamed_index = 0
-            for node in node_group.nodes:
+            unnamed_idx = 0
+            for node in node_tree.nodes:
+                if node.bl_idname == 'ShaderNodeGroup':
+                    node_nt = node.node_tree
+                    if node_nt is not None and node_nt not in node_trees:
+                        process_mat_node_group(node_nt, level + 1)
+                        node_trees.add(node_nt)
+                
+                node_var, unnamed_idx = create_node(node, file, inner, nt_var, unnamed_idx)
+                
+                set_settings_defaults(node, node_settings, file, inner, node_var)
+
                 if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:
-                        process_mat_node_group(node.node_tree, level + 1)
-                #create node
-                node_name = utils.clean_string(node.name)
-                if node_name == "":
-                    node_name = f"node_{unnamed_index}"
-                    unnamed_index += 1
-                
-                file.write(f"{inner}#node {node.name}\n")
-                file.write((f"{inner}{node_name} "
-                            f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
-                file.write((f"{inner}{node_name}.location "
-                            f"= ({node.location.x}, {node.location.y})\n"))
-                file.write((f"{inner}{node_name}.width, {node_name}.height "
-                            f"= {node.width}, {node.height}\n"))
-                if node.label:
-                    file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
-                
-                #special nodes
-                if node.bl_idname in node_settings:
-                    for setting in node_settings[node.bl_idname]:
-                        attr = getattr(node, setting, None)
-                        if attr:
-                            if type(attr) == str:
-                                attr = f"\'{attr}\'"
-                            if type(attr) == mathutils.Vector:
-                                attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
-                            file.write((f"{inner}{node_name}.{setting} "
-                                        f"= {attr}\n"))
-                elif node.bl_idname == 'ShaderNodeGroup':
-                    if node.node_tree is not None:
-                        file.write((f"{inner}{node_name}.node_tree = "
+                        file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
-                    color_ramp = node.color_ramp
-                    file.write("\n")
-                    file.write((f"{inner}{node_name}.color_ramp.color_mode = "
-                                f"\'{color_ramp.color_mode}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp"
-                                f".hue_interpolation = "
-                                f"\'{color_ramp.hue_interpolation}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp.interpolation "
-                                f"= '{color_ramp.interpolation}'\n"))
-                    file.write("\n")
-                    for i, element in enumerate(color_ramp.elements):
-                        file.write((f"{inner}{node_name}_cre_{i} = "
-                                    f"{node_name}.color_ramp.elements"
-                                    f".new({element.position})\n"))
-                        file.write((f"{inner}{node_name}_cre_{i}.alpha = "
-                                    f"{element.alpha}\n"))
-                        col = element.color
-                        r, g, b, a = col[0], col[1], col[2], col[3]
-                        file.write((f"{inner}{node_name}_cre_{i}.color = "
-                                    f"({r}, {g}, {b}, {a})\n\n"))
+                    color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
-                    file.write(f"{inner}#mapping settings\n")
-                    mapping = f"{inner}{node_name}.mapping"
+                    curve_node_settings(node, file, inner, node_var)
 
-                    extend = f"\'{node.mapping.extend}\'"
-                    file.write(f"{mapping}.extend = {extend}\n")
-                    tone = f"\'{node.mapping.tone}\'"
-                    file.write(f"{mapping}.tone = {tone}\n")
+                set_input_defaults(node, dont_set_defaults, file, inner, 
+                                         node_var)
 
-                    b_lvl = node.mapping.black_level
-                    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
-                    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
-                    w_lvl = node.mapping.white_level
-                    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
-                    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
-
-                    min_x = node.mapping.clip_min_x
-                    file.write(f"{mapping}.clip_min_x = {min_x}\n")
-                    min_y = node.mapping.clip_min_y
-                    file.write(f"{mapping}.clip_min_y = {min_y}\n")
-                    max_x = node.mapping.clip_max_x
-                    file.write(f"{mapping}.clip_max_x = {max_x}\n")
-                    max_y = node.mapping.clip_max_y
-                    file.write(f"{mapping}.clip_max_y = {max_y}\n")
-
-                    use_clip = node.mapping.use_clip
-                    file.write(f"{mapping}.use_clip = {use_clip}\n")
-
-                    for i, curve in enumerate(node.mapping.curves):
-                        file.write(f"{inner}#curve {i}\n")
-                        curve_i = f"{node_name}_curve_{i}"
-                        file.write((f"{inner}{curve_i} = "
-                                    f"{node_name}.mapping.curves[{i}]\n"))
-                        for j, point in enumerate(curve.points):
-                            point_j = f"{inner}{curve_i}_point_{j}"
-
-                            loc = point.location
-                            file.write((f"{point_j} = "
-                                        f"{curve_i}.points.new"
-                                        f"({loc[0]}, {loc[1]})\n"))
-
-                            handle = f"\'{point.handle_type}\'"
-                            file.write(f"{point_j}.handle_type = {handle}\n")
-                    file.write(f"{inner}#update curve after changes\n")
-                    file.write(f"{mapping}.update()\n")
-
-                if node.bl_idname != 'NodeReroute':
-                    def default_value(i, socket, list_name):
-                        if socket.bl_idname not in dont_set_defaults:
-                            dv = None
-                            if socket.bl_idname == 'NodeSocketColor':
-                                col = socket.default_value
-                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
-                            elif "Vector" in socket.bl_idname:
-                                vector = socket.default_value
-                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
-                            elif socket.bl_idname == 'NodeSocketString':
-                                dv = f"\"\""
-                            else:
-                                dv = socket.default_value
-                            if dv is not None:
-                                file.write(f"{inner}#{socket.identifier}\n")
-                                file.write((f"{inner}{node_name}"
-                                            f".{list_name}[{i}]"
-                                            f".default_value = {dv}\n"))  
-                    for i, input in enumerate(node.inputs):
-                        default_value(i, input, "inputs")
-                    """
-                    TODO: some shader nodes require you set the default value in the output.
-                    this will need to be handled case by case it looks like though
-
-                    for i, output in enumerate(node.outputs):
-                        default_value(i, output, "outputs")
-                    """
-
-            #initialize links
-            if node_group.links:
-                file.write(f"{inner}#initialize {ng_name} links\n")     
-            for link in node_group.links:
-                input_node = utils.clean_string(link.from_node.name)
-                input_socket = link.from_socket
-                
-                """
-                Blender's socket dictionary doesn't guarantee 
-                unique keys, which has caused much wailing and
-                gnashing of teeth. This is a quick fix that
-                doesn't run quick
-                """
-                for i, item in enumerate(link.from_node.outputs.items()):
-                    if item[1] == input_socket:
-                        input_idx = i
-                        break
-                
-                output_node = utils.clean_string(link.to_node.name)
-                output_socket = link.to_socket
-                
-                for i, item in enumerate(link.to_node.inputs.items()):
-                    if item[1] == output_socket:
-                        output_idx = i
-                        break
-                
-                file.write((f"{inner}#{input_node}.{input_socket.name} "
-                            f"-> {output_node}.{output_socket.name}\n"))
-                file.write((f"{inner}{ng_name}.links.new({input_node}"
-                            f".outputs[{input_idx}], "
-                            f"{output_node}.inputs[{output_idx}])\n"))
+            init_links(node_tree, file, inner, nt_var)
             
-            file.write(f"{outer}{ng_name}_node_group()\n")
+            file.write(f"\n{outer}{nt_var}_node_group()\n\n")
                 
-        process_mat_node_group(ng, 2)
+        process_mat_node_group(nt, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
 
-        """Create the function that adds the addon to the menu"""
-        def create_menu_func():
-            file.write("def menu_func(self, context):\n")
-            file.write(f"\tself.layout.operator({class_name}.bl_idname)\n")
-            file.write("\n")
-        create_menu_func()
-
-        """Create the register function"""
-        def create_register():
-            file.write("def register():\n")
-            file.write(f"\tbpy.utils.register_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
-            file.write("\n")
-        create_register()
-
-        """Create the unregister function"""
-        def create_unregister():
-            file.write("def unregister():\n")
-            file.write(f"\tbpy.utils.unregister_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
-            file.write("\n")
-        create_unregister()
-
-        """Create the main function"""
-        def create_main():
-            file.write("if __name__ == \"__main__\":\n")
-            file.write("\tregister()")
-        create_main()
+        create_menu_func(file, class_name)
+        create_register_func(file, class_name)
+        create_unregister_func(file, class_name)
+        create_main_func(file)
 
         file.close()
         return {'FINISHED'}

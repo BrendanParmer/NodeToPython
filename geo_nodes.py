@@ -1,17 +1,7 @@
-bl_info = {
-    "name": "Node to Python", 
-    "description": "Convert Geometry Node Groups to a Python add-on",
-    "author": "Brendan Parmer",
-    "version": (2, 0, 0),
-    "blender": (3, 0, 0),
-    "location": "Node", 
-    "category": "Node",
-}
-
 import bpy
 import os
 
-from . import utils
+from .utils import *
 
 #node tree input sockets that have default properties
 default_sockets = {'NodeSocketBool', 
@@ -19,11 +9,6 @@ default_sockets = {'NodeSocketBool',
                    'NodeSocketFloat',
                    'NodeSocketInt',
                    'NodeSocketVector'}
-
-#node tree input sockets that have min/max properties           
-value_sockets = {'NodeSocketInt',
-                 'NodeSocketFloat',
-                 'NodeSocketVector'}
 
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
@@ -154,88 +139,75 @@ curve_nodes = {'ShaderNodeFloatCurve',
 
 class GeoNodesToPython(bpy.types.Operator):
     bl_idname = "node.geo_nodes_to_python"
-    bl_label = "Geo Node to Python"
+    bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
-    node_group_name: bpy.props.StringProperty(name="Node Group")
+    geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
-        if self.node_group_name not in bpy.data.node_groups:
-            return {'FINISHED'}
-        ng = bpy.data.node_groups[self.node_group_name]
-        ng_name = utils.clean_string(ng.name)
-        class_name = ng.name.replace(" ", "").replace('.', "")
+        #find node group to replicate
+        nt = bpy.data.node_groups[self.geo_nodes_group_name]
+
+        #set up names to use in generated addon
+        nt_var = clean_string(nt.name)
+        class_name = nt.name.replace(" ", "").replace('.', "")
+
+        #find base directory to save new addon
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
             self.report({'ERROR'}, 
                         ("NodeToPython: Save your blend file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
+
+        #save in /addons/ subdirectory
         addon_dir = os.path.join(dir, "addons")
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{ng_name}_addon.py", "w")
+        file = open(f"{addon_dir}/{nt_var}_addon.py", "w")
         
-        """Sets up bl_info and imports Blender"""
-        def header():
-            file.write("bl_info = {\n")
-            file.write(f"\t\"name\" : \"{ng.name}\",\n")
-            file.write("\t\"author\" : \"Node To Python\",\n")
-            file.write("\t\"version\" : (1, 0, 0),\n")
-            file.write(f"\t\"blender\" : {bpy.app.version},\n")
-            file.write("\t\"location\" : \"Object\",\n")
-            file.write("\t\"category\" : \"Object\"\n")
-            file.write("}\n")
-            file.write("\n")
-            file.write("import bpy\n")
-            file.write("\n")
-        header()
+        create_header(file, nt)
+        init_operator(file, class_name, nt_var, nt.name)
 
-        """Creates the class and its variables"""
-        def init_class():
-            file.write(f"class {class_name}(bpy.types.Operator):\n")
-            file.write(f"\tbl_idname = \"object.{ng_name}\"\n")
-            file.write(f"\tbl_label = \"{ng.name}\"\n")
-            file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
-            file.write("\n")
-        init_class()
-
-        """Construct the execute function"""
         file.write("\tdef execute(self, context):\n")
 
-        def process_node_group(node_group, level):
-            ng_name = utils.clean_string(node_group.name)
+        #set to keep track of already created node trees
+        node_trees = set()
+
+        def process_geo_nodes_group(node_tree, level):
+            node_tree_var = clean_string(node_tree.name)
                 
-            outer = "\t"*level       #outer indentation
-            inner = "\t"*(level + 1) #inner indentation
+            outer, inner = make_indents(level)
 
             #initialize node group
-            file.write(f"{outer}#initialize {ng_name} node group\n")
-            file.write(f"{outer}def {ng_name}_node_group():\n")
-            file.write((f"{inner}{ng_name}"
+            file.write(f"{outer}#initialize {node_tree_var} node group\n")
+            file.write(f"{outer}def {node_tree_var}_node_group():\n")
+            file.write((f"{inner}{node_tree_var}"
                         f"= bpy.data.node_groups.new("
                         f"type = \"GeometryNodeTree\", "
-                        f"name = \"{node_group.name}\")\n"))
+                        f"name = \"{node_tree.name}\")\n"))
             file.write("\n")
 
             inputs_set = False
             outputs_set = False
 
             #initialize nodes
-            file.write(f"{inner}#initialize {ng_name} nodes\n")
-            for node in node_group.nodes:
+            file.write(f"{inner}#initialize {node_tree_var} nodes\n")
+            for node in node_tree.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
-                    if node.node_tree is not None:
-                        process_node_group(node.node_tree, level + 1)
+                    node_nt = node.node_tree
+                    if node_nt is not None and node_nt not in node_trees:
+                        process_geo_nodes_group(node_nt, level + 1)
+                        node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-                    file.write(f"{inner}#{ng_name} inputs\n")
+                    file.write(f"{inner}#{node_tree_var} inputs\n")
                     for i, input in enumerate(node.outputs):
                         if input.bl_idname != "NodeSocketVirtual":
                             file.write(f"{inner}#input {input.name}\n")
-                            file.write((f"{inner}{ng_name}.inputs.new"
+                            file.write((f"{inner}{node_tree_var}.inputs.new"
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
-                            socket = node_group.inputs[i]
+                            socket = node_tree.inputs[i]
                             if input.bl_idname in default_sockets:  
                                 if input.bl_idname == 'NodeSocketColor':
                                     col = socket.default_value
@@ -248,39 +220,39 @@ class GeoNodesToPython(bpy.types.Operator):
                                     dv = socket.default_value
                                 
                                 #default value
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".default_value = {dv}\n"))
 
                                 #min value
                                 if hasattr(socket, "min_value"):
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".min_value = "
                                                 f"{socket.min_value}\n"))
                                 #max value
                                 if hasattr(socket, "max_value"):
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".max_value = "
                                                 f"{socket.max_value}\n"))
                             #default attribute name
                             if hasattr(socket, "default_attribute_name"):
                                 if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".inputs[{i}]"
                                                 f".default_attribute_name = \""
                                                 f"{socket.default_attribute_name}"
                                                 f"\"\n"))
                             #description
                             if socket.description != "":
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".description = "
                                             f"\"{socket.description}\"\n"))
                             #hide value
                             if socket.hide_value is True:
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".inputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
@@ -289,23 +261,23 @@ class GeoNodesToPython(bpy.types.Operator):
                     inputs_set = True
 
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-                    file.write(f"{inner}#{ng_name} outputs\n")
+                    file.write(f"{inner}#{node_tree_var} outputs\n")
                     for i, output in enumerate(node.inputs):
                         if output.bl_idname != 'NodeSocketVirtual':
-                            file.write((f"{inner}{ng_name}.outputs"
+                            file.write((f"{inner}{node_tree_var}.outputs"
                                         f".new(\"{output.bl_idname}\", "
                                         f"\"{output.name}\")\n"))
                             
-                            socket = node_group.outputs[i]
+                            socket = node_tree.outputs[i]
                             #description
                             if socket.description != "":
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".description = "
                                             f"\"{socket.description}\"\n"))
                             #hide value
                             if socket.hide_value is True:
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
@@ -313,203 +285,56 @@ class GeoNodesToPython(bpy.types.Operator):
                             #default attribute name
                             if hasattr(socket, "default_attribute_name"):
                                 if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{ng_name}"
+                                    file.write((f"{inner}{node_tree_var}"
                                                 f".outputs[{i}]"
                                                 f".default_attribute_name = \""
                                                 f"{socket.default_attribute_name}"
                                                 f"\"\n"))
                             #attribute domain
                             if hasattr(socket, "attribute_domain"):
-                                file.write((f"{inner}{ng_name}"
+                                file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".attribute_domain = "
                                             f"\'{socket.attribute_domain}\'\n"))             
                     file.write("\n")
                     outputs_set = True
 
+                unnamed_idx = 0
                 #create node
-                node_name = utils.clean_string(node.name)
-                file.write(f"{inner}#node {node.name}\n")
-                file.write((f"{inner}{node_name} "
-                            f"= {ng_name}.nodes.new(\"{node.bl_idname}\")\n"))
-                file.write((f"{inner}{node_name}.location "
-                            f"= ({node.location.x}, {node.location.y})\n"))
-                file.write((f"{inner}{node_name}.width, {node_name}.height "
-                            f"= {node.width}, {node.height}\n"))
-                if node.label:
-                    file.write(f"{inner}{node_name}.label = \"{node.label}\"\n")
-
-                #special nodes
-                if node.bl_idname in geo_node_settings:
-                    for setting in geo_node_settings[node.bl_idname]:
-                        attr = getattr(node, setting, None)
-                        if attr:
-                            if type(attr) == str:
-                                attr = f"\'{attr}\'"
-                            file.write((f"{inner}{node_name}.{setting} "
-                                        f"= {attr}\n"))
-                elif node.bl_idname == 'GeometryNodeGroup':
+                node_var, unnamed_idx = create_node(node, file, inner, 
+                                                            node_tree_var, 
+                                                            unnamed_idx)
+                
+                set_settings_defaults(node, geo_node_settings, file, 
+                                            inner, node_var)
+                
+                if node.bl_idname == 'GeometryNodeGroup':
                     if node.node_tree is not None:
-                        file.write((f"{inner}{node_name}.node_tree = "
+                        file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
                 elif node.bl_idname == 'ShaderNodeValToRGB':
-                    color_ramp = node.color_ramp
-                    file.write("\n")
-                    file.write((f"{inner}{node_name}.color_ramp.color_mode = "
-                                f"\'{color_ramp.color_mode}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp"
-                                f".hue_interpolation = "
-                                f"\'{color_ramp.hue_interpolation}\'\n"))
-                    file.write((f"{inner}{node_name}.color_ramp.interpolation "
-                                f"= '{color_ramp.interpolation}'\n"))
-                    file.write("\n")
-                    for i, element in enumerate(color_ramp.elements):
-                        file.write((f"{inner}{node_name}_cre_{i} = "
-                                    f"{node_name}.color_ramp.elements"
-                                    f".new({element.position})\n"))
-                        file.write((f"{inner}{node_name}_cre_{i}.alpha = "
-                                    f"{element.alpha}\n"))
-                        col = element.color
-                        r, g, b, a = col[0], col[1], col[2], col[3]
-                        file.write((f"{inner}{node_name}_cre_{i}.color = "
-                                    f"({r}, {g}, {b}, {a})\n\n"))
+                    color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
-                    file.write(f"{inner}#mapping settings\n")
-                    mapping = f"{inner}{node_name}.mapping"
-
-                    extend = f"\'{node.mapping.extend}\'"
-                    file.write(f"{mapping}.extend = {extend}\n")
-                    tone = f"\'{node.mapping.tone}\'"
-                    file.write(f"{mapping}.tone = {tone}\n")
-
-                    b_lvl = node.mapping.black_level
-                    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
-                    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
-                    w_lvl = node.mapping.white_level
-                    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
-                    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
-
-                    min_x = node.mapping.clip_min_x
-                    file.write(f"{mapping}.clip_min_x = {min_x}\n")
-                    min_y = node.mapping.clip_min_y
-                    file.write(f"{mapping}.clip_min_y = {min_y}\n")
-                    max_x = node.mapping.clip_max_x
-                    file.write(f"{mapping}.clip_max_x = {max_x}\n")
-                    max_y = node.mapping.clip_max_y
-                    file.write(f"{mapping}.clip_max_y = {max_y}\n")
-
-                    use_clip = node.mapping.use_clip
-                    file.write(f"{mapping}.use_clip = {use_clip}\n")
-
-                    for i, curve in enumerate(node.mapping.curves):
-                        file.write(f"{inner}#curve {i}\n")
-                        curve_i = f"{node_name}_curve_{i}"
-                        file.write((f"{inner}{curve_i} = "
-                                    f"{node_name}.mapping.curves[{i}]\n"))
-                        for j, point in enumerate(curve.points):
-                            point_j = f"{inner}{curve_i}_point_{j}"
-
-                            loc = point.location
-                            file.write((f"{point_j} = "
-                                        f"{curve_i}.points.new"
-                                        f"({loc[0]}, {loc[1]})\n"))
-
-                            handle = f"\'{point.handle_type}\'"
-                            file.write(f"{point_j}.handle_type = {handle}\n")
-                    file.write(f"{inner}#update curve after changes\n")
-                    file.write(f"{mapping}.update()\n")
+                    curve_node_settings(node, file, inner, node_var)
                 
-                if node.bl_idname != 'NodeReroute':
-                    for i, input in enumerate(node.inputs):
-                        if input.bl_idname not in dont_set_defaults:
-                            if input.bl_idname == 'NodeSocketColor':
-                                col = input.default_value
-                                dv = f"({col[0]}, {col[1]}, {col[2]}, {col[3]})"
-                            elif "Vector" in input.bl_idname:
-                                vector = input.default_value
-                                dv = f"({vector[0]}, {vector[1]}, {vector[2]})"
-                            elif input.bl_idname == 'NodeSocketString':
-                                dv = f"\"\""
-                            else:
-                                dv = input.default_value
-                            if dv is not None:
-                                file.write(f"{inner}#{input.identifier}\n")
-                                file.write((f"{inner}{node_name}"
-                                            f".inputs[{i}]"
-                                            f".default_value = {dv}\n"))
-                file.write("\n")
+                set_input_defaults(node, dont_set_defaults, file, inner, 
+                                         node_var)
             
-            #initialize links
-            if node_group.links:
-                file.write(f"{inner}#initialize {ng_name} links\n")     
-            for link in node_group.links:
-                input_node = utils.clean_string(link.from_node.name)
-                input_socket = link.from_socket
-                
-                """
-                Blender's socket dictionary doesn't guarantee 
-                unique keys, which has caused much wailing and
-                gnashing of teeth. This is a quick fix that
-                doesn't run quick
-                """
-                for i, item in enumerate(link.from_node.outputs.items()):
-                    if item[1] == input_socket:
-                        input_idx = i
-                        break
-                
-                output_node = utils.clean_string(link.to_node.name)
-                output_socket = link.to_socket
-                
-                for i, item in enumerate(link.to_node.inputs.items()):
-                    if item[1] == output_socket:
-                        output_idx = i
-                        break
-                
-                file.write((f"{inner}#{input_node}.{input_socket.name} "
-                            f"-> {output_node}.{output_socket.name}\n"))
-                file.write((f"{inner}{ng_name}.links.new({input_node}"
-                            f".outputs[{input_idx}], "
-                            f"{output_node}.inputs[{output_idx}])\n"))
+            init_links(node_tree, file, inner, node_tree_var)
             
             #create node group
-            file.write("\n")
-            file.write(f"{outer}{ng_name}_node_group()\n")
-            file.write("\n")    
+            file.write(f"\n{outer}{node_tree_var}_node_group()\n\n")
         
-        process_node_group(ng, 2)
+        process_geo_nodes_group(nt, 2)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         
-        """Create the function that adds the addon to the menu"""
-        def create_menu_func():
-            file.write("def menu_func(self, context):\n")
-            file.write(f"\tself.layout.operator({class_name}.bl_idname)\n")
-            file.write("\n")
-        create_menu_func()
+        create_menu_func(file, class_name)
+        create_register_func(file, class_name)
+        create_unregister_func(file, class_name)
+        create_main_func(file)
 
-        """Create the register function"""
-        def create_register():
-            file.write("def register():\n")
-            file.write(f"\tbpy.utils.register_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
-            file.write("\n")
-        create_register()
-
-        """Create the unregister function"""
-        def create_unregister():
-            file.write("def unregister():\n")
-            file.write(f"\tbpy.utils.unregister_class({class_name})\n")
-            file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
-            file.write("\n")
-        create_unregister()
-
-        """Create the main function"""
-        def create_main():
-            file.write("if __name__ == \"__main__\":\n")
-            file.write("\tregister()")
-        create_main()
-        
         file.close()
         return {'FINISHED'}
 
@@ -529,7 +354,7 @@ class SelectGeoNodesMenu(bpy.types.Menu):
 
         for geo_ng in geo_node_groups:
             op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)
-            op.node_group_name = geo_ng.name
+            op.geo_nodes_group_name = geo_ng.name
             
 class GeoNodesToPythonPanel(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"
