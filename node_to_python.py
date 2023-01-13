@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Geometry Node Groups to a Python add-on",
     "author": "Brendan Parmer",
-    "version": (1, 2, 4),
+    "version": (1, 3, 0),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
