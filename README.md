@@ -56,7 +56,6 @@ From here, you can install it like a regular add-on.
     as they won't exist in every blend file. I'm expecting to support some of these in the future.
 
     There are a few nodes that don't set their default values like other ones, though these should also soon be supported. 
-* NodeToPython does not currently support Frame nodes, as they tend to mess up links when added.
 
 ## Bug Reports and Suggestions
 
