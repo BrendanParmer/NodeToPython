@@ -154,14 +154,14 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
 
     file.write((f"{inner}{node_var} "
                 f"= {node_tree_var}.nodes.new(\"{node.bl_idname}\")\n"))
-
-    #dimensions
-    file.write((f"{inner}{node_var}.width, {node_var}.height "
-                f"= {node.width}, {node.height}\n"))
     #label
     if node.label:
         file.write(f"{inner}{node_var}.label = \"{node.label}\"\n")
 
+    #color
+    if node.use_custom_color:
+        file.write(f"{inner}{node_var}.use_custom_color = True\n")
+        file.write(f"{inner}{node_var}.color = {vec3_to_py_str(node.color)}\n")
     return node_var, node_vars
 
 def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
@@ -350,6 +350,23 @@ def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.location "
                     f"= ({node.location.x}, {node.location.y})\n"))
+
+def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
+    """
+    Set dimensions for all nodes
+
+    Parameters:
+    node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+    file (TextIO): file for the generated add-on
+    inner (str): indentation string
+    node_vars (dict): dictionary for (node, variable) name pairs
+    """
+
+    for node in node_tree.nodes:
+        node_var = node_vars[node]
+        file.write((f"{inner}{node_var}.width, {node_var}.height "
+                        f"= {node.width}, {node.height}\n"))
+        
 
 def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
                 node_vars: dict):

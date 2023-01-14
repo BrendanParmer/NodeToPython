@@ -180,6 +180,8 @@ class MaterialToPython(bpy.types.Operator):
                                          node_var)
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
+            set_dimensions(node_tree, file, inner, node_vars)
+            
             init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")

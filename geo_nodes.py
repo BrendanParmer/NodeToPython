@@ -319,8 +319,11 @@ class GeoNodesToPython(bpy.types.Operator):
                 
                 set_input_defaults(node, dont_set_defaults, file, inner, 
                                     node_var)
+            
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
+            set_dimensions(node_tree, file, inner, node_vars)
+
             init_links(node_tree, file, inner, node_tree_var, node_vars)
             
             #create node group
