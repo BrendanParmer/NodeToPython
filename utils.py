@@ -162,6 +162,11 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     if node.use_custom_color:
         file.write(f"{inner}{node_var}.use_custom_color = True\n")
         file.write(f"{inner}{node_var}.color = {vec3_to_py_str(node.color)}\n")
+
+    #mute
+    if node.mute:
+        file.write(f"{inner}{node_var}.mute = True\n")
+        
     return node_var, node_vars
 
 def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
