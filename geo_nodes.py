@@ -193,6 +193,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
             #initialize nodes
             file.write(f"{inner}#initialize {node_tree_var} nodes\n")
+            node_vars = {}
             for node in node_tree.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     node_nt = node.node_tree
@@ -298,18 +299,14 @@ class GeoNodesToPython(bpy.types.Operator):
                                             f"\'{socket.attribute_domain}\'\n"))             
                     file.write("\n")
                     outputs_set = True
-                elif node.bl_idname == 'NodeFrame':
-                    continue
 
-                unnamed_idx = 0
                 #create node
-                node_var, unnamed_idx = create_node(node, file, inner, 
-                                                            node_tree_var, 
-                                                            unnamed_idx)
-                
-                set_settings_defaults(node, geo_node_settings, file, 
-                                            inner, node_var)
-                
+                node_var, node_vars = create_node(node, file, inner, 
+                                                    node_tree_var, node_vars)
+                set_settings_defaults(node, geo_node_settings, file, inner, 
+                                        node_var)
+                hide_sockets(node, file, inner, node_var)
+
                 if node.bl_idname == 'GeometryNodeGroup':
                     if node.node_tree is not None:
                         file.write((f"{inner}{node_var}.node_tree = "
@@ -321,9 +318,10 @@ class GeoNodesToPython(bpy.types.Operator):
                     curve_node_settings(node, file, inner, node_var)
                 
                 set_input_defaults(node, dont_set_defaults, file, inner, 
-                                         node_var)
-            
-            init_links(node_tree, file, inner, node_tree_var)
+                                    node_var)
+            set_parents(node_tree, file, inner, node_vars)
+            set_locations(node_tree, file, inner, node_vars)
+            init_links(node_tree, file, inner, node_tree_var, node_vars)
             
             #create node group
             file.write(f"\n{outer}{node_tree_var}_node_group()\n\n")

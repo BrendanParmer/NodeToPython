@@ -123,7 +123,7 @@ def make_indents(level: int) -> Tuple[str, str]:
     return outer, inner
 
 def create_node(node, file: TextIO, inner: str, node_tree_var: str, 
-                unnamed_idx: int = 0) -> Tuple[str, int]:
+                node_vars: dict) -> Tuple[str, dict]:
     """
     Initializes a new node with location, dimension, and label info
 
@@ -132,25 +132,29 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     file (TextIO): file containing the generated add-on
     inner (str): indentation level for this logic
     node_tree_var (str): variable name for the node tree
+    node_vars (dict): dictionary containing (bpy.types.Node, str) key-value 
+        pairs, where the key is the node and the value its corresponding 
+        variable name in the addon
 
     Returns:
     node_var (str): variable name for the node
-    unnamed_idx (int): unnamed index. if a node doesn't have a name, this will be used to give it a variable name
+    node_vars (dict): the updated variable name dictionary
     """
 
     file.write(f"{inner}#node {node.name}\n")
 
     node_var = clean_string(node.name)
     if node_var == "":
-        node_var = f"node_{unnamed_idx}"
-        unnamed_idx += 1
+        i = 0
+        while node_var in node_vars:
+            node_var = f"unnamed_node_{i}"
+            i += 1
+
+    node_vars[node] = node_var
 
     file.write((f"{inner}{node_var} "
                 f"= {node_tree_var}.nodes.new(\"{node.bl_idname}\")\n"))
 
-    #location
-    file.write((f"{inner}{node_var}.location "
-                f"= ({node.location.x}, {node.location.y})\n"))
     #dimensions
     file.write((f"{inner}{node_var}.width, {node_var}.height "
                 f"= {node.width}, {node.height}\n"))
@@ -158,7 +162,7 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     if node.label:
         file.write(f"{inner}{node_var}.label = \"{node.label}\"\n")
 
-    return node_var, unnamed_idx
+    return node_var, node_vars
 
 def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
                             node_var: str):
@@ -183,9 +187,28 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
                 file.write((f"{inner}{node_var}.{setting} "
                             f"= {attr}\n"))
 
-def color_ramp_settings(node, file: TextIO, inner: str, 
-                    node_var: str):
+def hide_sockets(node, file: TextIO, inner: str, node_var: str):
     """
+    Hide hidden sockets
+
+    Parameters:
+    node (bpy.types.Node): node object we're copying socket settings from
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation string
+    node_var (str): name of the variable we're using for this node
+    """
+    for i, socket in enumerate(node.inputs):
+        if socket.hide is True:
+            file.write(f"{inner}{node_var}.inputs[{i}].hide = True\n")
+    for i, socket in enumerate(node.outputs):
+        if socket.hide is True:
+            file.write(f"{inner}{node_var}.outputs[{i}].hide = True\n") 
+
+def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
+    """
+    Replicate a color ramp node
+
+    Parameters
     node (bpy.types.Node): node object we're copying settings from
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
@@ -296,7 +319,40 @@ def set_input_defaults(node, dont_set_defaults: dict, file: TextIO, inner: str,
                                 f" = {default_val}\n"))
     file.write("\n")
 
-def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str):
+def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
+    """
+    Sets parents for all nodes, mostly used to put nodes in frames
+
+    Parameters:
+    node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+    file (TextIO): file for the generated add-on
+    inner (str): indentation string
+    node_vars (dict): dictionary for (node, variable) name pairs
+    """
+    for node in node_tree.nodes:
+        if node is not None and node.parent is not None:
+            node_var = node_vars[node]
+            parent_var = node_vars[node.parent]
+            file.write(f"{inner}{node_var}.parent = {parent_var}\n")
+
+def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
+    """
+    Set locations for all nodes
+
+    Parameters:
+    node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+    file (TextIO): file for the generated add-on
+    inner (str): indentation string
+    node_vars (dict): dictionary for (node, variable) name pairs
+    """
+
+    for node in node_tree.nodes:
+        node_var = node_vars[node]
+        file.write((f"{inner}{node_var}.location "
+                    f"= ({node.location.x}, {node.location.y})\n"))
+
+def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
+                node_vars: dict):
     """
     Create all the links between nodes
 
@@ -305,12 +361,13 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str):
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
     node_tree_var (str): variable name we're using for the copied node tree
+    node_vars (dict): dictionary containing node to variable name pairs
     """
 
     if node_tree.links:
         file.write(f"{inner}#initialize {node_tree_var} links\n")     
     for link in node_tree.links:
-        input_node = clean_string(link.from_node.name)
+        in_node_var = node_vars[link.from_node]
         input_socket = link.from_socket
         
         """
@@ -324,7 +381,7 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str):
                 input_idx = i
                 break
         
-        output_node = clean_string(link.to_node.name)
+        out_node_var = node_vars[link.to_node]
         output_socket = link.to_socket
         
         for i, item in enumerate(link.to_node.inputs.items()):
@@ -332,11 +389,11 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str):
                 output_idx = i
                 break
         
-        file.write((f"{inner}#{input_node}.{input_socket.name} "
-                    f"-> {output_node}.{output_socket.name}\n"))
-        file.write((f"{inner}{node_tree_var}.links.new({input_node}"
+        file.write((f"{inner}#{in_node_var}.{input_socket.name} "
+                    f"-> {out_node_var}.{output_socket.name}\n"))
+        file.write((f"{inner}{node_tree_var}.links.new({in_node_var}"
                     f".outputs[{input_idx}], "
-                    f"{output_node}.inputs[{output_idx}])\n"))
+                    f"{out_node_var}.inputs[{output_idx}])\n"))
 
 def create_menu_func(file: TextIO, name: str):
     """

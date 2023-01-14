@@ -152,19 +152,19 @@ class MaterialToPython(bpy.types.Operator):
             #initialize nodes
             file.write(f"{inner}#initialize {nt_var} nodes\n")
 
-            unnamed_idx = 0
+            node_vars = {}
             for node in node_tree.nodes:
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
                         process_mat_node_group(node_nt, level + 1)
                         node_trees.add(node_nt)
-                elif node.bl_idname == 'NodeFrame':
-                    continue
                 
-                node_var, unnamed_idx = create_node(node, file, inner, nt_var, unnamed_idx)
+                node_var, node_vars = create_node(node, file, inner, nt_var,
+                                                  node_vars)
                 
                 set_settings_defaults(node, node_settings, file, inner, node_var)
+                hide_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:
@@ -178,8 +178,9 @@ class MaterialToPython(bpy.types.Operator):
 
                 set_input_defaults(node, dont_set_defaults, file, inner, 
                                          node_var)
-
-            init_links(node_tree, file, inner, nt_var)
+            set_parents(node_tree, file, inner, node_vars)
+            set_locations(node_tree, file, inner, node_vars)
+            init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")
                 
