@@ -340,7 +340,7 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
     """
     if node.bl_idname != 'NodeReroute':
         for i, input in enumerate(node.inputs):
-            if input.bl_idname not in dont_set_defaults:
+            if input.bl_idname not in dont_set_defaults and not input.is_linked:
                 socket_var = f"{node_var}.inputs[{i}]"
                 if input.bl_idname == 'NodeSocketColor':
                     default_val = vec4_to_py_str(input.default_value)

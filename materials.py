@@ -143,6 +143,9 @@ class MaterialToPython(bpy.types.Operator):
 
             if level == 2: #outermost node group
                 file.write(f"{inner}{nt_var} = mat.node_tree\n")
+                file.write(f"{inner}#start with a clean node tree\n")
+                file.write(f"{inner}for node in {nt_var}.nodes:\n")
+                file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
             else:
                 file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
