@@ -108,7 +108,7 @@ class MaterialToPython(bpy.types.Operator):
                         ("NodeToPython: Save your blender file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
-        addon_dir = os.path.join(dir, "addons", mat_var)
+        addon_dir = os.path.join(dir, "addons", mat_var, mat_var)
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
         file = open(f"{addon_dir}/__init__.py", "w")
