@@ -1,8 +1,12 @@
 import bpy
 import mathutils
 
+import os
 import re
+import shutil
 from typing import TextIO, Tuple
+
+image_dir_name = "imgs"
 
 def clean_string(string: str) -> str:
     """
@@ -66,6 +70,20 @@ def vec4_to_py_str(vec) -> str:
     """
     return f"({vec[0]}, {vec[1]}, {vec[2]}, {vec[3]})"
 
+def img_to_py_str(img) -> str:
+    """
+    Converts a Blender image into its string
+
+    Paramters:
+    img (bpy.types.Image): a Blender image
+    
+    Returns:
+    (str): string version
+    """
+    name = img.name
+    format = img.file_format.lower()
+    return f"{name}.{format}"
+
 def create_header(file: TextIO, node_tree):
     """
     Sets up the bl_info and imports the Blender API
@@ -85,6 +103,7 @@ def create_header(file: TextIO, node_tree):
     file.write("}\n")
     file.write("\n")
     file.write("import bpy\n")
+    file.write("import os")
     file.write("\n")
 
 def init_operator(file: TextIO, name: str, idname: str, label: str):
@@ -229,7 +248,6 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
     file.write((f"{inner}{node_var}.color_ramp.interpolation "
                 f"= '{color_ramp.interpolation}'\n"))
     file.write("\n")
-
     #key points
     for i, element in enumerate(color_ramp.elements):
         file.write((f"{inner}{node_var}_cre_{i} = "
@@ -305,22 +323,41 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping}.update()\n")
 
-def set_input_defaults(node, dont_set_defaults: dict, file: TextIO, inner: str, 
-                        node_var: str):
+def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str, 
+                        node_var: str, addon_dir: str):
+    """
+    Sets defaults for input sockets
+
+    Parameters:
+    node (bpy.types.Node): node we're setting inputs for
+    dont_set_defaults (set): set of sockets we shouldn't attempt to set
+        default values for
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    node_var (str): variable name we're using for the copied node
+    addon_dir (str): directory of the add-on, for if we need to save other
+        objects for the add-on
+    """
     if node.bl_idname != 'NodeReroute':
         for i, input in enumerate(node.inputs):
             if input.bl_idname not in dont_set_defaults:
+                socket_var = f"{node_var}.inputs[{i}]"
                 if input.bl_idname == 'NodeSocketColor':
                     default_val = vec4_to_py_str(input.default_value)
                 elif "Vector" in input.bl_idname:
                     default_val = vec3_to_py_str(input.default_value)
                 elif input.bl_idname == 'NodeSocketString':
                     default_val = str_to_py_str(input.default_value)
+                elif input.bl_idname == 'NodeSocketImage':
+                    img = input.default_value
+                    save_image(img, addon_dir)
+                    load_image(img, file, inner, f"{socket_var}.default_value")
+                    default_val = None
                 else:
                     default_val = input.default_value
                 if default_val is not None:
                     file.write(f"{inner}#{input.identifier}\n")
-                    file.write((f"{inner}{node_var}.inputs[{i}].default_value"
+                    file.write((f"{inner}{socket_var}.default_value"
                                 f" = {default_val}\n"))
     file.write("\n")
 
@@ -372,7 +409,6 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
         file.write((f"{inner}{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}\n"))
         
-
 def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
                 node_vars: dict):
     """
@@ -465,3 +501,53 @@ def create_main_func(file: TextIO):
     """
     file.write("if __name__ == \"__main__\":\n")
     file.write("\tregister()")
+
+def save_image(img, addon_dir: str):
+    """
+    Saves an image to an image directory of the add-on
+
+    Parameters:
+    img (bpy.types.Image): image to be saved
+    addon_dir (str): directory of the addon
+    """
+    #create image dir if one doesn't exist
+    img_dir = os.path.join(addon_dir, image_dir_name)
+    if not os.path.exists(img_dir):
+        os.mkdir(img_dir)
+
+    #save the image
+    img_str = img_to_py_str(img)
+    img_path = f"{img_dir}/{img_str}"
+    if not os.path.exists(img_path):
+        img.save_render(img_path)
+
+def load_image(img, file: TextIO, inner: str, img_var: str):
+    """
+    Loads an image from the add-on into a blend file and assigns it
+
+    Parameters:
+    img (bpy.types.Image): Blender image from the original node group
+    file (TextIO): file for the generated add-on
+    inner (str): indentation string
+    img_var (str): variable name to be used for the image
+    """
+    img_str = img_to_py_str(img)
+
+    file.write(f"{inner}#load image {img_str}\n")
+    file.write((f"{inner}base_dir = "
+                f"os.path.dirname(os.path.abspath(__file__))\n"))
+    file.write((f"{inner}image_path = "
+                f"os.path.join(base_dir, \"{image_dir_name}\", "
+                f"\"{img_str}\")\n"))
+    file.write((f"{inner}{img_var} = "
+                f"bpy.data.images.load(image_path, check_existing = True)\n"))
+
+def zip_addon(addon_dir: str):
+    """
+    Zips up the addon and removes the directory
+
+    Parameters:
+    addon_dir (str): path to the directory of the addon
+    """
+    shutil.make_archive(addon_dir, "zip", addon_dir)
+    shutil.rmtree(addon_dir)

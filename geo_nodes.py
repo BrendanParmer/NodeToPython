@@ -13,7 +13,7 @@ default_sockets = {'NodeSocketBool',
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
-                     'NodeSocketImage',
+                     #'NodeSocketImage',
                      'NodeSocketMaterial',
                      'NodeSocketObject',
                      'NodeSocketTexture',
@@ -153,18 +153,18 @@ class GeoNodesToPython(bpy.types.Operator):
         class_name = nt.name.replace(" ", "").replace('.', "")
 
         #find base directory to save new addon
-        dir = bpy.path.abspath("//")
-        if not dir or dir == "":
+        base_dir = bpy.path.abspath("//")
+        if not base_dir or base_dir == "":
             self.report({'ERROR'}, 
                         ("NodeToPython: Save your blend file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
 
         #save in /addons/ subdirectory
-        addon_dir = os.path.join(dir, "addons")
+        addon_dir = os.path.join(base_dir, "addons", nt_var)
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{nt_var}_addon.py", "w")
+        file = open(f"{addon_dir}/__init__.py", "w")
         
         create_header(file, nt)
         init_operator(file, class_name, nt_var, nt.name)
@@ -318,7 +318,7 @@ class GeoNodesToPython(bpy.types.Operator):
                     curve_node_settings(node, file, inner, node_var)
                 
                 set_input_defaults(node, dont_set_defaults, file, inner, 
-                                    node_var)
+                                    node_var, addon_dir)
             
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
@@ -339,6 +339,9 @@ class GeoNodesToPython(bpy.types.Operator):
         create_main_func(file)
 
         file.close()
+
+        zip_addon(addon_dir)
+
         return {'FINISHED'}
 
 class SelectGeoNodesMenu(bpy.types.Menu):

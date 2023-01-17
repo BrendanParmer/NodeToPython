@@ -6,7 +6,7 @@ from .utils import *
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
-                     'NodeSocketImage',
+                     #'NodeSocketImage',
                      'NodeSocketMaterial',
                      'NodeSocketObject',
                      'NodeSocketShader',
@@ -108,10 +108,10 @@ class MaterialToPython(bpy.types.Operator):
                         ("NodeToPython: Save your blender file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
-        addon_dir = os.path.join(dir, "addons")
+        addon_dir = os.path.join(dir, "addons", mat_var)
         if not os.path.exists(addon_dir):
             os.mkdir(addon_dir)
-        file = open(f"{addon_dir}/{mat_var}_addon.py", "w")
+        file = open(f"{addon_dir}/__init__.py", "w")
 
         create_header(file, nt)  
         init_operator(file, class_name, mat_var, self.material_name)
@@ -177,7 +177,7 @@ class MaterialToPython(bpy.types.Operator):
                     curve_node_settings(node, file, inner, node_var)
 
                 set_input_defaults(node, dont_set_defaults, file, inner, 
-                                         node_var)
+                                    node_var, addon_dir)
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
@@ -196,6 +196,7 @@ class MaterialToPython(bpy.types.Operator):
         create_main_func(file)
 
         file.close()
+        zip_addon(addon_dir)
         return {'FINISHED'}
 
 class SelectMaterialMenu(bpy.types.Menu):
