@@ -84,17 +84,17 @@ def img_to_py_str(img) -> str:
     format = img.file_format.lower()
     return f"{name}.{format}"
 
-def create_header(file: TextIO, node_tree):
+def create_header(file: TextIO, name: str):
     """
     Sets up the bl_info and imports the Blender API
 
     Parameters:
     file (TextIO): the file for the generated add-on
-    node_tree (bpy.types.NodeTree): the node group object we're converting into an add-on
+    name (str): name of the add-on
     """
 
     file.write("bl_info = {\n")
-    file.write(f"\t\"name\" : \"{node_tree.name}\",\n")
+    file.write(f"\t\"name\" : \"{name}\",\n")
     file.write("\t\"author\" : \"Node To Python\",\n")
     file.write("\t\"version\" : (1, 0, 0),\n")
     file.write(f"\t\"blender\" : {bpy.app.version},\n")
@@ -338,27 +338,30 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
     addon_dir (str): directory of the add-on, for if we need to save other
         objects for the add-on
     """
-    if node.bl_idname != 'NodeReroute':
-        for i, input in enumerate(node.inputs):
-            if input.bl_idname not in dont_set_defaults and not input.is_linked:
-                socket_var = f"{node_var}.inputs[{i}]"
-                if input.bl_idname == 'NodeSocketColor':
-                    default_val = vec4_to_py_str(input.default_value)
-                elif "Vector" in input.bl_idname:
-                    default_val = vec3_to_py_str(input.default_value)
-                elif input.bl_idname == 'NodeSocketString':
-                    default_val = str_to_py_str(input.default_value)
-                elif input.bl_idname == 'NodeSocketImage':
-                    img = input.default_value
-                    save_image(img, addon_dir)
-                    load_image(img, file, inner, f"{socket_var}.default_value")
-                    default_val = None
-                else:
-                    default_val = input.default_value
-                if default_val is not None:
-                    file.write(f"{inner}#{input.identifier}\n")
-                    file.write((f"{inner}{socket_var}.default_value"
-                                f" = {default_val}\n"))
+    if node.bl_idname == 'NodeReroute':
+        return
+
+    for i, input in enumerate(node.inputs):
+        if input.bl_idname not in dont_set_defaults and not input.is_linked:
+            socket_var = f"{node_var}.inputs[{i}]"
+            if input.bl_idname == 'NodeSocketColor':
+                default_val = vec4_to_py_str(input.default_value)
+            elif "Vector" in input.bl_idname:
+                default_val = vec3_to_py_str(input.default_value)
+            elif input.bl_idname == 'NodeSocketString':
+                default_val = str_to_py_str(input.default_value)
+            elif input.bl_idname == 'NodeSocketImage':
+                print("Input is linked: ", input.is_linked)
+                img = input.default_value
+                save_image(img, addon_dir)
+                load_image(img, file, inner, f"{socket_var}.default_value")
+                default_val = None
+            else:
+                default_val = input.default_value
+            if default_val is not None:
+                file.write(f"{inner}#{input.identifier}\n")
+                file.write((f"{inner}{socket_var}.default_value"
+                            f" = {default_val}\n"))
     file.write("\n")
 
 def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
@@ -518,6 +521,7 @@ def save_image(img, addon_dir: str):
     #save the image
     img_str = img_to_py_str(img)
     img_path = f"{img_dir}/{img_str}"
+    print("Image Path: ", img_path)
     if not os.path.exists(img_path):
         img.save_render(img_path)
 

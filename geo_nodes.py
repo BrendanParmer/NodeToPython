@@ -167,7 +167,7 @@ class GeoNodesToPython(bpy.types.Operator):
             os.makedirs(addon_dir)
         file = open(f"{addon_dir}/__init__.py", "w")
         
-        create_header(file, nt)
+        create_header(file, nt.name)
         init_operator(file, class_name, nt_var, nt.name)
 
         file.write("\tdef execute(self, context):\n")

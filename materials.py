@@ -114,7 +114,7 @@ class MaterialToPython(bpy.types.Operator):
             os.makedirs(addon_dir)
         file = open(f"{addon_dir}/__init__.py", "w")
 
-        create_header(file, nt)  
+        create_header(file, self.material_name)  
         init_operator(file, class_name, mat_var, self.material_name)
 
         file.write("\tdef execute(self, context):\n")
