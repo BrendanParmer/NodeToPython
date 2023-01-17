@@ -80,7 +80,7 @@ def img_to_py_str(img) -> str:
     Returns:
     (str): string version
     """
-    name = img.name
+    name = img.name.split('.', 1)[0]
     format = img.file_format.lower()
     return f"{name}.{format}"
 
@@ -542,12 +542,12 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     file.write((f"{inner}{img_var} = "
                 f"bpy.data.images.load(image_path, check_existing = True)\n"))
 
-def zip_addon(addon_dir: str):
+def zip_addon(zip_dir: str):
     """
     Zips up the addon and removes the directory
 
     Parameters:
-    addon_dir (str): path to the directory of the addon
+    zip_dir (str): path to the top-level addon directory
     """
-    shutil.make_archive(addon_dir, "zip", addon_dir)
-    shutil.rmtree(addon_dir)
+    shutil.make_archive(zip_dir, "zip", zip_dir)
+    shutil.rmtree(zip_dir)

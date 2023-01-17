@@ -161,9 +161,10 @@ class GeoNodesToPython(bpy.types.Operator):
             return {'CANCELLED'}
 
         #save in /addons/ subdirectory
-        addon_dir = os.path.join(base_dir, "addons", nt_var, nt_var)
+        zip_dir = os.path.join(base_dir, "addons", nt_var)
+        addon_dir = os.path.join(zip_dir, nt_var)
         if not os.path.exists(addon_dir):
-            os.mkdir(addon_dir)
+            os.makedirs(addon_dir)
         file = open(f"{addon_dir}/__init__.py", "w")
         
         create_header(file, nt)
@@ -340,7 +341,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.close()
 
-        zip_addon(addon_dir)
+        zip_addon(zip_dir)
 
         return {'FINISHED'}
 

@@ -108,9 +108,10 @@ class MaterialToPython(bpy.types.Operator):
                         ("NodeToPython: Save your blender file before using "
                         "NodeToPython!"))
             return {'CANCELLED'}
-        addon_dir = os.path.join(dir, "addons", mat_var, mat_var)
+        zip_dir = os.path.join(dir, "addons", mat_var)
+        addon_dir = os.path.join(zip_dir, mat_var)
         if not os.path.exists(addon_dir):
-            os.mkdir(addon_dir)
+            os.makedirs(addon_dir)
         file = open(f"{addon_dir}/__init__.py", "w")
 
         create_header(file, nt)  
@@ -171,6 +172,9 @@ class MaterialToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
+                elif node.bl_idname == 'ShaderNodeTexImage':
+                    save_image(node.image, addon_dir)
+                    load_image(node.image, file, inner, f"{node_var}.image")
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
@@ -196,7 +200,7 @@ class MaterialToPython(bpy.types.Operator):
         create_main_func(file)
 
         file.close()
-        zip_addon(addon_dir)
+        zip_addon(zip_dir)
         return {'FINISHED'}
 
 class SelectMaterialMenu(bpy.types.Menu):
