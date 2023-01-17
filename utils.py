@@ -353,8 +353,9 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
             elif input.bl_idname == 'NodeSocketImage':
                 print("Input is linked: ", input.is_linked)
                 img = input.default_value
-                save_image(img, addon_dir)
-                load_image(img, file, inner, f"{socket_var}.default_value")
+                if img is not None:
+                    save_image(img, addon_dir)
+                    load_image(img, file, inner, f"{socket_var}.default_value")
                 default_val = None
             else:
                 default_val = input.default_value
@@ -513,6 +514,10 @@ def save_image(img, addon_dir: str):
     img (bpy.types.Image): image to be saved
     addon_dir (str): directory of the addon
     """
+
+    if img is None:
+        return
+
     #create image dir if one doesn't exist
     img_dir = os.path.join(addon_dir, image_dir_name)
     if not os.path.exists(img_dir):
@@ -535,6 +540,10 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     inner (str): indentation string
     img_var (str): variable name to be used for the image
     """
+
+    if img is None:
+        return
+        
     img_str = img_to_py_str(img)
 
     file.write(f"{inner}#load image {img_str}\n")

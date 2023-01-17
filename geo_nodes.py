@@ -13,7 +13,6 @@ default_sockets = {'NodeSocketBool',
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
-                     #'NodeSocketImage',
                      'NodeSocketMaterial',
                      'NodeSocketObject',
                      'NodeSocketTexture',

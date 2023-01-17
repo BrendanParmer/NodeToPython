@@ -6,7 +6,6 @@ from .utils import *
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketCollection',
                      'NodeSocketGeometry',
-                     #'NodeSocketImage',
                      'NodeSocketMaterial',
                      'NodeSocketObject',
                      'NodeSocketShader',
