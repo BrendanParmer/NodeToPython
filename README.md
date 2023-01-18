@@ -9,14 +9,14 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
  
 ## About
-A Blender add-on to create add-ons! This script will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
+A Blender add-on to create add-ons! This addo-on will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
 
 It automatically handles node layout, default values, sub-node groups, naming, and more! 
 
-I think Blender's node-based editors are powerful, yet accessible tools, and I wanted to make scripting them for add-on creators. Combining Python with node based setups allows you to do things that would otherwise be tedious or impossible, such as
+I think Blender's node-based editors are powerful, yet accessible tools, and I wanted to make scripting them easier for add-on creators. Combining Python with node based setups allows you to do things that would otherwise be tedious or impossible, such as
 * `for` loops
-* different node trees for different versions or settings
-* interfacing with other parts of the software. 
+* creating different node trees for different versions or settings
+* interfacing with other parts of the software or properties of an object
 
 NodeToPython recreates the node networks for you, so you can focus on the good stuff. 
 
@@ -45,7 +45,6 @@ From here, you can install it like a regular add-on.
 ## Potential Issues
 * As of version 2.0.0, the add-on will not set default values for
     * Collections
-    * Images
     * Materials
     * Objects
     * Textures
