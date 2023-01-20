@@ -340,7 +340,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.close()
 
-        zip_addon(zip_dir)
+        #zip_addon(zip_dir)
 
         return {'FINISHED'}
 

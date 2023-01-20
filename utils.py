@@ -555,6 +555,17 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     file.write((f"{inner}{img_var} = "
                 f"bpy.data.images.load(image_path, check_existing = True)\n"))
 
+    #copy image settings
+    #source
+    file.write(f"{inner}{img_var}.source = \'{img.source}\'\n")
+
+    #color space settings
+    file.write((f"{inner}{img_var}.colorspace_settings.name = "
+                f"\'{img.colorspace_settings.name}\'\n"))
+    
+    #alpha mode
+    file.write(f"{inner}{img_var}.alpha_mode = \'{img.alpha_mode}\'\n")
+
 def zip_addon(zip_dir: str):
     """
     Zips up the addon and removes the directory
