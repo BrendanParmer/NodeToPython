@@ -102,7 +102,7 @@ class MaterialToPython(bpy.types.Operator):
 
         #set up names to use in generated addon
         mat_var = clean_string(self.material_name)
-        class_name = nt.name.replace(" ", "")
+        class_name = clean_string(self.material_name, lower=False)
         
         dir = bpy.path.abspath("//")
         if not dir or dir == "":
@@ -182,6 +182,7 @@ class MaterialToPython(bpy.types.Operator):
                     if img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
+                        image_user_settings(node, file, inner, node_var)
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:

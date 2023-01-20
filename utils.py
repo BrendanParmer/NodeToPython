@@ -8,7 +8,7 @@ from typing import TextIO, Tuple
 
 image_dir_name = "imgs"
 
-def clean_string(string: str) -> str:
+def clean_string(string: str, lower: bool = True) -> str:
     """
     Cleans up a string for use as a variable or file name
 
@@ -19,7 +19,9 @@ def clean_string(string: str) -> str:
     clean_str: The input string with nasty characters converted to underscores
     """
 
-    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string.lower())
+    if lower:
+        string = string.lower()
+    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string)
     return clean_str
 
 def enum_to_py_str(enum: str) -> str:
@@ -556,6 +558,8 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
                 f"bpy.data.images.load(image_path, check_existing = True)\n"))
 
     #copy image settings
+    file.write(f"{inner}#set image settings\n")
+
     #source
     file.write(f"{inner}{img_var}.source = \'{img.source}\'\n")
 
