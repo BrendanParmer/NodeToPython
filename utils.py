@@ -8,7 +8,7 @@ from typing import TextIO, Tuple
 
 image_dir_name = "imgs"
 
-def clean_string(string: str) -> str:
+def clean_string(string: str, lower: bool = True) -> str:
     """
     Cleans up a string for use as a variable or file name
 
@@ -19,7 +19,9 @@ def clean_string(string: str) -> str:
     clean_str: The input string with nasty characters converted to underscores
     """
 
-    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string.lower())
+    if lower:
+        string = string.lower()
+    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string)
     return clean_str
 
 def enum_to_py_str(enum: str) -> str:
@@ -555,6 +557,43 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     file.write((f"{inner}{img_var} = "
                 f"bpy.data.images.load(image_path, check_existing = True)\n"))
 
+    #copy image settings
+    file.write(f"{inner}#set image settings\n")
+
+    #source
+    file.write(f"{inner}{img_var}.source = \'{img.source}\'\n")
+
+    #color space settings
+    file.write((f"{inner}{img_var}.colorspace_settings.name = "
+                f"\'{img.colorspace_settings.name}\'\n"))
+    
+    #alpha mode
+    file.write(f"{inner}{img_var}.alpha_mode = \'{img.alpha_mode}\'\n")
+
+def image_user_settings(node, file: TextIO, inner: str, node_var: str):
+    """
+    Replicate the image user of an image node
+
+    Parameters
+    node (bpy.types.Node): node object we're copying settings from
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    node_var (str): name of the variable we're using for the color ramp
+    """
+
+    if not hasattr(node, "image_user"):
+        raise ValueError("Node must have attribute \"image_user\"")
+
+    img_usr = node.image_user
+    img_usr_var = f"{node_var}.image_user"
+
+    img_usr_attrs = ["frame_current", "frame_duration", "frame_offset",
+                     "frame_start", "tile", "use_auto_refresh", "use_cyclic"]
+    
+    for img_usr_attr in img_usr_attrs:
+        file.write((f"{inner}{img_usr_var}.{img_usr_attr} = "
+                    f"{getattr(img_usr, img_usr_attr)}\n"))
+    
 def zip_addon(zip_dir: str):
     """
     Zips up the addon and removes the directory
