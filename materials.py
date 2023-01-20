@@ -208,7 +208,7 @@ class MaterialToPython(bpy.types.Operator):
         create_main_func(file)
 
         file.close()
-        #zip_addon(zip_dir)
+        zip_addon(zip_dir)
         return {'FINISHED'}
 
 class SelectMaterialMenu(bpy.types.Menu):
