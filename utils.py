@@ -568,7 +568,7 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
 
 def image_user_settings(node, file: TextIO, inner: str, node_var: str):
     """
-    Replicate the image user
+    Replicate the image user of an image node
 
     Parameters
     node (bpy.types.Node): node object we're copying settings from

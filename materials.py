@@ -79,7 +79,10 @@ node_settings = {
 
 curve_nodes = {'ShaderNodeFloatCurve', 
                'ShaderNodeVectorCurve', 
-               'ShaderNodeRGBCurve'}   
+               'ShaderNodeRGBCurve'}
+
+image_nodes = {'ShaderNodeTexEnvironment',
+               'ShaderNodeTexImage'}
 
 class MaterialToPython(bpy.types.Operator):
     bl_idname = "node.material_to_python"
@@ -174,9 +177,11 @@ class MaterialToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
-                elif node.bl_idname == 'ShaderNodeTexImage':
-                    save_image(node.image, addon_dir)
-                    load_image(node.image, file, inner, f"{node_var}.image")
+                elif node.bl_idname in image_nodes:
+                    img = node.image
+                    if img.source in {'FILE', 'GENERATED', 'TILED'}:
+                        save_image(img, addon_dir)
+                        load_image(img, file, inner, f"{node_var}.image")
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
