@@ -8,6 +8,11 @@ from typing import TextIO, Tuple
 
 image_dir_name = "imgs"
 
+#node input sockets that are messy to set default values for
+dont_set_defaults = {'NodeSocketGeometry',
+                     'NodeSocketShader',
+                     'NodeSocketVirtual'}
+
 def clean_string(string: str, lower: bool = True) -> str:
     """
     Cleans up a string for use as a variable or file name
@@ -325,15 +330,13 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping}.update()\n")
 
-def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str, 
-                        node_var: str, addon_dir: str):
+def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
+                       addon_dir: str):
     """
     Sets defaults for input sockets
 
     Parameters:
     node (bpy.types.Node): node we're setting inputs for
-    dont_set_defaults (set): set of sockets we shouldn't attempt to set
-        default values for
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
     node_var (str): variable name we're using for the copied node

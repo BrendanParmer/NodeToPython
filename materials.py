@@ -3,15 +3,6 @@ import os
 
 from .utils import *
 
-#node input sockets that are messy to set default values for
-dont_set_defaults = {#'NodeSocketCollection',
-                     'NodeSocketGeometry',
-                     #'NodeSocketMaterial',
-                     #'NodeSocketObject',
-                     'NodeSocketShader',
-                     #'NodeSocketTexture',
-                     'NodeSocketVirtual'}
-
 node_settings = {
     #input
     "ShaderNodeAmbientOcclusion" : ["samples", "inside", "only_local"],
@@ -188,8 +179,7 @@ class MaterialToPython(bpy.types.Operator):
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
 
-                set_input_defaults(node, dont_set_defaults, file, inner, 
-                                    node_var, addon_dir)
+                set_input_defaults(node, file, inner, node_var, addon_dir)
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
