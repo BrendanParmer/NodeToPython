@@ -4,10 +4,10 @@ import os
 from .utils import *
 
 #node input sockets that are messy to set default values for
-dont_set_defaults = {'NodeSocketCollection',
+dont_set_defaults = {#'NodeSocketCollection',
                      'NodeSocketGeometry',
-                     'NodeSocketMaterial',
-                     'NodeSocketObject',
+                     #'NodeSocketMaterial',
+                     #'NodeSocketObject',
                      'NodeSocketShader',
                      'NodeSocketTexture',
                      'NodeSocketVirtual'}

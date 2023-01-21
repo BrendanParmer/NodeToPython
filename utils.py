@@ -346,12 +346,20 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
     for i, input in enumerate(node.inputs):
         if input.bl_idname not in dont_set_defaults and not input.is_linked:
             socket_var = f"{node_var}.inputs[{i}]"
+
+            #colors
             if input.bl_idname == 'NodeSocketColor':
                 default_val = vec4_to_py_str(input.default_value)
+
+            #vector types
             elif "Vector" in input.bl_idname:
                 default_val = vec3_to_py_str(input.default_value)
+
+            #strings
             elif input.bl_idname == 'NodeSocketString':
                 default_val = str_to_py_str(input.default_value)
+
+            #images
             elif input.bl_idname == 'NodeSocketImage':
                 print("Input is linked: ", input.is_linked)
                 img = input.default_value
@@ -359,6 +367,22 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
                     save_image(img, addon_dir)
                     load_image(img, file, inner, f"{socket_var}.default_value")
                 default_val = None
+
+            #materials 
+            elif input.bl_idname == 'NodeSocketMaterial':
+                in_file_inputs(input, file, inner, socket_var, "materials")
+                default_val = None
+
+            #collections
+            elif input.bl_idname == 'NodeSocketCollection':
+                in_file_inputs(input, file, inner, socket_var, "collections")
+                default_val = None
+
+            #objects
+            elif input.bl_idname == 'NodeSocketObject':
+                in_file_inputs(input, file, inner, socket_var, "objects")
+                default_val = None
+                    
             else:
                 default_val = input.default_value
             if default_val is not None:
@@ -366,6 +390,23 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
                 file.write((f"{inner}{socket_var}.default_value"
                             f" = {default_val}\n"))
     file.write("\n")
+
+def in_file_inputs(input, file: TextIO, inner: str, socket_var: str, type: str):
+    """
+    Sets inputs for a node input if one already exists in the blend file
+
+    Parameters:
+    input (bpy.types.NodeSocket): input socket we're setting the value for
+    file (TextIO): file we're writing the add-on into
+    inner (str): indentation string
+    socket_var (str): variable name we're using for the socket
+    type (str): from what section of bpy.data to pull the default value from
+    """
+
+    name = str_to_py_str(input.default_value.name)
+    file.write(f"{inner}if {name} in bpy.data.{type}:\n")
+    file.write((f"{inner}\t{socket_var}.default_value = "
+                            f"bpy.data.{type}[{name}]\n"))
 
 def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     """
