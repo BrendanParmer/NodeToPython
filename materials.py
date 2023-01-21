@@ -9,7 +9,7 @@ dont_set_defaults = {#'NodeSocketCollection',
                      #'NodeSocketMaterial',
                      #'NodeSocketObject',
                      'NodeSocketShader',
-                     'NodeSocketTexture',
+                     #'NodeSocketTexture',
                      'NodeSocketVirtual'}
 
 node_settings = {

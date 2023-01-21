@@ -382,7 +382,12 @@ def set_input_defaults(node, dont_set_defaults: set, file: TextIO, inner: str,
             elif input.bl_idname == 'NodeSocketObject':
                 in_file_inputs(input, file, inner, socket_var, "objects")
                 default_val = None
-                    
+            
+            #textures
+            elif input.bl_idname == 'NodeSocketTexture':
+                in_file_inputs(input, file, inner, socket_var, "textures")
+                default_val = None
+
             else:
                 default_val = input.default_value
             if default_val is not None:
