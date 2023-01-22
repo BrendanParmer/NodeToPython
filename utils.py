@@ -411,10 +411,11 @@ def in_file_inputs(input, file: TextIO, inner: str, socket_var: str, type: str):
     type (str): from what section of bpy.data to pull the default value from
     """
 
-    name = str_to_py_str(input.default_value.name)
-    file.write(f"{inner}if {name} in bpy.data.{type}:\n")
-    file.write((f"{inner}\t{socket_var}.default_value = "
-                            f"bpy.data.{type}[{name}]\n"))
+    if input.default_value is not None:
+        name = str_to_py_str(input.default_value.name)
+        file.write(f"{inner}if {name} in bpy.data.{type}:\n")
+        file.write((f"{inner}\t{socket_var}.default_value = "
+                                f"bpy.data.{type}[{name}]\n"))
 
 def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     """
