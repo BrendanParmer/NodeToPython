@@ -216,7 +216,7 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
                 if type(attr) == mathutils.Vector:
                     attr = vec3_to_py_str(attr)
                 if type(attr) == bpy.types.bpy_prop_array:
-                    attr = vec4_to_py_str(attr)
+                    attr = vec4_to_py_str(list(attr))
                 if type(attr) == bpy.types.Material:
                     name = str_to_py_str(attr.name)
                     file.write((f"{inner}if {name} in bpy.data.materials:\n"))
@@ -449,11 +449,13 @@ def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     inner (str): indentation string
     node_vars (dict): dictionary for (node, variable) name pairs
     """
+    file.write(f"{inner}#Set parents")
     for node in node_tree.nodes:
         if node is not None and node.parent is not None:
             node_var = node_vars[node]
             parent_var = node_vars[node.parent]
             file.write(f"{inner}{node_var}.parent = {parent_var}\n")
+    file.write("\n")
 
 def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
     """
@@ -466,10 +468,12 @@ def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_vars (dict): dictionary for (node, variable) name pairs
     """
 
+    file.write(f"{inner}#Set locations")
     for node in node_tree.nodes:
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.location "
                     f"= ({node.location.x}, {node.location.y})\n"))
+    file.write("\n")
 
 def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
     """
@@ -482,11 +486,13 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_vars (dict): dictionary for (node, variable) name pairs
     """
 
+    file.write(f"{inner}Set dimensions")
     for node in node_tree.nodes:
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}\n"))
-        
+    file.write("\n")
+    
 def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
                 node_vars: dict):
     """
