@@ -703,14 +703,11 @@ def image_user_settings(node, file: TextIO, inner: str, node_var: str):
                     f"{getattr(img_usr, img_usr_attr)}\n"))
     
 def zip_addon(zip_dir: str):
-    pass
     """
     Zips up the addon and removes the directory
 
     Parameters:
     zip_dir (str): path to the top-level addon directory
     """
-    """
     shutil.make_archive(zip_dir, "zip", zip_dir)
     shutil.rmtree(zip_dir)
-    """
