@@ -239,6 +239,12 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
                     file.write((f"{inner}\t{node_var}.{setting} = "
                                 f"bpy.data.materials[{name}]\n"))
                     continue
+                if type(attr) == bpy.types.Object:
+                    name = str_to_py_str(attr.name)
+                    file.write((f"{inner}if {name} in bpy.data.objects:\n"))
+                    file.write((f"{inner}\t{node_var}.{setting} = "
+                                f"bpy.data.objects[{name}]\n"))
+                    continue
                 file.write((f"{inner}{node_var}.{setting} "
                             f"= {attr}\n"))
 
@@ -451,8 +457,16 @@ def set_output_defaults(node, file: TextIO, inner: str, node_var: str):
     inner (str): indentation string
     node_var (str): variable name for the node we're setting output defaults for
     """
-    if node.bl_idname == 'ShaderNodeValue':
+    output_default_nodes = {'ShaderNodeValue', 
+                            'ShaderNodeRGB', 
+                            'ShaderNodeNormal'}
+
+    if node.bl_idname in output_default_nodes:
         dv = node.outputs[0].default_value
+        if node.bl_idname == 'ShaderNodeRGB':
+            dv = vec4_to_py_str(list(dv))
+        if node.bl_idname == 'ShaderNodeNormal':
+            dv = vec3_to_py_str(dv)
         file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
 
 def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):

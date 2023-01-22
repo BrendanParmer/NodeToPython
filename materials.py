@@ -10,7 +10,7 @@ node_settings = {
     "ShaderNodeBevel" : ["samples"],
     "ShaderNodeVertexColor" : ["layer_name"],
     "ShaderNodeTangent" : ["direction_type", "axis"],
-    "ShaderNodeTexCoord" : ["from_instancer"],
+    "ShaderNodeTexCoord" : ["object", "from_instancer"],
     "ShaderNodeUVMap" : ["from_instancer", "uv_map"],
     "ShaderNodeWireframe" : ["use_pixel_size"],
 
@@ -35,11 +35,12 @@ node_settings = {
     "ShaderNodeTexMagic" : ["turbulence_depth"],
     "ShaderNodeTexMusgrave" : ["musgrave_dimensions", "musgrave_type"],
     "ShaderNodeTexNoise" : ["noise_dimensions"],
-    "ShaderNodeTexPointDensity" : ["point_source", "space", "radius", 
+    "ShaderNodeTexPointDensity" : ["point_source", "object", "space", "radius", 
                                     "interpolation", "resolution", 
                                     "vertex_color_source"],
     "ShaderNodeTexSky" : ["sky_type", "sun_direction", "turbidity",
-                            "ground_albedo", "sun_disc", "sun_elevation", 
+                            "ground_albedo", "sun_disc", "sun_size", 
+                            "sun_intensity", "sun_elevation", 
                             "sun_rotation", "altitude", "air_density", 
                             "dust_density", "ozone_density"],
     "ShaderNodeTexVoronoi" : ["voronoi_dimensions", "feature", "distance"],
@@ -187,7 +188,9 @@ class MaterialToPython(bpy.types.Operator):
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
 
-            set_input_defaults(node, file, inner, node_var, addon_dir)
+                set_input_defaults(node, file, inner, node_var, addon_dir)
+                set_output_defaults(node, file, inner, node_var)
+
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
