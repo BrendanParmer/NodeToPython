@@ -212,9 +212,17 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
             attr = getattr(node, setting, None)
             if attr:
                 if type(attr) == str:
-                    attr = f"\'{attr}\'"
+                    attr = enum_to_py_str(attr)
                 if type(attr) == mathutils.Vector:
-                    attr = f"({attr[0]}, {attr[1]}, {attr[2]})"
+                    attr = vec3_to_py_str(attr)
+                if type(attr) == mathutils.Color:
+                    attr = vec4_to_py_str(attr)
+                if type(attr) == bpy.types.Material:
+                    name = str_to_py_str(attr.name)
+                    file.write((f"{inner}if {name} in bpy.data.materials:\n"))
+                    file.write((f"{inner}\t{node_var}.{setting} = "
+                                f"bpy.data.materials[{name}]\n"))
+                    continue
                 file.write((f"{inner}{node_var}.{setting} "
                             f"= {attr}\n"))
 

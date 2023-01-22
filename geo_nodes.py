@@ -54,8 +54,15 @@ geo_node_settings = {
     "GeometryNodeSeparateGeometry" : ["domain"],
 
     #input
+    "FunctionNodeInputBool" : ["boolean"],
     "GeometryNodeCollectionInfo" : ["transform_space"],
+    "FunctionNodeInputColor" : ["color"],
+    "FunctionNodeInputInt" : ["integer"],
+    "GeometryNodeInputMaterial" : ["material"],
     "GeometryNodeObjectInfo" : ["transform_space"],
+    "FunctionNodeInputString" : ["string"],
+    "ShaderNodeValue" : ["outputs[0].default_value"],
+    "FunctionNodeInputVector" : ["vector"],
     "GeometryNodeInputNamedAttribute" : ["data_type"],
 
     #mesh
@@ -326,12 +333,17 @@ class GeoNodesToPython(bpy.types.Operator):
         
         process_geo_nodes_group(nt, 2)
 
-        file.write(f"\t\tname = bpy.context.object.name\n")
-        file.write(f"\t\tobj = bpy.data.objects[name]\n")
-        mod_name = str_to_py_str(nt.name)
-        file.write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
-                    f"type = 'NODES')\n"))
-        file.write(f"\t\tmod.node_group = {nt_var}\n")
+        def apply_modifier():
+            #get object
+            file.write(f"\t\tname = bpy.context.object.name\n")
+            file.write(f"\t\tobj = bpy.data.objects[name]\n")
+
+            #set modifier to the one we just created
+            mod_name = str_to_py_str(nt.name)
+            file.write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
+                        f"type = 'NODES')\n"))
+            file.write(f"\t\tmod.node_group = {nt_var}\n")
+        apply_modifier()
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         
