@@ -173,8 +173,14 @@ class GeoNodesToPython(bpy.types.Operator):
         #set to keep track of already created node trees
         node_trees = set()
 
-        def process_geo_nodes_group(node_tree, level):
-            node_tree_var = clean_string(node_tree.name)
+        #dictionary to keep track of node->variable name pairs
+        node_vars = {}
+
+        #keeps track of all used variables
+        used_vars = set()
+        
+        def process_geo_nodes_group(node_tree, level, node_vars, used_vars):
+            node_tree_var = create_var(node_tree.name, used_vars)
                 
             outer, inner = make_indents(level)
 
@@ -192,12 +198,13 @@ class GeoNodesToPython(bpy.types.Operator):
 
             #initialize nodes
             file.write(f"{inner}#initialize {node_tree_var} nodes\n")
-            node_vars = {}
+            
             for node in node_tree.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_geo_nodes_group(node_nt, level + 1)
+                        process_geo_nodes_group(node_nt, level + 1, node_vars, 
+                                                used_vars)
                         node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
                     file.write(f"{inner}#{node_tree_var} inputs\n")
@@ -300,8 +307,8 @@ class GeoNodesToPython(bpy.types.Operator):
                     outputs_set = True
 
                 #create node
-                node_var, node_vars = create_node(node, file, inner, 
-                                                    node_tree_var, node_vars)
+                node_var = create_node(node, file, inner, node_tree_var, 
+                                      node_vars, used_vars)
                 set_settings_defaults(node, geo_node_settings, file, inner, 
                                         node_var)
                 hide_sockets(node, file, inner, node_var)
@@ -329,8 +336,9 @@ class GeoNodesToPython(bpy.types.Operator):
             #create node group
             file.write((f"\n{outer}{node_tree_var} = "
                         f"{node_tree_var}_node_group()\n\n"))
+            return used_vars
         
-        process_geo_nodes_group(nt, 2)
+        process_geo_nodes_group(nt, 2, node_vars, used_vars)
 
         def apply_modifier():
             #get object
@@ -353,7 +361,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.close()
 
-        #zip_addon(zip_dir)
+        zip_addon(zip_dir)
 
         return {'FINISHED'}
 

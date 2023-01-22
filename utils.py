@@ -129,6 +129,29 @@ def init_operator(file: TextIO, name: str, idname: str, label: str):
     file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
     file.write("\n")
 
+def create_var(name: str, used_vars: set) -> str:
+    """
+    Creates a unique variable name for a node tree
+
+    Parameters:
+    name (str): basic string we'd like to create the variable name out of
+    used_vars (set): set containing all used variable names so far
+
+    Returns:
+    clean_name (str): variable name for the node tree
+    """
+    if name == "":
+        name = "unnamed"
+    clean_name = clean_string(name)
+    var = clean_name
+    i = 0
+    while var in used_vars:
+        i += 1
+        var = f"{clean_name}_{i}"
+
+    used_vars.add(var)
+    return var
+
 def make_indents(level: int) -> Tuple[str, str]:
     """
     Returns strings with the correct number of indentations 
@@ -149,7 +172,7 @@ def make_indents(level: int) -> Tuple[str, str]:
     return outer, inner
 
 def create_node(node, file: TextIO, inner: str, node_tree_var: str, 
-                node_vars: dict) -> Tuple[str, dict]:
+                node_vars: dict, used_vars: set) -> str:
     """
     Initializes a new node with location, dimension, and label info
 
@@ -158,24 +181,17 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     file (TextIO): file containing the generated add-on
     inner (str): indentation level for this logic
     node_tree_var (str): variable name for the node tree
-    node_vars (dict): dictionary containing (bpy.types.Node, str) key-value 
-        pairs, where the key is the node and the value its corresponding 
-        variable name in the addon
+    node_vars (dict): dictionary containing (bpy.types.Node, str)
+        pairs, with a Node and its corresponding variable name
+    used_vars (set): set of used variable names
 
     Returns:
     node_var (str): variable name for the node
-    node_vars (dict): the updated variable name dictionary
     """
 
     file.write(f"{inner}#node {node.name}\n")
 
-    node_var = clean_string(node.name)
-    if node_var == "":
-        i = 0
-        while node_var in node_vars:
-            node_var = f"unnamed_node_{i}"
-            i += 1
-
+    node_var = create_var(node.name, used_vars)
     node_vars[node] = node_var
 
     file.write((f"{inner}{node_var} "
@@ -193,7 +209,7 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     if node.mute:
         file.write(f"{inner}{node_var}.mute = True\n")
         
-    return node_var, node_vars
+    return node_var
 
 def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
                             node_var: str):
@@ -449,7 +465,7 @@ def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     inner (str): indentation string
     node_vars (dict): dictionary for (node, variable) name pairs
     """
-    file.write(f"{inner}#Set parents")
+    file.write(f"{inner}#Set parents\n")
     for node in node_tree.nodes:
         if node is not None and node.parent is not None:
             node_var = node_vars[node]
@@ -468,7 +484,7 @@ def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_vars (dict): dictionary for (node, variable) name pairs
     """
 
-    file.write(f"{inner}#Set locations")
+    file.write(f"{inner}#Set locations\n")
     for node in node_tree.nodes:
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.location "
@@ -486,13 +502,13 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_vars (dict): dictionary for (node, variable) name pairs
     """
 
-    file.write(f"{inner}Set dimensions")
+    file.write(f"{inner}#sSet dimensions\n")
     for node in node_tree.nodes:
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}\n"))
     file.write("\n")
-    
+
 def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
                 node_vars: dict):
     """
@@ -673,11 +689,14 @@ def image_user_settings(node, file: TextIO, inner: str, node_var: str):
                     f"{getattr(img_usr, img_usr_attr)}\n"))
     
 def zip_addon(zip_dir: str):
+    pass
     """
     Zips up the addon and removes the directory
 
     Parameters:
     zip_dir (str): path to the top-level addon directory
     """
+    """
     shutil.make_archive(zip_dir, "zip", zip_dir)
     shutil.rmtree(zip_dir)
+    """

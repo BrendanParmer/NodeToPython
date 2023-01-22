@@ -118,15 +118,23 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"\t\tmat.use_nodes = True\n")
         create_material()
         
+        #set to keep track of already created node trees
         node_trees = set()
 
-        def process_mat_node_group(node_tree, level):
-            nt_var = clean_string(node_tree.name)
-            nt_name = node_tree.name
+        #dictionary to keep track of node->variable name pairs
+        node_vars = {}
+
+        #keeps track of all used variables
+        used_vars = set()
+
+        def process_mat_node_group(node_tree, level, node_vars, used_vars):
 
             if level == 2: #outermost node group
-                nt_var = clean_string(self.material_name)
+                nt_var = create_var(self.material_name, used_vars)
                 nt_name = self.material_name
+            else:
+                nt_var = create_var(node_tree.name, used_vars)
+                nt_name = node_tree.name
 
             outer, inner = make_indents(level)
 
@@ -154,11 +162,11 @@ class MaterialToPython(bpy.types.Operator):
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_mat_node_group(node_nt, level + 1)
+                        process_mat_node_group(node_nt, level + 1, node_vars, used_vars)
                         node_trees.add(node_nt)
                 
-                node_var, node_vars = create_node(node, file, inner, nt_var,
-                                                  node_vars)
+                node_var = create_node(node, file, inner, nt_var, node_vars, 
+                                       used_vars)
                 
                 set_settings_defaults(node, node_settings, file, inner, node_var)
                 hide_sockets(node, file, inner, node_var)
@@ -179,7 +187,7 @@ class MaterialToPython(bpy.types.Operator):
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
 
-                set_input_defaults(node, file, inner, node_var, addon_dir)
+            set_input_defaults(node, file, inner, node_var, addon_dir)
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
@@ -188,7 +196,7 @@ class MaterialToPython(bpy.types.Operator):
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")
                 
-        process_mat_node_group(nt, 2)
+        process_mat_node_group(nt, 2, node_vars, used_vars)
 
         file.write("\t\treturn {'FINISHED'}\n\n")
 
