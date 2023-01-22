@@ -11,7 +11,7 @@
 ## About
 A Blender add-on to create add-ons! This addo-on will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
 
-It automatically handles node layout, default values, sub-node groups, naming, and more! 
+It automatically handles node layout, default values, subgroups, naming, colors, and more! 
 
 I think Blender's node-based editors are powerful, yet accessible tools, and I wanted to make scripting them easier for add-on creators. Combining Python with node based setups allows you to do things that would otherwise be tedious or impossible, such as
 * `for` loops
@@ -33,28 +33,28 @@ Once you've installed the add-on, you'll see a new tab to the side of a Node Edi
 
 In the tab, there's panels to create add-ons for Geometry Nodes and Materials, each with a drop-down menu. 
 
-Just select the one you want, and soon a python file will be created in an `addons` folder located in the folder where your blend file is.
+Just select the one you want, and soon a zip file will be created in an `addons` folder located in the folder where your blend file is.
 
 From here, you can install it like a regular add-on.
 
 ## Future
 * Expansion to Compositing nodes
-* Copy over referenced assets in the scene (Collections, Objects, Materials, Textures, etc.)
+* Add all referenced assets to the Asset Library for use outside of the original blend file
 * Automatically format code to be PEP8 compliant
 
 ## Potential Issues
 * As of version 2.0.0, the add-on will not set default values for
-    * Collections
-    * Materials
-    * Objects
-    * Textures
     * Scripts
     * IES files
     * Filepaths
+    * UV maps
+* Currently when setting default values for the following, the add-on must be run in the same blend file as the node group was created in to set the default, otherwise it will just set it to `None`:
+    * Materials
+    * Objects
+    * Collections
+    * Textures
 
-    as they won't exist in every blend file. I'm expecting to support some of these in the future.
-
-    There are a few nodes that don't set their default values like other ones, though these should also soon be supported. 
+* In a future version, I plan on having the add-on adding all of the above to the Asset Library for reference
 
 ## Bug Reports and Suggestions
 
