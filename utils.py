@@ -110,7 +110,7 @@ def create_header(file: TextIO, name: str):
     file.write("}\n")
     file.write("\n")
     file.write("import bpy\n")
-    file.write("import os")
+    file.write("import os\n")
     file.write("\n")
 
 def init_operator(file: TextIO, name: str, idname: str, label: str):

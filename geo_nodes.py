@@ -141,7 +141,8 @@ class GeoNodesToPython(bpy.types.Operator):
 
         #set up names to use in generated addon
         nt_var = clean_string(nt.name)
-        class_name = nt.name.replace(" ", "").replace('.', "")
+        class_name = clean_string(nt.name.replace(" ", "").replace('.', ""), 
+                                  lower = False)
 
         #find base directory to save new addon
         base_dir = bpy.path.abspath("//")
@@ -317,10 +318,20 @@ class GeoNodesToPython(bpy.types.Operator):
 
             init_links(node_tree, file, inner, node_tree_var, node_vars)
             
+            file.write(f"{inner}return {node_tree_var}\n")
+
             #create node group
-            file.write(f"\n{outer}{node_tree_var}_node_group()\n\n")
+            file.write((f"\n{outer}{node_tree_var} = "
+                        f"{node_tree_var}_node_group()\n\n"))
         
         process_geo_nodes_group(nt, 2)
+
+        file.write(f"\t\tname = bpy.context.object.name\n")
+        file.write(f"\t\tobj = bpy.data.objects[name]\n")
+        mod_name = str_to_py_str(nt.name)
+        file.write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
+                    f"type = 'NODES')\n"))
+        file.write(f"\t\tmod.node_group = {nt_var}\n")
 
         file.write("\t\treturn {'FINISHED'}\n\n")
         
@@ -331,7 +342,7 @@ class GeoNodesToPython(bpy.types.Operator):
 
         file.close()
 
-        zip_addon(zip_dir)
+        #zip_addon(zip_dir)
 
         return {'FINISHED'}
 
