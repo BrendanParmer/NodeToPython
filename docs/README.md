@@ -1,11 +1,11 @@
 # Node to Python
 
-![Node To Python Logo](./img/ntp.jpg "")
+![Node To Python Logo](./img/ntp.jpg "Node To Python Logo")
 
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
  
 ## About
-A Blender add-on to create add-ons! This addo-on will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
+A Blender add-on to create add-ons! This add-on will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
 
 It automatically handles node layout, default values, subgroups, naming, colors, and more! 
 
@@ -25,11 +25,11 @@ NodeToPython v2.0 is compatible with Blender 3.0 - 3.4 on Windows, macOS, and Li
 3. Click Install, and find where you downloaded the zip file. Then hit the `Install Add-on` button, and you're done!
 
 ## Usage
-Once you've installed the add-on, you'll see a new tab in the Node Editor's sidebar, which you can open with keyboard shortcut `N`.
+Once you've installed the add-on, you'll see a new tab in any Node Editor's sidebar. You can open this with keyboard shortcut `N` when focused in the Node Editor.
 
 In the tab, there's panels to create add-ons for Geometry Nodes and Materials, each with a drop-down menu. 
 
-![Add-on Location](./img/location.png "")
+![Add-on Location](./img/location.png "Add-on Location")
 
 Just select the one you want, and soon a zip file will be created in an `addons` folder located in the folder where your blend file is.
 
@@ -38,7 +38,9 @@ From here, you can install it like a regular add-on.
 ## Future
 * Expansion to Compositing nodes
 * Add all referenced assets to the Asset Library for use outside of the original blend file
+* Auto-set handle movies and image sequences
 * Automatically format code to be PEP8 compliant
+* Automatically detect the minimum version of Blender needed to run the add-on
 
 ## Potential Issues
 * As of version 2.0.0, the add-on will not set default values for
