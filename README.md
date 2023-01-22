@@ -29,7 +29,7 @@ NodeToPython v2.0 is compatible with Blender 3.0 - 3.4 on Windows, macOS, and Li
 3. Click Install, and find where you downloaded the zip file. Then hit the `Install Add-on` button, and you're done!
 
 ## Usage
-Once you've installed the add-on, you'll see a new tab to the side of a Node Editor. 
+Once you've installed the add-on, you'll see a new tab in the Node Editor's sidebar, which you can open with keyboard shortcut `N`.
 
 In the tab, there's panels to create add-ons for Geometry Nodes and Materials, each with a drop-down menu. 
 
