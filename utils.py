@@ -215,7 +215,7 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
                     attr = enum_to_py_str(attr)
                 if type(attr) == mathutils.Vector:
                     attr = vec3_to_py_str(attr)
-                if type(attr) == mathutils.Color:
+                if type(attr) == bpy.types.bpy_prop_array:
                     attr = vec4_to_py_str(attr)
                 if type(attr) == bpy.types.Material:
                     name = str_to_py_str(attr.name)
@@ -424,6 +424,20 @@ def in_file_inputs(input, file: TextIO, inner: str, socket_var: str, type: str):
         file.write(f"{inner}if {name} in bpy.data.{type}:\n")
         file.write((f"{inner}\t{socket_var}.default_value = "
                                 f"bpy.data.{type}[{name}]\n"))
+
+def set_output_defaults(node, file: TextIO, inner: str, node_var: str):
+    """
+    Some output sockets need default values set. It's rather annoying
+
+    Parameters:
+    node (bpy.types.Node): node for the output we're setting
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation string
+    node_var (str): variable name for the node we're setting output defaults for
+    """
+    if node.bl_idname == 'ShaderNodeValue':
+        dv = node.outputs[0].default_value
+        file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
 
 def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     """

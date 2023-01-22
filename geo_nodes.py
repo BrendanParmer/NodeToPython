@@ -61,7 +61,6 @@ geo_node_settings = {
     "GeometryNodeInputMaterial" : ["material"],
     "GeometryNodeObjectInfo" : ["transform_space"],
     "FunctionNodeInputString" : ["string"],
-    "ShaderNodeValue" : ["outputs[0].default_value"],
     "FunctionNodeInputVector" : ["vector"],
     "GeometryNodeInputNamedAttribute" : ["data_type"],
 
@@ -318,7 +317,7 @@ class GeoNodesToPython(bpy.types.Operator):
                     curve_node_settings(node, file, inner, node_var)
                 
                 set_input_defaults(node, file, inner, node_var, addon_dir)
-            
+                set_output_defaults(node, file, inner, node_var)
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
