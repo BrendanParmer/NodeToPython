@@ -1,11 +1,7 @@
 # Node to Python
-<img 
-     src="https://github.com/BrendanParmer/NodeToPython/blob/main/img/ntp.jpg" 
-     alt="Node To Python" 
-     width = "400" 
-     height = "400"
-    >
-    
+
+![Node To Python Logo](./img/ntp.jpg "")
+
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
  
 ## About
@@ -32,6 +28,8 @@ NodeToPython v2.0 is compatible with Blender 3.0 - 3.4 on Windows, macOS, and Li
 Once you've installed the add-on, you'll see a new tab in the Node Editor's sidebar, which you can open with keyboard shortcut `N`.
 
 In the tab, there's panels to create add-ons for Geometry Nodes and Materials, each with a drop-down menu. 
+
+![Add-on Location](./img/location.png "")
 
 Just select the one you want, and soon a zip file will be created in an `addons` folder located in the folder where your blend file is.
 
