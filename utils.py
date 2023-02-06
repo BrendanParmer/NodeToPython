@@ -303,7 +303,7 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
         file.write((f"{inner}{element_var}.alpha = "
                     f"{element.alpha}\n"))
         color_str = vec4_to_py_str(element.color)
-        file.write((f"{element_var}.color = {color_str}\n\n"))
+        file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
 
 def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     """
@@ -318,37 +318,35 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
 
     #mapping settings
     file.write(f"{inner}#mapping settings\n")
-    mapping = f"{inner}{node_var}.mapping"
+    mapping_var = f"{inner}{node_var}.mapping"
 
     #extend
     extend = enum_to_py_str(node.mapping.extend)
-    file.write(f"{mapping}.extend = {extend}\n")
+    file.write(f"{mapping_var}.extend = {extend}\n")
     #tone
     tone = enum_to_py_str(node.mapping.tone)
-    file.write(f"{mapping}.tone = {tone}\n")
+    file.write(f"{mapping_var}.tone = {tone}\n")
 
     #black level
-    b_lvl = node.mapping.black_level
-    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
-    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+    b_lvl_str = vec3_to_py_str(node.mapping.black_level)
+    file.write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
     #white level
-    w_lvl = node.mapping.white_level
-    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
-    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
+    w_lvl_str = vec3_to_py_str(node.mapping.white_level)
+    file.write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
 
     #minima and maxima
     min_x = node.mapping.clip_min_x
-    file.write(f"{mapping}.clip_min_x = {min_x}\n")
+    file.write(f"{mapping_var}.clip_min_x = {min_x}\n")
     min_y = node.mapping.clip_min_y
-    file.write(f"{mapping}.clip_min_y = {min_y}\n")
+    file.write(f"{mapping_var}.clip_min_y = {min_y}\n")
     max_x = node.mapping.clip_max_x
-    file.write(f"{mapping}.clip_max_x = {max_x}\n")
+    file.write(f"{mapping_var}.clip_max_x = {max_x}\n")
     max_y = node.mapping.clip_max_y
-    file.write(f"{mapping}.clip_max_y = {max_y}\n")
+    file.write(f"{mapping_var}.clip_max_y = {max_y}\n")
 
     #use_clip
     use_clip = node.mapping.use_clip
-    file.write(f"{mapping}.use_clip = {use_clip}\n")
+    file.write(f"{mapping_var}.use_clip = {use_clip}\n")
 
     #create curves
     for i, curve in enumerate(node.mapping.curves):
@@ -371,7 +369,7 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     
     #update curve
     file.write(f"{inner}#update curve after changes\n")
-    file.write(f"{mapping}.update()\n")
+    file.write(f"{mapping_var}.update()\n")
 
 def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
                        addon_dir: str):
