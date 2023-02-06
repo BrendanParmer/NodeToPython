@@ -290,9 +290,11 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
     file.write("\n")
 
     #key points
+    file.write((f"{inner}{node_var}.color_ramp.elements.remove"
+                f"({node_var}.color_ramp.elements[0])\n"))
     for i, element in enumerate(color_ramp.elements):
         element_var = f"{node_var}_cre_{i}"
-        if i < 2:
+        if i == 0:
             file.write(f"{inner}{element_var} = "
                        f"{node_var}.color_ramp.elements[{i}]\n")
             file.write(f"{inner}{element_var}.position = {element.position}\n")
