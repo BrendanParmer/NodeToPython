@@ -36,6 +36,7 @@ Just select the one you want, and soon a zip file will be created in an `addons`
 From here, you can install it like a regular add-on.
 
 ## Future
+* A "copy" mode, where just the functionality to build the node group is just copied to the clipbaord
 * Expansion to Compositing nodes
 * Add all referenced assets to the Asset Library for use outside of the original blend file
 * Auto-set handle movies and image sequences
@@ -43,7 +44,7 @@ From here, you can install it like a regular add-on.
 * Automatically detect the minimum version of Blender needed to run the add-on
 
 ## Potential Issues
-* As of version 2.0.0, the add-on will not set default values for
+* As of version 2.0.1, the add-on will not set default values for
     * Scripts
     * IES files
     * Filepaths

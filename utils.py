@@ -278,24 +278,32 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
 
     color_ramp = node.color_ramp
     #settings
-    file.write((f"{inner}{node_var}.color_ramp.color_mode = "
-                f"\'{color_ramp.color_mode}\'\n"))
+    color_mode = enum_to_py_str(color_ramp.color_mode)
+    file.write(f"{inner}{node_var}.color_ramp.color_mode = {color_mode}\n")
+
+    hue_interpolation = enum_to_py_str(color_ramp.hue_interpolation)
     file.write((f"{inner}{node_var}.color_ramp.hue_interpolation = "
-                f"\'{color_ramp.hue_interpolation}\'\n"))
+                f"{hue_interpolation}\n"))
+    interpolation = enum_to_py_str(color_ramp.interpolation)
     file.write((f"{inner}{node_var}.color_ramp.interpolation "
-                f"= '{color_ramp.interpolation}'\n"))
+                f"= {interpolation}\n"))
     file.write("\n")
+
     #key points
     for i, element in enumerate(color_ramp.elements):
-        file.write((f"{inner}{node_var}_cre_{i} = "
-                    f"{node_var}.color_ramp.elements"
-                    f".new({element.position})\n"))
-        file.write((f"{inner}{node_var}_cre_{i}.alpha = "
+        element_var = f"{node_var}_cre_{i}"
+        if i < 2:
+            file.write(f"{inner}{element_var} = "
+                       f"{node_var}.color_ramp.elements[{i}]\n")
+            file.write(f"{inner}{element_var}.position = {element.position}\n")
+        else:
+            file.write((f"{inner}{element_var} = "
+                        f"{node_var}.color_ramp.elements"
+                        f".new({element.position})\n"))
+        file.write((f"{inner}{element_var}.alpha = "
                     f"{element.alpha}\n"))
-        col = element.color
-        r, g, b, a = col[0], col[1], col[2], col[3]
-        file.write((f"{inner}{node_var}_cre_{i}.color = "
-                    f"({r}, {g}, {b}, {a})\n\n"))
+        color_str = vec4_to_py_str(element.color)
+        file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
 
 def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     """
@@ -310,37 +318,35 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
 
     #mapping settings
     file.write(f"{inner}#mapping settings\n")
-    mapping = f"{inner}{node_var}.mapping"
+    mapping_var = f"{inner}{node_var}.mapping"
 
     #extend
-    extend = f"\'{node.mapping.extend}\'"
-    file.write(f"{mapping}.extend = {extend}\n")
+    extend = enum_to_py_str(node.mapping.extend)
+    file.write(f"{mapping_var}.extend = {extend}\n")
     #tone
-    tone = f"\'{node.mapping.tone}\'"
-    file.write(f"{mapping}.tone = {tone}\n")
+    tone = enum_to_py_str(node.mapping.tone)
+    file.write(f"{mapping_var}.tone = {tone}\n")
 
     #black level
-    b_lvl = node.mapping.black_level
-    b_lvl_str = f"({b_lvl[0]}, {b_lvl[1]}, {b_lvl[2]})"
-    file.write((f"{mapping}.black_level = {b_lvl_str}\n"))
+    b_lvl_str = vec3_to_py_str(node.mapping.black_level)
+    file.write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
     #white level
-    w_lvl = node.mapping.white_level
-    w_lvl_str = f"({w_lvl[0]}, {w_lvl[1]}, {w_lvl[2]})"
-    file.write((f"{mapping}.white_level = {w_lvl_str}\n"))
+    w_lvl_str = vec3_to_py_str(node.mapping.white_level)
+    file.write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
 
     #minima and maxima
     min_x = node.mapping.clip_min_x
-    file.write(f"{mapping}.clip_min_x = {min_x}\n")
+    file.write(f"{mapping_var}.clip_min_x = {min_x}\n")
     min_y = node.mapping.clip_min_y
-    file.write(f"{mapping}.clip_min_y = {min_y}\n")
+    file.write(f"{mapping_var}.clip_min_y = {min_y}\n")
     max_x = node.mapping.clip_max_x
-    file.write(f"{mapping}.clip_max_x = {max_x}\n")
+    file.write(f"{mapping_var}.clip_max_x = {max_x}\n")
     max_y = node.mapping.clip_max_y
-    file.write(f"{mapping}.clip_max_y = {max_y}\n")
+    file.write(f"{mapping_var}.clip_max_y = {max_y}\n")
 
     #use_clip
     use_clip = node.mapping.use_clip
-    file.write(f"{mapping}.use_clip = {use_clip}\n")
+    file.write(f"{mapping_var}.use_clip = {use_clip}\n")
 
     #create curves
     for i, curve in enumerate(node.mapping.curves):
@@ -351,14 +357,19 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
             point_j = f"{inner}{curve_i}_point_{j}"
 
             loc = point.location
-            file.write((f"{point_j} = {curve_i}.points.new({loc[0]}, {loc[1]})\n"))
+            loc_str = f"{loc[0]}, {loc[1]}"
+            if j < 2:
+                file.write(f"{point_j} = {curve_i}.points[{j}]\n")
+                file.write(f"{point_j}.location = ({loc_str})\n")
+            else:
+                file.write((f"{point_j} = {curve_i}.points.new({loc_str})\n"))
 
-            handle = f"\'{point.handle_type}\'"
+            handle = enum_to_py_str(point.handle_type)
             file.write(f"{point_j}.handle_type = {handle}\n")
     
     #update curve
     file.write(f"{inner}#update curve after changes\n")
-    file.write(f"{mapping}.update()\n")
+    file.write(f"{mapping_var}.update()\n")
 
 def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
                        addon_dir: str):
@@ -669,14 +680,16 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     file.write(f"{inner}#set image settings\n")
 
     #source
-    file.write(f"{inner}{img_var}.source = \'{img.source}\'\n")
+    source = enum_to_py_str(img.source)
+    file.write(f"{inner}{img_var}.source = {source}\n")
 
     #color space settings
-    file.write((f"{inner}{img_var}.colorspace_settings.name = "
-                f"\'{img.colorspace_settings.name}\'\n"))
+    color_space = enum_to_py_str(img.colorspace_settings.name)
+    file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
     
     #alpha mode
-    file.write(f"{inner}{img_var}.alpha_mode = \'{img.alpha_mode}\'\n")
+    alpha_mode = enum_to_py_str(img.alpha_mode)
+    file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
 
 def image_user_settings(node, file: TextIO, inner: str, node_var: str):
     """
