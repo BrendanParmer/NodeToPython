@@ -278,24 +278,32 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
 
     color_ramp = node.color_ramp
     #settings
-    file.write((f"{inner}{node_var}.color_ramp.color_mode = "
-                f"\'{color_ramp.color_mode}\'\n"))
+    color_mode = enum_to_py_str(color_ramp.color_mode)
+    file.write(f"{inner}{node_var}.color_ramp.color_mode = {color_mode}\n")
+
+    hue_interpolation = enum_to_py_str(color_ramp.hue_interpolation)
     file.write((f"{inner}{node_var}.color_ramp.hue_interpolation = "
-                f"\'{color_ramp.hue_interpolation}\'\n"))
+                f"{hue_interpolation}\n"))
+    interpolation = enum_to_py_str(color_ramp.interpolation)
     file.write((f"{inner}{node_var}.color_ramp.interpolation "
-                f"= '{color_ramp.interpolation}'\n"))
+                f"= {interpolation}\n"))
     file.write("\n")
+
     #key points
     for i, element in enumerate(color_ramp.elements):
-        file.write((f"{inner}{node_var}_cre_{i} = "
-                    f"{node_var}.color_ramp.elements"
-                    f".new({element.position})\n"))
-        file.write((f"{inner}{node_var}_cre_{i}.alpha = "
+        element_var = f"{node_var}_cre_{i}"
+        if i < 2:
+            file.write(f"{inner}{element_var} = "
+                       f"{node_var}.color_ramp.elements[{i}]\n")
+            file.write(f"{inner}{element_var}.position = {element.position}\n")
+        else:
+            file.write((f"{inner}{element_var} = "
+                        f"{node_var}.color_ramp.elements"
+                        f".new({element.position})\n"))
+        file.write((f"{inner}{element_var}.alpha = "
                     f"{element.alpha}\n"))
-        col = element.color
-        r, g, b, a = col[0], col[1], col[2], col[3]
-        file.write((f"{inner}{node_var}_cre_{i}.color = "
-                    f"({r}, {g}, {b}, {a})\n\n"))
+        color_str = vec4_to_py_str(element.color)
+        file.write((f"{element_var}.color = {color_str}\n\n"))
 
 def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     """
@@ -313,10 +321,10 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     mapping = f"{inner}{node_var}.mapping"
 
     #extend
-    extend = f"\'{node.mapping.extend}\'"
+    extend = enum_to_py_str(node.mapping.extend)
     file.write(f"{mapping}.extend = {extend}\n")
     #tone
-    tone = f"\'{node.mapping.tone}\'"
+    tone = enum_to_py_str(node.mapping.tone)
     file.write(f"{mapping}.tone = {tone}\n")
 
     #black level
@@ -351,9 +359,14 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
             point_j = f"{inner}{curve_i}_point_{j}"
 
             loc = point.location
-            file.write((f"{point_j} = {curve_i}.points.new({loc[0]}, {loc[1]})\n"))
+            loc_str = f"{loc[0]}, {loc[1]}"
+            if j < 2:
+                file.write(f"{point_j} = {curve_i}.points[{j}]\n")
+                file.write(f"{point_j}.location = ({loc_str})\n")
+            else:
+                file.write((f"{point_j} = {curve_i}.points.new({loc_str})\n"))
 
-            handle = f"\'{point.handle_type}\'"
+            handle = enum_to_py_str(point.handle_type)
             file.write(f"{point_j}.handle_type = {handle}\n")
     
     #update curve
@@ -669,14 +682,16 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     file.write(f"{inner}#set image settings\n")
 
     #source
-    file.write(f"{inner}{img_var}.source = \'{img.source}\'\n")
+    source = enum_to_py_str(img.source)
+    file.write(f"{inner}{img_var}.source = {source}\n")
 
     #color space settings
-    file.write((f"{inner}{img_var}.colorspace_settings.name = "
-                f"\'{img.colorspace_settings.name}\'\n"))
+    color_space = enum_to_py_str(img.colorspace_settings.name)
+    file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
     
     #alpha mode
-    file.write(f"{inner}{img_var}.alpha_mode = \'{img.alpha_mode}\'\n")
+    alpha_mode = enum_to_py_str(img.alpha_mode)
+    file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
 
 def image_user_settings(node, file: TextIO, inner: str, node_var: str):
     """
