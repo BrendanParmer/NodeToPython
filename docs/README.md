@@ -20,7 +20,8 @@ NodeToPython recreates the node networks for you, so you can focus on the good s
 NodeToPython v2.0 is compatible with Blender 3.0 - 3.4 on Windows, macOS, and Linux. I generally try to update the addon to handle new nodes around the beta release of each update.
 
 ## Installation
-1. Download the .zip file from the [latest release](https://github.com/BrendanParmer/NodeToPython/releases)
+1. Download the `NodeToPython.zip` file from the [latest release](https://github.com/BrendanParmer/NodeToPython/releases)
+    * If you download other options, you'll need to rename the zip and the first folder to "NodeToPython" so Blender can properly import the module
 2. In Blender, navigate to `Edit > Preferences > Add-ons`
 3. Click Install, and find where you downloaded the zip file. Then hit the `Install Add-on` button, and you're done!
 
