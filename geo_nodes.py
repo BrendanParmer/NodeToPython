@@ -4,96 +4,113 @@ import os
 from .utils import *
 
 #node tree input sockets that have default properties
-default_sockets = {'NodeSocketBool', 
-                   'NodeSocketColor',
-                   'NodeSocketFloat',
-                   'NodeSocketInt',
-                   'NodeSocketVector'}
+default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
 
 geo_node_settings = {
-    #attribute
+    # Attribute nodes
     "GeometryNodeAttributeStatistic" : ["data_type", "domain"],
-    "GeometryNodeCaptureAttribute" : ["data_type", "domain"],
     "GeometryNodeAttributeDomainSize" : ["component"],
+
+    "GeometryNodeBlurAttribute" : ["data_type"],
+    "GeometryNodeCaptureAttribute" : ["data_type", "domain"],
     "GeometryNodeStoreNamedAttribute" : ["data_type", "domain"],
     "GeometryNodeAttributeTransfer" : ["data_type", "mapping"],
 
-    #color
-    "ShaderNodeMixRGB"          : ["blend_type", "use_clamp"],
-    "FunctionNodeCombineColor"  : ["mode"],
-    "FunctionNodeSeparateColor" : ["mode"],
+    # Input Nodes
+    # Input > Constant
+    "FunctionNodeInputBool" : ["boolean"],
+    "FunctionNodeInputColor" : ["color"],
+    "FunctionNodeInputInt" : ["integer"],
+    "GeometryNodeInputMaterial" : ["material"],
+    "FunctionNodeInputString" : ["string"],
+    "FunctionNodeInputVector" : ["vector"],
 
-    #curve
-    "GeometryNodeCurveToPoints" : ["mode"],
-    "GeometryNodeFillCurve" : ["mode"], 
-    "GeometryNodeFilletCurve" : ["mode"],
-    "GeometryNodeResampleCurve" : ["mode"],
-    "GeometryNodeSampleCurve" : ["data_type", "mode", "use_all_curves"],
-    "GeometryNodeTrimCurve" : ["mode"],
-    "GeometryNodeSetCurveNormal" : ["mode"],
+    # Input > Scene
+    "GeometryNodeCollectionInfo" : ["transform_space"],
+    "GeometryNodeObjectInfo" : ["transform_space"],
+
+    # Output Nodes
+    "GeometryNodeViewer" : ["domain"],
+
+    # Geometry Nodes
+    # Geometry > Read
+    "GeometryNodeInputNamedAttribute" : ["data_type"],
+
+    # Geometry > Sample
+    "GeometryNodeProximity" : ["target_element"],
+    "GeometryNodeRaycast" : ["data_type", "mapping"],
+    "GeometryNodeSampleIndex" : ["data_type", "domain", "clamp"],
+    "GeometryNodeSampleNearest" : ["domain"],
+
+    # Geometry > Operations
+    "GeometryNodeDeleteGeometry" : ["domain", "mode"],
+    "GeometryNodeDuplicateElements" : ["domain"],
+    "GeometryNodeMergeByDistance" : ["mode"],
+    "GeometryNodeSeparateGeometry" : ["domain"],
+
+
+    # Curve
+    # Curve > Read
     "GeometryNodeCurveHandleTypeSelection" : ["mode", "handle_type"],
+
+    # Curve > Sample
+    "GeometryNodeSampleCurve" : ["data_type", "mode", "use_all_curves"],
+
+    # Curve > Write
+    "GeometryNodeSetCurveNormal" : ["mode"],
     "GeometryNodeSetCurveHandlePositions" : ["mode"],
     "GeometryNodeCurveSetHandles" : ["mode", "handle_type"],
     "GeometryNodeCurveSplineType" : ["spline_type"],
 
-    #curve primitives
+    # Curve > Operations
+    "GeometryNodeCurveToPoints" : ["mode"],
+    "GeometryNodeFillCurve" : ["mode"], 
+    "GeometryNodeFilletCurve" : ["mode"],
+    "GeometryNodeResampleCurve" : ["mode"],
+    "GeometryNodeTrimCurve" : ["mode"],
+
+    # Curve > Primitives
     "GeometryNodeCurveArc" : ["mode"],
     "GeometryNodeCurvePrimitiveBezierSegment" : ["mode"],
     "GeometryNodeCurvePrimitiveCircle" : ["mode"],
     "GeometryNodeCurvePrimitiveLine" : ["mode"],
     "GeometryNodeCurvePrimitiveQuadrilateral" : ["mode"],
 
-    #geometry
-    "GeometryNodeDeleteGeometry" : ["domain", "mode"],
-    "GeometryNodeDuplicateElements" : ["domain"],
-    "GeometryNodeProximity" : ["target_element"],
-    "GeometryNodeMergeByDistance" : ["mode"],
-    "GeometryNodeRaycast" : ["data_type", "mapping"],
-    "GeometryNodeSampleIndex" : ["data_type", "domain", "clamp"],
-    "GeometryNodeSampleNearest" : ["domain"],
-    "GeometryNodeSeparateGeometry" : ["domain"],
 
-    #input
-    "FunctionNodeInputBool" : ["boolean"],
-    "GeometryNodeCollectionInfo" : ["transform_space"],
-    "FunctionNodeInputColor" : ["color"],
-    "FunctionNodeInputInt" : ["integer"],
-    "GeometryNodeInputMaterial" : ["material"],
-    "GeometryNodeObjectInfo" : ["transform_space"],
-    "FunctionNodeInputString" : ["string"],
-    "FunctionNodeInputVector" : ["vector"],
-    "GeometryNodeInputNamedAttribute" : ["data_type"],
+    # Mesh Nodes
+    # Mesh > Sample
+    "GeometryNodeSampleNearestSurface" : ["data_type"],
+    "GeometryNodeSampleUVSurface" : ["data_type"],
 
-    #mesh
+    # Mesh > Operations
     "GeometryNodeExtrudeMesh" : ["mode"],
     "GeometryNodeMeshBoolean" : ["operation"],
     "GeometryNodeMeshToPoints" : ["mode"],
     "GeometryNodeMeshToVolume" : ["resolution_mode"],
-    "GeometryNodeSampleNearestSurface" : ["data_type"],
-    "GeometryNodeSampleUVSurface" : ["data_type"],
+    "GeometryNodeScaleElements" : ["domain", "scale_mode"],
     "GeometryNodeSubdivisionSurface" : ["uv_smooth", "boundary_smooth"],
     "GeometryNodeTriangulate" : ["quad_method", "ngon_method"],
-    "GeometryNodeScaleElements" : ["domain", "scale_mode"],
 
-    #mesh primitives
+    # Mesh > Primitives
     "GeometryNodeMeshCone" : ["fill_type"],
     "GeometryNodeMeshCylinder" : ["fill_type"],
     "GeometryNodeMeshCircle" : ["fill_type"],
     "GeometryNodeMeshLine" : ["mode"],
 
-    #output
-    "GeometryNodeViewer" : ["domain"],
-    
-    #point
+    # Mesh > UV
+    "GeometryNodeUVUnwrap" : ["method"],
+
+
+    # Point Nodes
     "GeometryNodeDistributePointsInVolume" : ["mode"],
     "GeometryNodeDistributePointsOnFaces" : ["distribute_method"],
     "GeometryNodePointsToVolume" : ["resolution_mode"],
 
-    #text
-    "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
-                                    "pivot_mode"],
-    
-    #texture
+    # Volume Nodes
+    "GeometryNodeVolumeToMesh" : ["resolution_mode"],
+
+
+    # Texture Nodes
     "ShaderNodeTexBrick" : ["offset", "offset_frequency", "squash", 
                             "squash_frequency"],
     "ShaderNodeTexGradient" : ["gradient_type"],
@@ -104,35 +121,50 @@ geo_node_settings = {
     "ShaderNodeTexWave" : ["wave_type", "bands_direction", "wave_profile"],
     "ShaderNodeTexWhiteNoise" : ["noise_dimensions"],
 
-    #utilities
-    "GeometryNodeAccumulateField" : ["data_type", "domain"],
-    "FunctionNodeAlignEulerToVector" : ["axis", "pivot_axis"],
-    "FunctionNodeBooleanMath" : ["operation"],
-    "ShaderNodeClamp" : ["clamp_type"],
-    "FunctionNodeCompare" : ["data_type", "operation", "mode"],
-    "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
-    "FunctionNodeFloatToInt" : ["rounding_mode"],
-    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
-    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
-    "ShaderNodeMath" : ["operation", "use_clamp"],
-    "FunctionNodeRandomValue" : ["data_type"],
-    "FunctionNodeRotateEuler" : ["type", "space"],
-    "GeometryNodeSwitch" : ["input_type"],
 
-    #uv
-    "GeometryNodeUVUnwrap" : ["method"],
+    # Utilities
+    # Utilities > Color
+    "FunctionNodeCombineColor" : ["mode"],
+    "ShaderNodeMixRGB" : ["blend_type", "use_clamp"], #legacy
+    "FunctionNodeSeparateColor" : ["mode"],
+    
+    # Utilities > Text
+    "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
+                                    "pivot_mode"],
 
-    #vector
+    # Utilities > Vector
     "ShaderNodeVectorMath" : ["operation"],
     "ShaderNodeVectorRotate" : ["rotation_type", "invert"],
 
-    #volume
-    "GeometryNodeVolumeToMesh" : ["resolution_mode"]
+    # Utilities > Field
+    "GeometryNodeAccumulateField" : ["data_type", "domain"],
+    "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
+    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
+
+    # Utilities > Math
+    "FunctionNodeBooleanMath" : ["operation"],
+    "ShaderNodeClamp" : ["clamp_type"],
+    "FunctionNodeCompare" : ["data_type", "operation", "mode"],
+    "FunctionNodeFloatToInt" : ["rounding_mode"],
+    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
+    "ShaderNodeMath" : ["operation", "use_clamp"],
+
+    # Utilities > Rotate
+    "FunctionNodeAlignEulerToVector" : ["axis", "pivot_axis"],
+    "FunctionNodeRotateEuler" : ["type", "space"],
+
+    # Utilities > General
+    "ShaderNodeMix" : ["data_type", "blend_type", "clamp_result", 
+                       "clamp_factor", "factor_mode"],
+    "FunctionNodeRandomValue" : ["data_type"],
+    "GeometryNodeSwitch" : ["input_type"]
 }
 
 curve_nodes = {'ShaderNodeFloatCurve', 
                'ShaderNodeVectorCurve', 
                'ShaderNodeRGBCurve'}
+
+image_nodes = {'GeometryNodeInputImage'}
 
 class GeoNodesToPython(bpy.types.Operator):
     bl_idname = "node.geo_nodes_to_python"
@@ -215,14 +247,11 @@ class GeoNodesToPython(bpy.types.Operator):
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
                             socket = node_tree.inputs[i]
-                            if input.bl_idname in default_sockets:  
-                                if input.bl_idname == 'NodeSocketColor':
-                                    col = socket.default_value
-                                    r, g, b, a = col[0], col[1], col[2], col[3]
-                                    dv = f"({r}, {g}, {b}, {a})"
-                                elif input.bl_idname == 'NodeSocketVector':
-                                    vec = socket.default_value
-                                    dv = f"({vec[0]}, {vec[1]}, {vec[2]})"
+                            if input.type in default_sockets:  
+                                if input.type == 'RGBA':
+                                    dv = vec4_to_py_str(socket.default_value)
+                                elif input.type == 'VECTOR':
+                                    dv = vec3_to_py_str(socket.default_value)
                                 else:
                                     dv = socket.default_value
                                 
@@ -263,6 +292,14 @@ class GeoNodesToPython(bpy.types.Operator):
                                             f".inputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
+
+                            #hide in modifier
+                            if hasattr(socket, "hide_in_modifier"):
+                                if socket.hide_in_modifier is True:
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".inputs[{i}]"
+                                                f".hide_in_modifier = "
+                                                f"{socket.hide_in_modifier}\n"))
                             file.write("\n")
                     file.write("\n")
                     inputs_set = True
@@ -276,6 +313,31 @@ class GeoNodesToPython(bpy.types.Operator):
                                         f"\"{output.name}\")\n"))
                             
                             socket = node_tree.outputs[i]
+                            if output.type in default_sockets:  
+                                if output.type == 'RGBA':
+                                    dv = vec4_to_py_str(socket.default_value)
+                                elif output.type == 'VECTOR':
+                                    dv = vec3_to_py_str(socket.default_value)
+                                else:
+                                    dv = socket.default_value
+                                
+                                #default value
+                                file.write((f"{inner}{node_tree_var}"
+                                            f".outputs[{i}]"
+                                            f".default_value = {dv}\n"))
+
+                                #min value
+                                if hasattr(socket, "min_value"):
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".outputs[{i}]"
+                                                f".min_value = "
+                                                f"{socket.min_value}\n"))
+                                #max value
+                                if hasattr(socket, "max_value"):
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".outputs[{i}]"
+                                                f".max_value = "
+                                                f"{socket.max_value}\n"))
                             #description
                             if socket.description != "":
                                 file.write((f"{inner}{node_tree_var}"
@@ -302,7 +364,8 @@ class GeoNodesToPython(bpy.types.Operator):
                                 file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".attribute_domain = "
-                                            f"\'{socket.attribute_domain}\'\n"))             
+                                            f"\'{socket.attribute_domain}\'\n"))
+
                     file.write("\n")
                     outputs_set = True
 
@@ -322,6 +385,11 @@ class GeoNodesToPython(bpy.types.Operator):
                     color_ramp_settings(node, file, inner, node_var)
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
+                elif node.bl_idname in image_nodes:
+                    img = node.image
+                    if img.source in {'FILE', 'GENERATED', 'TILED'}:
+                        save_image(img, addon_dir)
+                        load_image(img, file, inner, f"{node_var}.image")
                 
                 set_input_defaults(node, file, inner, node_var, addon_dir)
                 set_output_defaults(node, file, inner, node_var)

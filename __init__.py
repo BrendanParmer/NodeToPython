@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Blender node groups to a Python add-on!",
     "author": "Brendan Parmer",
-    "version": (2, 0, 1),
+    "version": (2, 1, 0),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
