@@ -155,7 +155,7 @@ geo_node_settings = {
 
     # Utilities > General
     "ShaderNodeMix" : ["data_type", "blend_type", "clamp_result", 
-                       "clamp_factor"],
+                       "clamp_factor", "factor_mode"],
     "FunctionNodeRandomValue" : ["data_type"],
     "GeometryNodeSwitch" : ["input_type"]
 }
@@ -313,6 +313,31 @@ class GeoNodesToPython(bpy.types.Operator):
                                         f"\"{output.name}\")\n"))
                             
                             socket = node_tree.outputs[i]
+                            if output.type in default_sockets:  
+                                if output.type == 'RGBA':
+                                    dv = vec4_to_py_str(socket.default_value)
+                                elif output.type == 'VECTOR':
+                                    dv = vec3_to_py_str(socket.default_value)
+                                else:
+                                    dv = socket.default_value
+                                
+                                #default value
+                                file.write((f"{inner}{node_tree_var}"
+                                            f".outputs[{i}]"
+                                            f".default_value = {dv}\n"))
+
+                                #min value
+                                if hasattr(socket, "min_value"):
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".outputs[{i}]"
+                                                f".min_value = "
+                                                f"{socket.min_value}\n"))
+                                #max value
+                                if hasattr(socket, "max_value"):
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".outputs[{i}]"
+                                                f".max_value = "
+                                                f"{socket.max_value}\n"))
                             #description
                             if socket.description != "":
                                 file.write((f"{inner}{node_tree_var}"
@@ -339,7 +364,8 @@ class GeoNodesToPython(bpy.types.Operator):
                                 file.write((f"{inner}{node_tree_var}"
                                             f".outputs[{i}]"
                                             f".attribute_domain = "
-                                            f"\'{socket.attribute_domain}\'\n"))             
+                                            f"\'{socket.attribute_domain}\'\n"))
+
                     file.write("\n")
                     outputs_set = True
 
