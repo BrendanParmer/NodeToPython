@@ -174,7 +174,6 @@ class GeoNodesToPython(bpy.types.Operator):
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
-        print("EXECUTE")
         #find node group to replicate
         nt = bpy.data.node_groups[self.geo_nodes_group_name]
 
