@@ -4,11 +4,7 @@ import os
 from .utils import *
 
 #node tree input sockets that have default properties
-default_sockets = {'NodeSocketBool', 
-                   'NodeSocketColor',
-                   'NodeSocketFloat',
-                   'NodeSocketInt',
-                   'NodeSocketVector'}
+default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
 
 geo_node_settings = {
     # Attribute nodes
@@ -178,6 +174,7 @@ class GeoNodesToPython(bpy.types.Operator):
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
+        print("EXECUTE")
         #find node group to replicate
         nt = bpy.data.node_groups[self.geo_nodes_group_name]
 
@@ -251,14 +248,11 @@ class GeoNodesToPython(bpy.types.Operator):
                                         f"(\"{input.bl_idname}\", "
                                         f"\"{input.name}\")\n"))
                             socket = node_tree.inputs[i]
-                            if input.bl_idname in default_sockets:  
-                                if input.bl_idname == 'NodeSocketColor':
-                                    col = socket.default_value
-                                    r, g, b, a = col[0], col[1], col[2], col[3]
-                                    dv = f"({r}, {g}, {b}, {a})"
-                                elif input.bl_idname == 'NodeSocketVector':
-                                    vec = socket.default_value
-                                    dv = f"({vec[0]}, {vec[1]}, {vec[2]})"
+                            if input.type in default_sockets:  
+                                if input.type == 'RGBA':
+                                    dv = vec4_to_py_str(socket.default_value)
+                                elif input.type == 'VECTOR':
+                                    dv = vec3_to_py_str(socket.default_value)
                                 else:
                                     dv = socket.default_value
                                 
@@ -299,6 +293,14 @@ class GeoNodesToPython(bpy.types.Operator):
                                             f".inputs[{i}]"
                                             f".hide_value = "
                                             f"{socket.hide_value}\n"))
+
+                            #hide in modifier
+                            if hasattr(socket, "hide_in_modifier"):
+                                if socket.hide_in_modifier is True:
+                                    file.write((f"{inner}{node_tree_var}"
+                                                f".inputs[{i}]"
+                                                f".hide_in_modifier = "
+                                                f"{socket.hide_in_modifier}\n"))
                             file.write("\n")
                     file.write("\n")
                     inputs_set = True
