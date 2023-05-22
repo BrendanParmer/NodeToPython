@@ -492,9 +492,12 @@ def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     inner (str): indentation string
     node_vars (dict): dictionary for (node, variable) name pairs
     """
-    file.write(f"{inner}#Set parents\n")
+    parent_comment = False
     for node in node_tree.nodes:
         if node is not None and node.parent is not None:
+            if not parent_comment:
+                file.write(f"{inner}#Set parents\n")
+                parent_comment = True
             node_var = node_vars[node]
             parent_var = node_vars[node.parent]
             file.write(f"{inner}{node_var}.parent = {parent_var}\n")
