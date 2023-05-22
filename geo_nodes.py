@@ -231,6 +231,8 @@ class GeoNodesToPython(bpy.types.Operator):
             #initialize nodes
             file.write(f"{inner}#initialize {node_tree_var} nodes\n")
             
+            sim_inputs = []
+
             for node in node_tree.nodes:
                 if node.bl_idname == 'GeometryNodeGroup':
                     node_nt = node.node_tree
@@ -390,9 +392,38 @@ class GeoNodesToPython(bpy.types.Operator):
                     if img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
-                
-                set_input_defaults(node, file, inner, node_var, addon_dir)
-                set_output_defaults(node, file, inner, node_var)
+                elif node.bl_idname == 'GeometryNodeSimulationInput':
+                    sim_inputs.append(node)
+                elif node.bl_idname == 'GeometryNodeSimulationOutput':
+                    file.write(f"{inner}#remove generated sim state items\n")
+                    file.write(f"{inner}for item in {node_var}.state_items:\n")
+                    file.write(f"{inner}\t{node_var}.state_items.remove(item)\n")
+                    for i, si in enumerate(node.state_items):
+                        socket_type = enum_to_py_str(si.socket_type)
+                        name = str_to_py_str(si.name)
+                        file.write(f"{inner}#create SSI {name}\n")
+                        file.write((f"{inner}{node_var}.state_items.new"
+                                    f"({socket_type}, {name})\n"))
+                        si_var = f"{node_var}.state_items[{i}]"
+                        attr_domain = enum_to_py_str(si.attribute_domain)
+                        file.write((f"{inner}{si_var}.attribute_domain = "
+                                    f"{attr_domain}\n"))
+
+                if node.bl_idname != 'GeometryNodeSimulationInput':
+                    set_input_defaults(node, file, inner, node_var, addon_dir)
+                    set_output_defaults(node, file, inner, node_var)
+
+            #create simulation zones
+            for sim_input in sim_inputs:
+                sim_input_var = node_vars[sim_input]
+                sim_output_var = node_vars[sim_input.paired_output]
+                file.write((f"{inner}{sim_input_var}.pair_with_output"
+                            f"({sim_output_var})\n"))
+
+                #must set defaults after paired with output
+                set_input_defaults(sim_input, file, inner, sim_input_var, addon_dir)
+                set_output_defaults(sim_input, file, inner, sim_input_var)
+            
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
