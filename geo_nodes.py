@@ -401,6 +401,7 @@ class GeoNodesToPython(bpy.types.Operator):
                     for i, si in enumerate(node.state_items):
                         socket_type = enum_to_py_str(si.socket_type)
                         name = str_to_py_str(si.name)
+                        file.write(f"{inner}#create SSI {name}\n")
                         file.write((f"{inner}{node_var}.state_items.new"
                                     f"({socket_type}, {name})\n"))
                         si_var = f"{node_var}.state_items[{i}]"
@@ -408,8 +409,9 @@ class GeoNodesToPython(bpy.types.Operator):
                         file.write((f"{inner}{si_var}.attribute_domain = "
                                     f"{attr_domain}\n"))
 
-                set_input_defaults(node, file, inner, node_var, addon_dir)
-                set_output_defaults(node, file, inner, node_var)
+                if node.bl_idname != 'GeometryNodeSimulationInput':
+                    set_input_defaults(node, file, inner, node_var, addon_dir)
+                    set_output_defaults(node, file, inner, node_var)
 
             #create simulation zones
             for sim_input in sim_inputs:
@@ -417,6 +419,11 @@ class GeoNodesToPython(bpy.types.Operator):
                 sim_output_var = node_vars[sim_input.paired_output]
                 file.write((f"{inner}{sim_input_var}.pair_with_output"
                             f"({sim_output_var})\n"))
+
+                #must set defaults after paired with output
+                set_input_defaults(sim_input, file, inner, sim_input_var, addon_dir)
+                set_output_defaults(sim_input, file, inner, sim_input_var)
+            
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
