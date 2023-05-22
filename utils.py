@@ -529,7 +529,7 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_vars (dict): dictionary for (node, variable) name pairs
     """
 
-    file.write(f"{inner}#sSet dimensions\n")
+    file.write(f"{inner}#Set dimensions\n")
     for node in node_tree.nodes:
         node_var = node_vars[node]
         file.write((f"{inner}{node_var}.width, {node_var}.height "
