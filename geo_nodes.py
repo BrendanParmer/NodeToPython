@@ -394,6 +394,20 @@ class GeoNodesToPython(bpy.types.Operator):
                         load_image(img, file, inner, f"{node_var}.image")
                 elif node.bl_idname == 'GeometryNodeSimulationInput':
                     sim_inputs.append(node)
+                elif node.bl_idname == 'GeometryNodeSimulationOutput':
+                    file.write(f"{inner}#remove generated sim state items\n")
+                    file.write(f"{inner}for item in {node_var}.state_items:\n")
+                    file.write(f"{inner}\t{node_var}.state_items.remove(item)\n")
+                    for i, si in enumerate(node.state_items):
+                        socket_type = enum_to_py_str(si.socket_type)
+                        name = str_to_py_str(si.name)
+                        file.write((f"{inner}{node_var}.state_items.new"
+                                    f"({socket_type}, {name})\n"))
+                        si_var = f"{node_var}.state_items[{i}]"
+                        attr_domain = enum_to_py_str(si.attribute_domain)
+                        file.write((f"{inner}{si_var}.attribute_domain = "
+                                    f"{attr_domain}\n"))
+
                 set_input_defaults(node, file, inner, node_var, addon_dir)
                 set_output_defaults(node, file, inner, node_var)
 
