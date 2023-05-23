@@ -3,9 +3,6 @@ import os
 
 from .utils import *
 
-#node tree input sockets that have default properties
-default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
-
 geo_node_settings = {
     # Attribute nodes
     "GeometryNodeAttributeStatistic" : ["data_type", "domain"],
@@ -212,14 +209,14 @@ class GeoNodesToPython(bpy.types.Operator):
         used_vars = set()
         
         def process_geo_nodes_group(node_tree, level, node_vars, used_vars):
-            node_tree_var = create_var(node_tree.name, used_vars)
+            nt_var = create_var(node_tree.name, used_vars)
                 
             outer, inner = make_indents(level)
 
             #initialize node group
-            file.write(f"{outer}#initialize {node_tree_var} node group\n")
-            file.write(f"{outer}def {node_tree_var}_node_group():\n")
-            file.write((f"{inner}{node_tree_var}"
+            file.write(f"{outer}#initialize {nt_var} node group\n")
+            file.write(f"{outer}def {nt_var}_node_group():\n")
+            file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
                         f"type = \"GeometryNodeTree\", "
                         f"name = \"{node_tree.name}\")\n"))
@@ -229,7 +226,7 @@ class GeoNodesToPython(bpy.types.Operator):
             outputs_set = False
 
             #initialize nodes
-            file.write(f"{inner}#initialize {node_tree_var} nodes\n")
+            file.write(f"{inner}#initialize {nt_var} nodes\n")
             
             sim_inputs = []
 
@@ -241,138 +238,15 @@ class GeoNodesToPython(bpy.types.Operator):
                                                 used_vars)
                         node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-                    file.write(f"{inner}#{node_tree_var} inputs\n")
-                    for i, input in enumerate(node.outputs):
-                        if input.bl_idname != "NodeSocketVirtual":
-                            file.write(f"{inner}#input {input.name}\n")
-                            file.write((f"{inner}{node_tree_var}.inputs.new"
-                                        f"(\"{input.bl_idname}\", "
-                                        f"\"{input.name}\")\n"))
-                            socket = node_tree.inputs[i]
-                            if input.type in default_sockets:  
-                                if input.type == 'RGBA':
-                                    dv = vec4_to_py_str(socket.default_value)
-                                elif input.type == 'VECTOR':
-                                    dv = vec3_to_py_str(socket.default_value)
-                                else:
-                                    dv = socket.default_value
-                                
-                                #default value
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".inputs[{i}]"
-                                            f".default_value = {dv}\n"))
-
-                                #min value
-                                if hasattr(socket, "min_value"):
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".inputs[{i}]"
-                                                f".min_value = "
-                                                f"{socket.min_value}\n"))
-                                #max value
-                                if hasattr(socket, "max_value"):
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".inputs[{i}]"
-                                                f".max_value = "
-                                                f"{socket.max_value}\n"))
-                            #default attribute name
-                            if hasattr(socket, "default_attribute_name"):
-                                if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".inputs[{i}]"
-                                                f".default_attribute_name = \""
-                                                f"{socket.default_attribute_name}"
-                                                f"\"\n"))
-                            #description
-                            if socket.description != "":
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".inputs[{i}]"
-                                            f".description = "
-                                            f"\"{socket.description}\"\n"))
-                            #hide value
-                            if socket.hide_value is True:
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".inputs[{i}]"
-                                            f".hide_value = "
-                                            f"{socket.hide_value}\n"))
-
-                            #hide in modifier
-                            if hasattr(socket, "hide_in_modifier"):
-                                if socket.hide_in_modifier is True:
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".inputs[{i}]"
-                                                f".hide_in_modifier = "
-                                                f"{socket.hide_in_modifier}\n"))
-                            file.write("\n")
-                    file.write("\n")
+                    group_io_settings(node, file, inner, "input", nt_var, node_tree)
                     inputs_set = True
 
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-                    file.write(f"{inner}#{node_tree_var} outputs\n")
-                    for i, output in enumerate(node.inputs):
-                        if output.bl_idname != 'NodeSocketVirtual':
-                            file.write((f"{inner}{node_tree_var}.outputs"
-                                        f".new(\"{output.bl_idname}\", "
-                                        f"\"{output.name}\")\n"))
-                            
-                            socket = node_tree.outputs[i]
-                            if output.type in default_sockets:  
-                                if output.type == 'RGBA':
-                                    dv = vec4_to_py_str(socket.default_value)
-                                elif output.type == 'VECTOR':
-                                    dv = vec3_to_py_str(socket.default_value)
-                                else:
-                                    dv = socket.default_value
-                                
-                                #default value
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".outputs[{i}]"
-                                            f".default_value = {dv}\n"))
-
-                                #min value
-                                if hasattr(socket, "min_value"):
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".outputs[{i}]"
-                                                f".min_value = "
-                                                f"{socket.min_value}\n"))
-                                #max value
-                                if hasattr(socket, "max_value"):
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".outputs[{i}]"
-                                                f".max_value = "
-                                                f"{socket.max_value}\n"))
-                            #description
-                            if socket.description != "":
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".outputs[{i}]"
-                                            f".description = "
-                                            f"\"{socket.description}\"\n"))
-                            #hide value
-                            if socket.hide_value is True:
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".outputs[{i}]"
-                                            f".hide_value = "
-                                            f"{socket.hide_value}\n"))
-
-                            #default attribute name
-                            if hasattr(socket, "default_attribute_name"):
-                                if socket.default_attribute_name != "":
-                                    file.write((f"{inner}{node_tree_var}"
-                                                f".outputs[{i}]"
-                                                f".default_attribute_name = \""
-                                                f"{socket.default_attribute_name}"
-                                                f"\"\n"))
-                            #attribute domain
-                            if hasattr(socket, "attribute_domain"):
-                                file.write((f"{inner}{node_tree_var}"
-                                            f".outputs[{i}]"
-                                            f".attribute_domain = "
-                                            f"\'{socket.attribute_domain}\'\n"))
-
-                    file.write("\n")
+                    group_io_settings(node, file, inner, "output", nt_var, node_tree)
                     outputs_set = True
 
                 #create node
-                node_var = create_node(node, file, inner, node_tree_var, 
+                node_var = create_node(node, file, inner, nt_var, 
                                       node_vars, used_vars)
                 set_settings_defaults(node, geo_node_settings, file, inner, 
                                         node_var)
@@ -428,13 +302,13 @@ class GeoNodesToPython(bpy.types.Operator):
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
 
-            init_links(node_tree, file, inner, node_tree_var, node_vars)
+            init_links(node_tree, file, inner, nt_var, node_vars)
             
-            file.write(f"{inner}return {node_tree_var}\n")
+            file.write(f"{inner}return {nt_var}\n")
 
             #create node group
-            file.write((f"\n{outer}{node_tree_var} = "
-                        f"{node_tree_var}_node_group()\n\n"))
+            file.write((f"\n{outer}{nt_var} = "
+                        f"{nt_var}_node_group()\n\n"))
             return used_vars
         
         process_geo_nodes_group(nt, 2, node_vars, used_vars)

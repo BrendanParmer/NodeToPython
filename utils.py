@@ -13,6 +13,9 @@ dont_set_defaults = {'NodeSocketGeometry',
                      'NodeSocketShader',
                      'NodeSocketVirtual'}
 
+#node tree input sockets that have default properties
+default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
+
 def clean_string(string: str, lower: bool = True) -> str:
     """
     Cleans up a string for use as a variable or file name
@@ -264,6 +267,72 @@ def hide_sockets(node, file: TextIO, inner: str, node_var: str):
     for i, socket in enumerate(node.outputs):
         if socket.hide is True:
             file.write(f"{inner}{node_var}.outputs[{i}].hide = True\n") 
+
+def group_io_settings(node, file: TextIO, inner: str, io: str, node_tree_var: str, node_tree):
+    if io == "input":
+        ios = node.outputs
+        ntio = node_tree.inputs
+    else:
+        ios = node.inputs
+        ntio = node_tree.outputs
+    file.write(f"{inner}#{node_tree_var} {io}s\n")
+    for i, inout in enumerate(ios):
+        if inout.bl_idname == 'NodeSocketVirtual':
+            continue
+        file.write(f"{inner}#{io} {inout.name}\n")
+        idname = enum_to_py_str(inout.bl_idname)
+        name = str_to_py_str(inout.name)
+        file.write(f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
+        socket = ntio[i]
+        socket_var = f"{node_tree_var}.{io}s[{i}]"
+
+        print(f"{io} {i}: {name}")
+        if inout.type in default_sockets:
+            print(socket.default_value)
+            #default value
+            if inout.type == 'RGBA':
+                dv = vec4_to_py_str(socket.default_value)
+            elif inout.type == 'VECTOR':
+                dv = vec3_to_py_str(socket.default_value)
+            else:
+                dv = socket.default_value
+            file.write(f"{inner}{socket_var}.default_value = {dv}\n")
+
+            #min value
+            if hasattr(socket, "min_value"):
+                file.write(f"{inner}{socket_var}.min_value = {socket.min_value}\n")
+            #max value
+            if hasattr(socket, "min_value"):
+                file.write((f"{inner}{socket_var}.max_value = {socket.max_value}\n"))
+        
+        #default attribute name
+        if hasattr(socket, "default_attribute_name"):
+            if socket.default_attribute_name != "":
+                dan = str_to_py_str(socket.default_attribute_name)
+                file.write((f"{inner}{socket_var}"
+                            f".default_attribute_name = {dan}\n"))
+
+        #attribute domain
+        if hasattr(socket, "attribute_domain"):
+            ad = enum_to_py_str(socket.attribute_domain)
+            file.write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+
+        #tooltip
+        if socket.description != "":
+            description = str_to_py_str(socket.description)
+            file.write((f"{inner}{socket_var}.description = {description}\n"))
+
+        #hide_value
+        if socket.hide_value is True:
+            file.write(f"{inner}{socket_var}.hide_value = True\n")
+
+        #hide in modifier
+        if hasattr(socket, "hide_in_modifier"):
+            if socket.hide_in_modifier is True:
+                file.write(f"{inner}{socket_var}.hide_in_modifier = True\n")
+
+        file.write("\n")
+    file.write("\n")
 
 def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
     """
