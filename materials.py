@@ -155,6 +155,9 @@ class MaterialToPython(bpy.types.Operator):
                         f"name = \"{nt_name}\")\n"))
                 file.write("\n")
 
+            inputs_set = False
+            outputs_set = False
+
             #initialize nodes
             file.write(f"{inner}#initialize {nt_var} nodes\n")
 
@@ -177,6 +180,13 @@ class MaterialToPython(bpy.types.Operator):
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[\"{node.node_tree.name}\"]\n"))
+                elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
+                    group_io_settings(node, file, inner, "input", nt_var, node_tree)
+                    inputs_set = True
+                elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
+                    group_io_settings(node, file, inner, "output", nt_var, node_tree)
+                    outputs_set = True
+
                 elif node.bl_idname in image_nodes:
                     img = node.image
                     if img.source in {'FILE', 'GENERATED', 'TILED'}:
