@@ -263,7 +263,7 @@ class GeoNodesToPython(bpy.types.Operator):
                     curve_node_settings(node, file, inner, node_var)
                 elif node.bl_idname in image_nodes:
                     img = node.image
-                    if img.source in {'FILE', 'GENERATED', 'TILED'}:
+                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
                 elif node.bl_idname == 'GeometryNodeSimulationInput':
