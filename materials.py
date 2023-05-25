@@ -189,7 +189,7 @@ class MaterialToPython(bpy.types.Operator):
 
                 elif node.bl_idname in image_nodes:
                     img = node.image
-                    if img.source in {'FILE', 'GENERATED', 'TILED'}:
+                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
                         image_user_settings(node, file, inner, node_var)
