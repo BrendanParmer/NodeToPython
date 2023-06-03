@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Blender node groups to a Python add-on!",
     "author": "Brendan Parmer",
-    "version": (2, 1, 0),
+    "version": (2, 2, 0),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
@@ -36,7 +36,8 @@ classes = [NodeToPythonMenu,
             geo_nodes.GeoNodesToPythonPanel,
             materials.MaterialToPython,
             materials.SelectMaterialMenu,
-            materials.MaterialToPythonPanel]
+            materials.MaterialToPythonPanel
+            ]
 
 def register():
     for cls in classes:

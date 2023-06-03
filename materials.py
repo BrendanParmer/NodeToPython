@@ -81,9 +81,19 @@ class MaterialToPython(bpy.types.Operator):
     bl_label =  "Material to Python"
     bl_options = {'REGISTER', 'UNDO'}
 
+    mode : bpy.props.EnumProperty(
+        name = "Mode",
+        items = [
+            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
+            ('ADDON', "Addon", "Create a full addon")
+        ]
+    )
     material_name: bpy.props.StringProperty(name="Node Group")
-
     def execute(self, context):
+        if self.mode == 'SCRIPT':
+            print("Script!")
+        elif self.mode == 'ADDON':
+            print("Addon!")
         #find node group to replicate
         nt = bpy.data.materials[self.material_name].node_tree
         if nt is None:
@@ -220,7 +230,13 @@ class MaterialToPython(bpy.types.Operator):
 
         file.close()
         zip_addon(zip_dir)
+        self.report({'INFO'}, "NodeToPython: Saved material")
         return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+    def draw(self, context):
+        self.layout.prop(self, "mode")
 
 class SelectMaterialMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_npt_mat_selection"

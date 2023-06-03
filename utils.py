@@ -286,9 +286,7 @@ def group_io_settings(node, file: TextIO, inner: str, io: str, node_tree_var: st
         socket = ntio[i]
         socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-        print(f"{io} {i}: {name}")
         if inout.type in default_sockets:
-            print(socket.default_value)
             #default value
             if inout.type == 'RGBA':
                 dv = vec4_to_py_str(socket.default_value)
