@@ -441,7 +441,7 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     file.write(f"{mapping_var}.update()\n")
 
 def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
-                       addon_dir: str):
+                       addon_dir: str = ""):
     """
     Sets defaults for input sockets
 
@@ -476,7 +476,7 @@ def set_input_defaults(node, file: TextIO, inner: str, node_var: str,
             elif input.bl_idname == 'NodeSocketImage':
                 print("Input is linked: ", input.is_linked)
                 img = input.default_value
-                if img is not None:
+                if img is not None and addon_dir != "": #write in a better way
                     save_image(img, addon_dir)
                     load_image(img, file, inner, f"{socket_var}.default_value")
                 default_val = None

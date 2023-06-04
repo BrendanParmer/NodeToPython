@@ -2,6 +2,7 @@ import bpy
 import os
 
 from .utils import *
+from io import StringIO
 
 node_settings = {
     #input
@@ -89,45 +90,49 @@ class MaterialToPython(bpy.types.Operator):
         ]
     )
     material_name: bpy.props.StringProperty(name="Node Group")
+
     def execute(self, context):
-        if self.mode == 'SCRIPT':
-            print("Script!")
-        elif self.mode == 'ADDON':
-            print("Addon!")
         #find node group to replicate
         nt = bpy.data.materials[self.material_name].node_tree
         if nt is None:
-            self.report({'ERROR'},
-                        ("NodeToPython: This doesn't seem to be a valid "
-                            "material. Is Use Nodes selected?"))
+            self.report({'ERROR'},("NodeToPython: This doesn't seem to be a "
+                                   "valid material. Is Use Nodes selected?"))
             return {'CANCELLED'}
 
         #set up names to use in generated addon
         mat_var = clean_string(self.material_name)
-        class_name = clean_string(self.material_name, lower=False)
         
-        dir = bpy.path.abspath("//")
-        if not dir or dir == "":
-            self.report({'ERROR'},
-                        ("NodeToPython: Save your blender file before using "
-                        "NodeToPython!"))
-            return {'CANCELLED'}
-        zip_dir = os.path.join(dir, "addons", mat_var)
-        addon_dir = os.path.join(zip_dir, mat_var)
-        if not os.path.exists(addon_dir):
-            os.makedirs(addon_dir)
-        file = open(f"{addon_dir}/__init__.py", "w")
+        if self.mode == 'ADDON':
+            dir = bpy.path.abspath("//")
+            if not dir or dir == "":
+                self.report({'ERROR'},
+                            ("NodeToPython: Save your blender file before using "
+                            "NodeToPython!"))
+                return {'CANCELLED'}
 
-        create_header(file, self.material_name)  
-        init_operator(file, class_name, mat_var, self.material_name)
+            #save in addons/ subdirectory
+            zip_dir = os.path.join(dir, "addons", mat_var)
+            addon_dir = os.path.join(zip_dir, mat_var)
+            if not os.path.exists(addon_dir):
+                os.makedirs(addon_dir)
+            file = open(f"{addon_dir}/__init__.py", "w")
 
-        file.write("\tdef execute(self, context):\n")
+            create_header(file, self.material_name)
+            class_name = clean_string(self.material_name, lower=False)
+            init_operator(file, class_name, mat_var, self.material_name)
 
-        def create_material():
-            file.write((f"\t\tmat = bpy.data.materials.new("
-                        f"name = \"{self.material_name}\")\n"))
-            file.write(f"\t\tmat.use_nodes = True\n")
-        create_material()
+            file.write("\tdef execute(self, context):\n")
+        else:
+            file = StringIO("")
+
+        def create_material(indent: str):
+            file.write((f"{indent}mat = bpy.data.materials.new("
+                        f"name = {str_to_py_str(self.material_name)})\n"))
+            file.write(f"{indent}mat.use_nodes = True\n")
+        if self.mode == 'ADDON':
+            create_material("\t\t")
+        elif self.mode == 'SCRIPT':
+            create_material("")
         
         #set to keep track of already created node trees
         node_trees = set()
@@ -138,9 +143,15 @@ class MaterialToPython(bpy.types.Operator):
         #keeps track of all used variables
         used_vars = set()
 
-        def process_mat_node_group(node_tree, level, node_vars, used_vars):
+        def is_outermost_node_group(level: int) -> bool:
+            if self.mode == 'ADDON' and level == 2:
+                return True
+            elif self.mode == 'SCRIPT' and level == 0:
+                return True
+            return False
 
-            if level == 2: #outermost node group
+        def process_mat_node_group(node_tree, level, node_vars, used_vars):
+            if is_outermost_node_group(level):
                 nt_var = create_var(self.material_name, used_vars)
                 nt_name = self.material_name
             else:
@@ -153,7 +164,7 @@ class MaterialToPython(bpy.types.Operator):
             file.write(f"{outer}#initialize {nt_var} node group\n")
             file.write(f"{outer}def {nt_var}_node_group():\n")
 
-            if level == 2: #outermost node group
+            if is_outermost_node_group(level): #outermost node group
                 file.write(f"{inner}{nt_var} = mat.node_tree\n")
                 file.write(f"{inner}#start with a clean node tree\n")
                 file.write(f"{inner}for node in {nt_var}.nodes:\n")
@@ -161,8 +172,8 @@ class MaterialToPython(bpy.types.Operator):
             else:
                 file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
-                        f"type = \"ShaderNodeTree\", "
-                        f"name = \"{nt_name}\")\n"))
+                        f"type = \'ShaderNodeTree\', "
+                        f"name = {str_to_py_str(nt_name)})\n"))
                 file.write("\n")
 
             inputs_set = False
@@ -171,7 +182,9 @@ class MaterialToPython(bpy.types.Operator):
             #initialize nodes
             file.write(f"{inner}#initialize {nt_var} nodes\n")
 
+            #dictionary to keep track of node->variable name pairs
             node_vars = {}
+
             for node in node_tree.nodes:
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
@@ -193,22 +206,28 @@ class MaterialToPython(bpy.types.Operator):
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
                     group_io_settings(node, file, inner, "input", nt_var, node_tree)
                     inputs_set = True
+
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
                     group_io_settings(node, file, inner, "output", nt_var, node_tree)
                     outputs_set = True
 
-                elif node.bl_idname in image_nodes:
+                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
                     img = node.image
                     if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
                         image_user_settings(node, file, inner, node_var)
+
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
+
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
 
-                set_input_defaults(node, file, inner, node_var, addon_dir)
+                if self.mode == 'ADDON':
+                    set_input_defaults(node, file, inner, node_var, addon_dir)
+                else:
+                    set_input_defaults(node, file, inner, node_var)
                 set_output_defaults(node, file, inner, node_var)
 
             set_parents(node_tree, file, inner, node_vars)
@@ -218,18 +237,27 @@ class MaterialToPython(bpy.types.Operator):
             init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")
-                
-        process_mat_node_group(nt, 2, node_vars, used_vars)
 
-        file.write("\t\treturn {'FINISHED'}\n\n")
+        if self.mode == 'ADDON':
+            level = 2
+        else:
+            level = 0        
+        process_mat_node_group(nt, level, node_vars, used_vars)
 
-        create_menu_func(file, class_name)
-        create_register_func(file, class_name)
-        create_unregister_func(file, class_name)
-        create_main_func(file)
+        if self.mode == 'ADDON':
+            file.write("\t\treturn {'FINISHED'}\n\n")
+
+            create_menu_func(file, class_name)
+            create_register_func(file, class_name)
+            create_unregister_func(file, class_name)
+            create_main_func(file)
+        else:
+            context.window_manager.clipboard = file.getvalue()
 
         file.close()
-        zip_addon(zip_dir)
+        
+        if self.mode == 'ADDON':
+            zip_addon(zip_dir)
         self.report({'INFO'}, "NodeToPython: Saved material")
         return {'FINISHED'}
     
