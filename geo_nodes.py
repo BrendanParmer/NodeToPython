@@ -360,8 +360,14 @@ class GeoNodesToPython(bpy.types.Operator):
 
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
+
+        #alert user that NTP is finished
+        if self.mode == 'SCRIPT':
+            location = "clipboard"
+        else:
+            location = dir
         self.report({'INFO'}, 
-                    f"NodeToPython: Saved geometry nodes group to {dir}")
+                    f"NodeToPython: Saved geometry nodes group to {location}")
         return {'FINISHED'}
     
     def invoke(self, context, event):

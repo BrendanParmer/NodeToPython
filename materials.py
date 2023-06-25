@@ -258,7 +258,11 @@ class MaterialToPython(bpy.types.Operator):
         
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
-        self.report({'INFO'}, f"NodeToPython: Saved material to {dir}")
+        if self.mode == 'SCRIPT':
+            location = "clipboard"
+        else:
+            location = dir
+        self.report({'INFO'}, f"NodeToPython: Saved material to {location}")
         return {'FINISHED'}
     
     def invoke(self, context, event):
