@@ -474,7 +474,6 @@ def set_input_defaults(node, file: TextIO, inner: str, node_var: str,
 
             #images
             elif input.bl_idname == 'NodeSocketImage':
-                print("Input is linked: ", input.is_linked)
                 img = input.default_value
                 if img is not None and addon_dir != "": #write in a better way
                     save_image(img, addon_dir)
@@ -719,7 +718,6 @@ def save_image(img, addon_dir: str):
     #save the image
     img_str = img_to_py_str(img)
     img_path = f"{img_dir}/{img_str}"
-    print("Image Path: ", img_path)
     if not os.path.exists(img_path):
         img.save_render(img_path)
 

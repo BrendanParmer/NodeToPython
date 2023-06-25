@@ -103,7 +103,7 @@ class MaterialToPython(bpy.types.Operator):
         mat_var = clean_string(self.material_name)
         
         if self.mode == 'ADDON':
-            dir = bpy.path.abspath("//")
+            dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
             if not dir or dir == "":
                 self.report({'ERROR'},
                             ("NodeToPython: Save your blender file before using "
@@ -111,7 +111,7 @@ class MaterialToPython(bpy.types.Operator):
                 return {'CANCELLED'}
 
             #save in addons/ subdirectory
-            zip_dir = os.path.join(dir, "addons", mat_var)
+            zip_dir = os.path.join(dir, mat_var)
             addon_dir = os.path.join(zip_dir, mat_var)
             if not os.path.exists(addon_dir):
                 os.makedirs(addon_dir)
@@ -258,7 +258,7 @@ class MaterialToPython(bpy.types.Operator):
         
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
-        self.report({'INFO'}, "NodeToPython: Saved material")
+        self.report({'INFO'}, f"NodeToPython: Saved material to {dir}")
         return {'FINISHED'}
     
     def invoke(self, context, event):

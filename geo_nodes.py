@@ -176,6 +176,7 @@ class GeoNodesToPython(bpy.types.Operator):
             ('ADDON', "Addon", "Create a full addon")
         ]
     )
+
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
@@ -187,16 +188,17 @@ class GeoNodesToPython(bpy.types.Operator):
 
         if self.mode == 'ADDON':
             #find base directory to save new addon
-            base_dir = bpy.path.abspath("//")
-            if not base_dir or base_dir == "":
+            dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
+            if not dir or dir == "":
                 self.report({'ERROR'}, 
                             ("NodeToPython: Save your blend file before using "
                             "NodeToPython!"))
                 return {'CANCELLED'}
 
             #save in addons/ subdirectory
-            zip_dir = os.path.join(base_dir, "addons", nt_var)
+            zip_dir = os.path.join(dir, nt_var)
             addon_dir = os.path.join(zip_dir, nt_var)
+
             if not os.path.exists(addon_dir):
                 os.makedirs(addon_dir)
             file = open(f"{addon_dir}/__init__.py", "w")
@@ -358,7 +360,8 @@ class GeoNodesToPython(bpy.types.Operator):
 
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
-        self.report({'INFO'}, "NodeToPython: Saved geometry nodes group")
+        self.report({'INFO'}, 
+                    f"NodeToPython: Saved geometry nodes group to {dir}")
         return {'FINISHED'}
     
     def invoke(self, context, event):
