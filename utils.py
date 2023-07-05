@@ -132,13 +132,13 @@ def init_operator(file: TextIO, name: str, idname: str, label: str):
     file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
     file.write("\n")
 
-def create_var(name: str, used_vars: set) -> str:
+def create_var(name: str, used_vars: dict) -> str:
     """
     Creates a unique variable name for a node tree
 
     Parameters:
     name (str): basic string we'd like to create the variable name out of
-    used_vars (set): set containing all used variable names so far
+    used_vars (dict): dictionary containing variable names and usage counts
 
     Returns:
     clean_name (str): variable name for the node tree
@@ -147,13 +147,12 @@ def create_var(name: str, used_vars: set) -> str:
         name = "unnamed"
     clean_name = clean_string(name)
     var = clean_name
-    i = 0
-    while var in used_vars:
-        i += 1
-        var = f"{clean_name}_{i}"
-
-    used_vars.add(var)
-    return var
+    if var in used_vars:
+        used_vars[var] += 1
+        return f"{clean_name}_{used_vars[var]}"
+    else:
+        used_vars[var] = 0
+        return clean_name
 
 def make_indents(level: int) -> Tuple[str, str]:
     """
@@ -474,7 +473,6 @@ def set_input_defaults(node, file: TextIO, inner: str, node_var: str,
 
             #images
             elif input.bl_idname == 'NodeSocketImage':
-                print("Input is linked: ", input.is_linked)
                 img = input.default_value
                 if img is not None and addon_dir != "": #write in a better way
                     save_image(img, addon_dir)
@@ -719,7 +717,6 @@ def save_image(img, addon_dir: str):
     #save the image
     img_str = img_to_py_str(img)
     img_path = f"{img_dir}/{img_str}"
-    print("Image Path: ", img_path)
     if not os.path.exists(img_path):
         img.save_render(img_path)
 
