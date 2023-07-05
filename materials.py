@@ -110,7 +110,6 @@ class MaterialToPython(bpy.types.Operator):
                             "NodeToPython!"))
                 return {'CANCELLED'}
 
-            #save in addons/ subdirectory
             zip_dir = os.path.join(dir, mat_var)
             addon_dir = os.path.join(zip_dir, mat_var)
             if not os.path.exists(addon_dir):
@@ -129,6 +128,7 @@ class MaterialToPython(bpy.types.Operator):
             file.write((f"{indent}mat = bpy.data.materials.new("
                         f"name = {str_to_py_str(self.material_name)})\n"))
             file.write(f"{indent}mat.use_nodes = True\n")
+        
         if self.mode == 'ADDON':
             create_material("\t\t")
         elif self.mode == 'SCRIPT':
@@ -141,7 +141,7 @@ class MaterialToPython(bpy.types.Operator):
         node_vars = {}
 
         #keeps track of all used variables
-        used_vars = set()
+        used_vars = {}
 
         def is_outermost_node_group(level: int) -> bool:
             if self.mode == 'ADDON' and level == 2:
@@ -189,7 +189,8 @@ class MaterialToPython(bpy.types.Operator):
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_mat_node_group(node_nt, level + 1, node_vars, used_vars)
+                        process_mat_node_group(node_nt, level + 1, node_vars, 
+                                               used_vars)
                         node_trees.add(node_nt)
                 
                 node_var = create_node(node, file, inner, nt_var, node_vars, 
