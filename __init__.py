@@ -12,9 +12,11 @@ if "bpy" in locals():
     import importlib
     importlib.reload(materials)
     importlib.reload(geo_nodes)
+    importlib.reload(options)
 else:
     from . import materials
     from . import geo_nodes
+    from . import options
 
 import bpy
 
@@ -31,46 +33,24 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
 
 
-class NTPOptions(bpy.types.PropertyGroup):
-    dir_path : bpy.props.StringProperty(
-        name = "Save Location",
-        subtype='DIR_PATH',
-        description="Save location if generating an add-on",
-        default = "//"
-    )
 
-class NTPOptionsPanel(bpy.types.Panel):
-    bl_label = "Options"
-    bl_idname = "NODE_PT_ntp_options"
-    bl_space_type = 'NODE_EDITOR'
-    bl_region_type = 'UI'
-    bl_context = ''
-    bl_category = "NodeToPython"
-
-    @classmethod
-    def poll(cls, context):
-        return True
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_DEFAULT'
-        layout.prop(context.scene.ntp_options, "dir_path")
 
 classes = [NodeToPythonMenu,
-            NTPOptions,
+            options.NTPOptions,
             geo_nodes.GeoNodesToPython,
             geo_nodes.SelectGeoNodesMenu,
             geo_nodes.GeoNodesToPythonPanel,
             materials.MaterialToPython,
             materials.SelectMaterialMenu,
             materials.MaterialToPythonPanel,
-            NTPOptionsPanel
+            options.NTPOptionsPanel
             ]
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     scene = bpy.types.Scene
-    scene.ntp_options = bpy.props.PointerProperty(type=NTPOptions)
+    scene.ntp_options = bpy.props.PointerProperty(type=options.NTPOptions)
 
 def unregister():
     for cls in classes:
