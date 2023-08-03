@@ -684,7 +684,7 @@ def create_unregister_func(file: TextIO, name: str):
     """
     file.write("def unregister():\n")
     file.write(f"\tbpy.utils.unregister_class({name})\n")
-    file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
+    file.write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
     file.write("\n")
 
 def create_main_func(file: TextIO):
