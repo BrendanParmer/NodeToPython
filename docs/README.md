@@ -37,9 +37,10 @@ From here, you can install it like a regular add-on.
 ## Future
 ### v3.0
 * Expansion to Compositing nodes
-* Better asset handling
+* New Blender 4.0 nodes and changes
 
 ### Later
+* Better asset handling
 * Auto-set handle movies and image sequences
 * Automatically format code to be PEP8 compliant
 * Automatically detect the minimum version of Blender needed to run the add-on
@@ -58,7 +59,7 @@ From here, you can install it like a regular add-on.
     * Textures
 
 * In a future version, I plan on having the add-on adding all of the above to the Asset Library for reference
-* You may run into naming conflicts if your addon shares a name with another Blender addon or operator
+* You may run into naming conflicts if your addon shares a name with another Blender addon or operator (see [#56](https://github.com/BrendanParmer/NodeToPython/issues/56))
 
 ## Bug Reports and Suggestions
 
