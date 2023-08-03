@@ -35,7 +35,7 @@ Just select the one you want, and soon a zip file will be created in an `addons`
 From here, you can install it like a regular add-on.
 
 ## Future
-### v3.0
+### v3.x
 * Expansion to Compositing nodes
 * New Blender 4.0 nodes and changes
 
@@ -59,7 +59,7 @@ From here, you can install it like a regular add-on.
     * Textures
 
 * In a future version, I plan on having the add-on adding all of the above to the Asset Library for reference
-* You may run into naming conflicts if your addon shares a name with another Blender addon or operator (see [#56](https://github.com/BrendanParmer/NodeToPython/issues/56))
+* You may run into naming conflicts if your add-on shares a name with another Blender add-on or operator (see [#56](https://github.com/BrendanParmer/NodeToPython/issues/56))
 
 ## Bug Reports and Suggestions
 
