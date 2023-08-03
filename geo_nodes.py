@@ -2,6 +2,7 @@ import bpy
 import os
 
 from .utils import *
+from io import StringIO
 
 geo_node_settings = {
     # Attribute nodes
@@ -168,6 +169,14 @@ class GeoNodesToPython(bpy.types.Operator):
     bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
+    mode : bpy.props.EnumProperty(
+        name = "Mode",
+        items = [
+            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
+            ('ADDON', "Addon", "Create a full addon")
+        ]
+    )
+
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
     
     def execute(self, context):
@@ -176,28 +185,31 @@ class GeoNodesToPython(bpy.types.Operator):
 
         #set up names to use in generated addon
         nt_var = clean_string(nt.name)
-        class_name = clean_string(nt.name.replace(" ", "").replace('.', ""), 
-                                  lower = False)
 
-        #find base directory to save new addon
-        base_dir = bpy.path.abspath("//")
-        if not base_dir or base_dir == "":
-            self.report({'ERROR'}, 
-                        ("NodeToPython: Save your blend file before using "
-                        "NodeToPython!"))
-            return {'CANCELLED'}
+        if self.mode == 'ADDON':
+            #find base directory to save new addon
+            dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
+            if not dir or dir == "":
+                self.report({'ERROR'}, 
+                            ("NodeToPython: Save your blend file before using "
+                            "NodeToPython!"))
+                return {'CANCELLED'}
 
-        #save in /addons/ subdirectory
-        zip_dir = os.path.join(base_dir, "addons", nt_var)
-        addon_dir = os.path.join(zip_dir, nt_var)
-        if not os.path.exists(addon_dir):
-            os.makedirs(addon_dir)
-        file = open(f"{addon_dir}/__init__.py", "w")
-        
-        create_header(file, nt.name)
-        init_operator(file, class_name, nt_var, nt.name)
+            #save in addons/ subdirectory
+            zip_dir = os.path.join(dir, nt_var)
+            addon_dir = os.path.join(zip_dir, nt_var)
 
-        file.write("\tdef execute(self, context):\n")
+            if not os.path.exists(addon_dir):
+                os.makedirs(addon_dir)
+            file = open(f"{addon_dir}/__init__.py", "w")
+            
+            create_header(file, nt.name)
+            class_name = clean_string(nt.name.replace(" ", "").replace('.', ""), 
+                                    lower = False)
+            init_operator(file, class_name, nt_var, nt.name)
+            file.write("\tdef execute(self, context):\n")
+        else:
+            file = StringIO("")
 
         #set to keep track of already created node trees
         node_trees = set()
@@ -205,8 +217,8 @@ class GeoNodesToPython(bpy.types.Operator):
         #dictionary to keep track of node->variable name pairs
         node_vars = {}
 
-        #keeps track of all used variables
-        used_vars = set()
+        #dictionary to keep track of variables->usage count pairs
+        used_vars = {}
         
         def process_geo_nodes_group(node_tree, level, node_vars, used_vars):
             nt_var = create_var(node_tree.name, used_vars)
@@ -218,8 +230,8 @@ class GeoNodesToPython(bpy.types.Operator):
             file.write(f"{outer}def {nt_var}_node_group():\n")
             file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
-                        f"type = \"GeometryNodeTree\", "
-                        f"name = \"{node_tree.name}\")\n"))
+                        f"type = \'GeometryNodeTree\', "
+                        f"name = {str_to_py_str(node_tree.name)})\n"))
             file.write("\n")
 
             inputs_set = False
@@ -238,40 +250,48 @@ class GeoNodesToPython(bpy.types.Operator):
                                                 used_vars)
                         node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-                    group_io_settings(node, file, inner, "input", nt_var, node_tree)
+                    group_io_settings(node, file, inner, "input", nt_var, 
+                                      node_tree)
                     inputs_set = True
 
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-                    group_io_settings(node, file, inner, "output", nt_var, node_tree)
+                    group_io_settings(node, file, inner, "output", nt_var, 
+                                      node_tree)
                     outputs_set = True
 
                 #create node
                 node_var = create_node(node, file, inner, nt_var, 
-                                      node_vars, used_vars)
+                                       node_vars, used_vars)
                 set_settings_defaults(node, geo_node_settings, file, inner, 
-                                        node_var)
+                                      node_var)
                 hide_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'GeometryNodeGroup':
                     if node.node_tree is not None:
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
-                                    f"[\"{node.node_tree.name}\"]\n"))
+                                    f"[{str_to_py_str(node.node_tree.name)}]\n"))
+
                 elif node.bl_idname == 'ShaderNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
+
                 elif node.bl_idname in curve_nodes:
                     curve_node_settings(node, file, inner, node_var)
-                elif node.bl_idname in image_nodes:
+
+                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
                     img = node.image
                     if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
+
                 elif node.bl_idname == 'GeometryNodeSimulationInput':
                     sim_inputs.append(node)
+
                 elif node.bl_idname == 'GeometryNodeSimulationOutput':
                     file.write(f"{inner}#remove generated sim state items\n")
                     file.write(f"{inner}for item in {node_var}.state_items:\n")
                     file.write(f"{inner}\t{node_var}.state_items.remove(item)\n")
+
                     for i, si in enumerate(node.state_items):
                         socket_type = enum_to_py_str(si.socket_type)
                         name = str_to_py_str(si.name)
@@ -284,7 +304,10 @@ class GeoNodesToPython(bpy.types.Operator):
                                     f"{attr_domain}\n"))
 
                 if node.bl_idname != 'GeometryNodeSimulationInput':
-                    set_input_defaults(node, file, inner, node_var, addon_dir)
+                    if self.mode == 'ADDON':
+                        set_input_defaults(node, file, inner, node_var, addon_dir)
+                    else:
+                        set_input_defaults(node, file, inner, node_var)
                     set_output_defaults(node, file, inner, node_var)
 
             #create simulation zones
@@ -295,13 +318,18 @@ class GeoNodesToPython(bpy.types.Operator):
                             f"({sim_output_var})\n"))
 
                 #must set defaults after paired with output
-                set_input_defaults(sim_input, file, inner, sim_input_var, addon_dir)
+                if self.mode == 'ADDON':
+                    set_input_defaults(node, file, inner, node_var, addon_dir)
+                else:
+                    set_input_defaults(node, file, inner, node_var)
                 set_output_defaults(sim_input, file, inner, sim_input_var)
             
+            #set look of nodes
             set_parents(node_tree, file, inner, node_vars)
             set_locations(node_tree, file, inner, node_vars)
             set_dimensions(node_tree, file, inner, node_vars)
 
+            #create connections
             init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"{inner}return {nt_var}\n")
@@ -311,7 +339,11 @@ class GeoNodesToPython(bpy.types.Operator):
                         f"{nt_var}_node_group()\n\n"))
             return used_vars
         
-        process_geo_nodes_group(nt, 2, node_vars, used_vars)
+        if self.mode == 'ADDON':
+            level = 2
+        else:
+            level = 0
+        process_geo_nodes_group(nt, level, node_vars, used_vars)
 
         def apply_modifier():
             #get object
@@ -323,21 +355,37 @@ class GeoNodesToPython(bpy.types.Operator):
             file.write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
                         f"type = 'NODES')\n"))
             file.write(f"\t\tmod.node_group = {nt_var}\n")
-        apply_modifier()
+        if self.mode == 'ADDON':
+            apply_modifier()
 
-        file.write("\t\treturn {'FINISHED'}\n\n")
-        
-        create_menu_func(file, class_name)
-        create_register_func(file, class_name)
-        create_unregister_func(file, class_name)
-        create_main_func(file)
-
+            file.write("\t\treturn {'FINISHED'}\n\n")
+            
+            create_menu_func(file, class_name)
+            create_register_func(file, class_name)
+            create_unregister_func(file, class_name)
+            create_main_func(file)
+        else:
+            context.window_manager.clipboard = file.getvalue()
         file.close()
 
-        zip_addon(zip_dir)
+        if self.mode == 'ADDON':
+            zip_addon(zip_dir)
 
+        #alert user that NTP is finished
+        if self.mode == 'SCRIPT':
+            location = "clipboard"
+        else:
+            location = dir
+        self.report({'INFO'}, 
+                    f"NodeToPython: Saved geometry nodes group to {location}")
         return {'FINISHED'}
+    
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
 
+    def draw(self, context):
+        self.layout.prop(self, "mode")
+    
 class SelectGeoNodesMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_ntp_geo_nodes_selection"
     bl_label = "Select Geo Nodes"
@@ -350,7 +398,8 @@ class SelectGeoNodesMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
 
-        geo_node_groups = [node for node in bpy.data.node_groups if node.type == 'GEOMETRY']
+        geo_node_groups = [node for node in bpy.data.node_groups 
+                           if node.type == 'GEOMETRY']
 
         for geo_ng in geo_node_groups:
             op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)

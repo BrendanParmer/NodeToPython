@@ -109,7 +109,7 @@ def create_header(file: TextIO, name: str):
     file.write("\t\"version\" : (1, 0, 0),\n")
     file.write(f"\t\"blender\" : {bpy.app.version},\n")
     file.write("\t\"location\" : \"Object\",\n")
-    file.write("\t\"category\" : \"Object\"\n")
+    file.write("\t\"category\" : \"Node\"\n")
     file.write("}\n")
     file.write("\n")
     file.write("import bpy\n")
@@ -132,13 +132,13 @@ def init_operator(file: TextIO, name: str, idname: str, label: str):
     file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
     file.write("\n")
 
-def create_var(name: str, used_vars: set) -> str:
+def create_var(name: str, used_vars: dict) -> str:
     """
     Creates a unique variable name for a node tree
 
     Parameters:
     name (str): basic string we'd like to create the variable name out of
-    used_vars (set): set containing all used variable names so far
+    used_vars (dict): dictionary containing variable names and usage counts
 
     Returns:
     clean_name (str): variable name for the node tree
@@ -147,13 +147,12 @@ def create_var(name: str, used_vars: set) -> str:
         name = "unnamed"
     clean_name = clean_string(name)
     var = clean_name
-    i = 0
-    while var in used_vars:
-        i += 1
-        var = f"{clean_name}_{i}"
-
-    used_vars.add(var)
-    return var
+    if var in used_vars:
+        used_vars[var] += 1
+        return f"{clean_name}_{used_vars[var]}"
+    else:
+        used_vars[var] = 0
+        return clean_name
 
 def make_indents(level: int) -> Tuple[str, str]:
     """
@@ -286,9 +285,7 @@ def group_io_settings(node, file: TextIO, inner: str, io: str, node_tree_var: st
         socket = ntio[i]
         socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-        print(f"{io} {i}: {name}")
         if inout.type in default_sockets:
-            print(socket.default_value)
             #default value
             if inout.type == 'RGBA':
                 dv = vec4_to_py_str(socket.default_value)
@@ -443,7 +440,7 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     file.write(f"{mapping_var}.update()\n")
 
 def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
-                       addon_dir: str):
+                       addon_dir: str = ""):
     """
     Sets defaults for input sockets
 
@@ -476,9 +473,8 @@ def set_input_defaults(node, file: TextIO, inner: str, node_var: str,
 
             #images
             elif input.bl_idname == 'NodeSocketImage':
-                print("Input is linked: ", input.is_linked)
                 img = input.default_value
-                if img is not None:
+                if img is not None and addon_dir != "": #write in a better way
                     save_image(img, addon_dir)
                     load_image(img, file, inner, f"{socket_var}.default_value")
                 default_val = None
@@ -688,7 +684,7 @@ def create_unregister_func(file: TextIO, name: str):
     """
     file.write("def unregister():\n")
     file.write(f"\tbpy.utils.unregister_class({name})\n")
-    file.write("\tbpy.types.VIEW3D_MT_objects.remove(menu_func)\n")
+    file.write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
     file.write("\n")
 
 def create_main_func(file: TextIO):
@@ -721,7 +717,6 @@ def save_image(img, addon_dir: str):
     #save the image
     img_str = img_to_py_str(img)
     img_path = f"{img_dir}/{img_str}"
-    print("Image Path: ", img_path)
     if not os.path.exists(img_path):
         img.save_render(img_path)
 
