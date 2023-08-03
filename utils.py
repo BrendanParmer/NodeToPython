@@ -109,7 +109,7 @@ def create_header(file: TextIO, name: str):
     file.write("\t\"version\" : (1, 0, 0),\n")
     file.write(f"\t\"blender\" : {bpy.app.version},\n")
     file.write("\t\"location\" : \"Object\",\n")
-    file.write("\t\"category\" : \"Object\"\n")
+    file.write("\t\"category\" : \"Node\"\n")
     file.write("}\n")
     file.write("\n")
     file.write("import bpy\n")
