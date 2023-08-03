@@ -5,7 +5,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
  
 ## About
-A Blender add-on to create add-ons! This add-on will take your Geometry Nodes or Materials and convert them into legible Python add-ons!
+A Blender add-on to create scripts and add-ons! This add-on will take your Geometry Nodes or Materials and convert them into legible Python code.
 
 Node To Python automatically handles node layout, default values, subgroups, naming, colors, and more! 
 
@@ -30,9 +30,11 @@ In the tab, there's panels to create add-ons for Geometry Nodes and Materials, e
 
 ![Add-on Location](./img/location.png "Add-on Location")
 
-Just select the one you want, and soon a zip file will be created in an `addons` folder located in the folder where your blend file is.
-
-From here, you can install it like a regular add-on.
+Select the node group you want code for, and you'll be prompted with a **Script** or **Add-on** option. 
+* **Script** mode creates a function that generates the node tree and copies it to your Blender clipboard.
+    * Doesn't include `import bpy` line
+    * To keep NodeToPython cross-platform and independent of third-party libraries, to get it into your system clipboard you need to paste into the Blender text editor and recopy it currently
+* **Add-on** mode generates a zip file for you in the save directory specified in the NodeToPython menu. From here, you can install it like a regular add-on. The generated add-on comes complete with operator registration and creating a modifier/material for the node tree to be used in. 
 
 ## Future
 ### v3.x
