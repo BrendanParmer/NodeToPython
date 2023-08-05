@@ -164,8 +164,8 @@ curve_nodes = {'ShaderNodeFloatCurve',
 
 image_nodes = {'GeometryNodeInputImage'}
 
-class GeoNodesToPython(bpy.types.Operator):
-    bl_idname = "node.geo_nodes_to_python"
+class NTPGeoNodesOperator(bpy.types.Operator):
+    bl_idname = "node.ntp_geo_nodes"
     bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
@@ -386,8 +386,8 @@ class GeoNodesToPython(bpy.types.Operator):
     def draw(self, context):
         self.layout.prop(self, "mode")
     
-class SelectGeoNodesMenu(bpy.types.Menu):
-    bl_idname = "NODE_MT_ntp_geo_nodes_selection"
+class NTPGeoNodesMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_ntp_geo_nodes"
     bl_label = "Select Geo Nodes"
     
     @classmethod
@@ -402,12 +402,12 @@ class SelectGeoNodesMenu(bpy.types.Menu):
                            if node.type == 'GEOMETRY']
 
         for geo_ng in geo_node_groups:
-            op = layout.operator(GeoNodesToPython.bl_idname, text=geo_ng.name)
+            op = layout.operator(NTPGeoNodesOperator.bl_idname, text=geo_ng.name)
             op.geo_nodes_group_name = geo_ng.name
             
-class GeoNodesToPythonPanel(bpy.types.Panel):
+class NTPGeoNodesPanel(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"
-    bl_idname = "NODE_PT_geo_nodes_to_python"
+    bl_idname = "NODE_PT_geo_nodes"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
@@ -434,4 +434,4 @@ class GeoNodesToPythonPanel(bpy.types.Panel):
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_ntp_geo_nodes_selection", text="Geometry Nodes")
+        row.menu("NODE_MT_ntp_geo_nodes", text="Geometry Nodes")

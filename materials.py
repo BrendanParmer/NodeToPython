@@ -77,8 +77,8 @@ curve_nodes = {'ShaderNodeFloatCurve',
 image_nodes = {'ShaderNodeTexEnvironment',
                'ShaderNodeTexImage'}
 
-class MaterialToPython(bpy.types.Operator):
-    bl_idname = "node.material_to_python"
+class NTPMaterialOperator(bpy.types.Operator):
+    bl_idname = "node.ntp_material"
     bl_label =  "Material to Python"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -271,8 +271,8 @@ class MaterialToPython(bpy.types.Operator):
     def draw(self, context):
         self.layout.prop(self, "mode")
 
-class SelectMaterialMenu(bpy.types.Menu):
-    bl_idname = "NODE_MT_ntp_mat_selection"
+class NTPMaterialMenu(bpy.types.Menu):
+    bl_idname = "NODE_MT_ntp_material"
     bl_label = "Select Material"
     
     @classmethod
@@ -283,10 +283,10 @@ class SelectMaterialMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
         for mat in bpy.data.materials:
-            op = layout.operator(MaterialToPython.bl_idname, text=mat.name)
+            op = layout.operator(NTPMaterialOperator.bl_idname, text=mat.name)
             op.material_name = mat.name
     
-class MaterialToPythonPanel(bpy.types.Panel):
+class NTPMaterialPanel(bpy.types.Panel):
     bl_label = "Material to Python"
     bl_idname = "NODE_PT_mat_to_python"
     bl_space_type = 'NODE_EDITOR'
@@ -312,4 +312,4 @@ class MaterialToPythonPanel(bpy.types.Panel):
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_ntp_mat_selection", text="Materials")
+        row.menu("NODE_MT_ntp_material", text="Materials")
