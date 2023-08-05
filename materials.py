@@ -272,7 +272,7 @@ class MaterialToPython(bpy.types.Operator):
         self.layout.prop(self, "mode")
 
 class SelectMaterialMenu(bpy.types.Menu):
-    bl_idname = "NODE_MT_npt_mat_selection"
+    bl_idname = "NODE_MT_ntp_mat_selection"
     bl_label = "Select Material"
     
     @classmethod
@@ -312,4 +312,4 @@ class MaterialToPythonPanel(bpy.types.Panel):
         
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
-        row.menu("NODE_MT_npt_mat_selection", text="Materials")
+        row.menu("NODE_MT_ntp_mat_selection", text="Materials")
