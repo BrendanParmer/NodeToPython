@@ -5,14 +5,140 @@ from .utils import *
 from io import StringIO
 
 node_settings = {
+    #Input
+    'CompositorNodeBokehImage' : ["flaps", "angle", "rounding", "catadioptric", 
+                                  "shift"],
+    'CompositorNodeImage' : [], #TODO: handle image selection
+    'CompositorNodeMask' : ["use_feather", "size_source", "size_x", "size_y", 
+                            "use_motion_blur", 
+                            "motion_blur_samples", "motion_blur_shutter"], #TODO: handle mask selection
+    'CompositorNodeMovieClip' : [], #TODO: handle movie clip selection
+    'CompositorNodeRLayers' : ["name", "layer"],
+    'CompositorNodeRGB' : [], #should be handled by outputs
+    'CompositorNodeSceneTime' : [], #should be good
+    'CompositorNodeTexture' : [], #TODO: handle texture selection
+    'CompositorNodeTime' : ["frame_start", "frame_end"],
+    'CompositorNodeTrackPos' : [], #TODO: handle movie selection
+    'CompositorNodeValue' : [], #should be handled by outputs (why is this a separate class??)
+
+    #Output
+    'CompositorNodeComposite' : ["use_alpha"],
+    'CompositorNodeOutputFile' : ["base_path"], #TODO: doesn't seem portable
+    'CompositorNodeLevels' : ["channel"],
+    'CompositorNodeSplitViewer' : ["axis", "factor"],
+    'CompositorNodeViewer' : ["use_alpha"],
+
+    #Color
+    'CompositorNodeAlphaOver' : ["use_premultiply", "premul"],
+    'CompositorNodeBrightContrast' : ["use_premultiply"],
+    'CompositorNodeColorBalance' : ["correction_method", "lift", "gamma", 
+                                    "gain", "offset", "power", "slope", 
+                                    "offset_basis"],
+    'CompositorNodeColorCorrection' : ["red", "green", "blue", 
+                                       "master_saturation", "master_contrast", 
+                                       "master_gamma", "master_gain", 
+                                       "master_lift", 
+                                       "highlights_saturation", "highlights_contrast",
+                                       "highlights_gamma", "highlights_gain",
+                                       "highlights_lift",
+                                       "midtones_saturation", "midtones_contrast",
+                                       "midtones_gamma", "midtones_gain",
+                                       "midtones_lift",
+                                       "shadows_saturation", "shadows_contrast",
+                                       "shadows_gamma", "shadows_gain",
+                                       "shadows_lift",
+                                       "midtones_start", "midtones_end"],
+    'CompositorNodeExposure' : [],
+    'CompositorNodeGamma' : [],
+    'CompositorNodeHueCorrect' : [],
+    'CompositorNodeHueSat' : [],
+    'CompositorNodeInvert' : ["invert_rgb", "invert_alpha"],
+    'CompositorNodeMixRGB' : ["blend_type", "use_alpha", "use_clamp"], #TODO: has an update() method, may need to figure out why...
+    'CompositorNodePosterize' : [],
+    'CompositorNodeCurveRGB' : [],
+    'CompositorNodeTonemap' : ["tonemap_type", "intensity", "contrast", "adaptation", "correction", "key", "offset", "gamma"],
+    'CompositorNodeZcombine' : ["use_alpha", "use_antialias_z"],
+
+    #Converter
+    'CompositorNodePremulKey' : ["mapping"],
+    'CompositorNodeValToRGB' : [], #TODO: check to see if this'll work out of the box
+    'CompositorNodeConvertColorSpace' : ["from_color_space", "to_color_space"],
+    'CompositorNodeCombineColor' : ["mode", "ycc_mode"], #why isn't this standardized across blender?
+    'CompositorNodeCombineXYZ' : [],
+    'CompositorNodeIDMask' : ["index", "use_antialiasing"],
+    'CompositorNodeMath' : ["operation", "use_clamp"],
+    'CompositorNodeRGBToBW' : [],
+    'CompositorNodeSeparateColor' : ["mode", "ycc_mode"],
+    'CompositorNodeSeparateXYZ' : [],
+    'CompositorNodeSetAlpha' : ["mode"], 
+    'CompositorNodeSwitchView' : [],
+
+    #Filter
+    'CompositorNodeAntiAliasing' : ["threshold", "contrast_limit", "corner_rounding"],
+    'CompositorNodeBilateralblur' : ["iterations", "sigma_color", "sigma_space"],
+    'CompositorNodeBlur' : ["filter_type", "use_variable_size", "use_gamma_correction", "use_relative", "aspect_correction", "factor", "factor_x", "factor_y", "use_extended_bounds"],
+    'CompositorNodeBokehBlur' : ["use_variable_size", "blur_max", "use_extended_bounds"],
+    'CompositorNodeDefocus' : ["bokeh", "angle", "use_gamma_correction", "f_stop", "blur_max", "threshold", "use_preview", "use_zbuffer", "z_scale"],
+    'CompositorNodeDespeckle' : ["threshold", "threshold_neighbor"],
+    'CompositorNodeDilateErode' : ["mode", "distance", "edge", "falloff"],
+    'CompositorNodeDBlur' : ["iterations", "center_x", "center_y", "distance", "angle", "spin", "zoom"],
+    'CompositorNodeFilter' : ["filter_type"], 
+    'CompositorNodeGlare' : ["glare_type", "quality", "iterations", "color_modulation", "mix", "threshold", "streaks", "angle_offset", "fade", "size", "use_rotate_45"],
+    'CompositorNodeInpaint' : ["distance"],
+    'CompositorNodePixelate' : [],
+    'CompositorNodeSunBeams' : ["source", "ray_length"], #TODO: check that source doesn't freak out
+    'CompositorNodeVecBlur' : ["samples", "factor", "speed_min", "speed_max", "use_curved"],
+
+    #Vector
+    'CompositorNodeMapRange' : ["use_clamp"], 
+    'CompositorNodeMapValue' : ["offset", "size", "use_min", "min", "use_max", "max"], #why are all these vectors?? TODO: check to make sure it doesn't flip
+    'CompositorNodeNormal' : [], #should be handled with io system
+    'CompositorNodeNormalize' : [],
+    'CompositorNodeCurveVec' : [],
+
+    #Matte
+    'CompositorNodeBoxMask' : ["x", "y", "width", "height", "rotation", "mask_type"],
+    'CompositorNodeChannelMatte' : ["color_space", "matte_channel", "limit_method", "limit_channel", "limit_max", "limit_min"],
+    'CompositorNodeChromaMatte' : ["tolerance", "threshold", "gain"],
+    'CompositorNodeColorMatte' : ["color_hue", "color_saturation", "color_value"],
+    'CompositorNodeColorSpill' : ["channel", "limit_method", "ratio", "use_unspill", "unspill_red", "unspill_green", "unspill_blue"],
+    'CompositorNodeCryptomatteV2' : ["source"], #TODO: will need a lot of special handling
+    'CompositorNodeCryptomatte' : [], #TODO: will likely need same handling as above
+    'CompositorNodeDiffMatte' : ["tolerance", "falloff"],
+    'CompositorNodeDistanceMatte' : ["tolerance", "falloff", "channel"],
+    'CompositorNodeDoubleEdgeMask' : ["inner_mode", "edge_mode"],
+    'CompositorNodeEllipseMask' : ["x", "y", "width", "height", "rotation", "mask_type"],
+    'CompositorNodeKeying' : ["blur_pre", "screen_balance", "despill_factor", "despill_balance", "edge_kernel_radius", "edge_kernel_tolerance", "clip_black", "clip_white", "dilate_distance", "feather_falloff", "feather_distance", "blur_post"],
+    'CompositorNodeKeyingScreen' : [], #TODO: movie stuff
+    'CompositorNodeLumaMatte' : ["limit_max", "limit_min"],
+
+    #Distort
+    'CompositorNodeCornerPin' : [],
+    'CompositorNodeCrop' : ["use_crop_size", "relative", "min_x", "max_x", "min_y", "max_y", "rel_min_x", "rel_max_x", "rel_min_y", "rel_max_y"],
+    'CompositorNodeDisplace' : [],
+    'CompositorNodeFlip' : ["axis"],
+    'CompositorNodeLensdist' : ["use_projector", "use_jitter", "use_fit"],
+    'CompositorNodeMapUV' : ["alpha"],
+    'CompositorNodeMovieDistortion' : [], #TODO: movie stuff
+    'CompositorNodePlaneTrackDeform' : ["use_motion_blur", "motion_blur_samples", "motion_blur_shutter"], #TODO: movie stuff
+    'CompositorNodeRotate' : ["filter_type"],
+    'CompositorNodeScale' : ["space", "frame_method", "offset_x", "offset_y"],
+    'CompositorNodeStablize' : [], #TODO: movie stuff
+    'CompositorNodeTransform' : ["filter_type"],
+    'CompositorNodeTranslate' : ["use_relative", "wrapping"],
+
+    #Layout
+    'CompositorNodeSwitch' : ["check"]
 }
 
-curve_nodes = {'ShaderNodeFloatCurve', 
-               'ShaderNodeVectorCurve', 
-               'ShaderNodeRGBCurve'}
+curve_nodes = {
+    'CompositorNodeTime', #TODO: check this works
+    'CompositorNodeHueCorrect', #TODO: probbably will need custom work
+    'CompositorNodeCurveRGB', #may just work out of the box
+    'CompositorNodeCurveVec', #may just work out of the box
+}
 
-image_nodes = {'ShaderNodeTexEnvironment',
-               'ShaderNodeTexImage'}
+image_nodes = {'CompositorNodeImage',}
 
 class NTPCompositorOperator(bpy.types.Operator):
     bl_idname = "node.compositor_to_python"
@@ -33,14 +159,19 @@ class NTPCompositorOperator(bpy.types.Operator):
     def execute(self, context):
         """
         #find node group to replicate
-        nt = bpy.data.materials[self.material_name].node_tree
+        if self.is_scene:
+            nt = bpy.data.scenes[self.compositor_name].node_tree
+        else:
+            nt = bpy.data.node_groups[self.compositor_name]
         if nt is None:
+            #shouldn't happen
             self.report({'ERROR'},("NodeToPython: This doesn't seem to be a "
-                                   "valid material. Is Use Nodes selected?"))
+                                   "valid compositor node tree. Is Use Nodes "
+                                   "selected?"))
             return {'CANCELLED'}
 
         #set up names to use in generated addon
-        mat_var = clean_string(self.material_name)
+        comp_var = clean_string(self.compositor_name)
         
         if self.mode == 'ADDON':
             dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
@@ -50,29 +181,30 @@ class NTPCompositorOperator(bpy.types.Operator):
                             "NodeToPython!"))
                 return {'CANCELLED'}
 
-            zip_dir = os.path.join(dir, mat_var)
-            addon_dir = os.path.join(zip_dir, mat_var)
+            zip_dir = os.path.join(dir, comp_var)
+            addon_dir = os.path.join(zip_dir, comp_var)
             if not os.path.exists(addon_dir):
                 os.makedirs(addon_dir)
             file = open(f"{addon_dir}/__init__.py", "w")
 
-            create_header(file, self.material_name)
-            class_name = clean_string(self.material_name, lower=False)
-            init_operator(file, class_name, mat_var, self.material_name)
+            create_header(file, self.compositor_name)
+            class_name = clean_string(self.compositor_name, lower=False)
+            init_operator(file, class_name, comp_var, self.compositor_name)
 
             file.write("\tdef execute(self, context):\n")
         else:
             file = StringIO("")
 
-        def create_material(indent: str):
-            file.write((f"{indent}mat = bpy.data.materials.new("
-                        f"name = {str_to_py_str(self.material_name)})\n"))
-            file.write(f"{indent}mat.use_nodes = True\n")
-        
-        if self.mode == 'ADDON':
-            create_material("\t\t")
-        elif self.mode == 'SCRIPT':
-            create_material("")
+        if self.is_scene:
+            def create_scene(indent: str):
+                file.write((f"{indent}scene = bpy.data.scenes.new(" #TODO: see if using scene as name effects nodes named scene
+                            f"name = {str_to_py_str(self.compositor_name)})\n"))
+                file.write(f"{indent}scene.use_nodes = True\n")
+            
+            if self.mode == 'ADDON':
+                create_scene("\t\t")
+            elif self.mode == 'SCRIPT':
+                create_scene("")
         
         #set to keep track of already created node trees
         node_trees = set()
@@ -90,10 +222,10 @@ class NTPCompositorOperator(bpy.types.Operator):
                 return True
             return False
 
-        def process_mat_node_group(node_tree, level, node_vars, used_vars):
+        def process_comp_node_group(node_tree, level, node_vars, used_vars):
             if is_outermost_node_group(level):
-                nt_var = create_var(self.material_name, used_vars)
-                nt_name = self.material_name
+                nt_var = create_var(self.compositor_name, used_vars)
+                nt_name = self.compositor_name
             else:
                 nt_var = create_var(node_tree.name, used_vars)
                 nt_name = node_tree.name
@@ -105,14 +237,14 @@ class NTPCompositorOperator(bpy.types.Operator):
             file.write(f"{outer}def {nt_var}_node_group():\n")
 
             if is_outermost_node_group(level): #outermost node group
-                file.write(f"{inner}{nt_var} = mat.node_tree\n")
+                file.write(f"{inner}{nt_var} = scene.node_tree\n")
                 file.write(f"{inner}#start with a clean node tree\n")
                 file.write(f"{inner}for node in {nt_var}.nodes:\n")
                 file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
             else:
                 file.write((f"{inner}{nt_var}"
                         f"= bpy.data.node_groups.new("
-                        f"type = \'ShaderNodeTree\', "
+                        f"type = \'CompositorNodeTree\', "
                         f"name = {str_to_py_str(nt_name)})\n"))
                 file.write("\n")
 
@@ -126,10 +258,10 @@ class NTPCompositorOperator(bpy.types.Operator):
             node_vars = {}
 
             for node in node_tree.nodes:
-                if node.bl_idname == 'ShaderNodeGroup':
+                if node.bl_idname == 'CompositorNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_mat_node_group(node_nt, level + 1, node_vars, 
+                        process_comp_node_group(node_nt, level + 1, node_vars, 
                                                used_vars)
                         node_trees.add(node_nt)
                 
@@ -139,7 +271,7 @@ class NTPCompositorOperator(bpy.types.Operator):
                 set_settings_defaults(node, node_settings, file, inner, node_var)
                 hide_sockets(node, file, inner, node_var)
 
-                if node.bl_idname == 'ShaderNodeGroup':
+                if node.bl_idname == 'CompositorNodeGroup':
                     if node.node_tree is not None:
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
@@ -183,7 +315,7 @@ class NTPCompositorOperator(bpy.types.Operator):
             level = 2
         else:
             level = 0        
-        process_mat_node_group(nt, level, node_vars, used_vars)
+        process_comp_node_group(nt, level, node_vars, used_vars)
 
         if self.mode == 'ADDON':
             file.write("\t\treturn {'FINISHED'}\n\n")
