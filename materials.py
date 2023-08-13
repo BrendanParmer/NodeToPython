@@ -131,7 +131,7 @@ class NTPMaterialOperator(bpy.types.Operator):
         
         if self.mode == 'ADDON':
             create_material("\t\t")
-        elif self.mode == 'SCRIPT':
+        elif self.mode == 'SCRIPT': #TODO: should add option for just creating the node group
             create_material("")
         
         #set to keep track of already created node trees

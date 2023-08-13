@@ -4,6 +4,14 @@ import os
 from .utils import *
 from io import StringIO
 
+SCENE_VAR = "scene"
+BASE_NAME_VAR = "base_name"
+END_NAME_VAR = "end_name"
+
+ntp_vars = {SCENE_VAR, BASE_NAME_VAR, END_NAME_VAR} 
+#TODO: do something similar for geo nodes and materials, should be useful for
+# possible conflicts between ntp_vars and node vars
+
 node_settings = {
     #Input
     'CompositorNodeBokehImage' : ["flaps", "angle", "rounding", "catadioptric", 
@@ -157,7 +165,6 @@ class NTPCompositorOperator(bpy.types.Operator):
     is_scene : bpy.props.BoolProperty(name="Is Scene", description="Blender stores compositing node trees differently for scenes and in groups")
 
     def execute(self, context):
-        """
         #find node group to replicate
         if self.is_scene:
             nt = bpy.data.scenes[self.compositor_name].node_tree
@@ -194,12 +201,24 @@ class NTPCompositorOperator(bpy.types.Operator):
             file.write("\tdef execute(self, context):\n")
         else:
             file = StringIO("")
-
         if self.is_scene:
             def create_scene(indent: str):
-                file.write((f"{indent}scene = bpy.data.scenes.new(" #TODO: see if using scene as name effects nodes named scene
-                            f"name = {str_to_py_str(self.compositor_name)})\n"))
-                file.write(f"{indent}scene.use_nodes = True\n")
+                file.write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") #TODO: see if using scene as name effects nodes named scene
+
+                #TODO: wrap in more general unique name util function
+                file.write(f"{indent}# Generate unique scene name\n")
+                file.write(f"{indent}{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}\n")
+                file.write(f"{indent}{END_NAME_VAR} = {BASE_NAME_VAR}\n")
+                file.write(f"{indent}if bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
+                file.write(f"{indent}\ti = 1\n")
+                file.write(f"{indent}\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
+                file.write(f"{indent}\twhile bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
+                file.write(f"{indent}\t\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
+                file.write(f"{indent}\t\ti += 1\n\n")
+
+                file.write(f"{indent}{SCENE_VAR}.name = {END_NAME_VAR}\n")
+                file.write(f"{indent}{SCENE_VAR}.use_fake_user = True\n")
+                file.write(f"{indent}bpy.context.window.scene = {SCENE_VAR}\n")
             
             if self.mode == 'ADDON':
                 create_scene("\t\t")
@@ -237,7 +256,7 @@ class NTPCompositorOperator(bpy.types.Operator):
             file.write(f"{outer}def {nt_var}_node_group():\n")
 
             if is_outermost_node_group(level): #outermost node group
-                file.write(f"{inner}{nt_var} = scene.node_tree\n")
+                file.write(f"{inner}{nt_var} = {SCENE_VAR}.node_tree\n")
                 file.write(f"{inner}#start with a clean node tree\n")
                 file.write(f"{inner}for node in {nt_var}.nodes:\n")
                 file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
@@ -247,7 +266,7 @@ class NTPCompositorOperator(bpy.types.Operator):
                         f"type = \'CompositorNodeTree\', "
                         f"name = {str_to_py_str(nt_name)})\n"))
                 file.write("\n")
-
+            """
             inputs_set = False
             outputs_set = False
 
@@ -310,7 +329,7 @@ class NTPCompositorOperator(bpy.types.Operator):
             init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")
-
+        """
         if self.mode == 'ADDON':
             level = 2
         else:
@@ -331,7 +350,7 @@ class NTPCompositorOperator(bpy.types.Operator):
         
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
-        """
+
         if self.mode == 'SCRIPT':
             location = "clipboard"
         else:
