@@ -4,165 +4,340 @@ import os
 from .utils import *
 from io import StringIO
 
-geo_node_settings = {
-    # Attribute nodes
-    "GeometryNodeAttributeStatistic" : ["data_type", "domain"],
-    "GeometryNodeAttributeDomainSize" : ["component"],
+geo_node_settings : dict[str, list[(str, str)]] = {
+    # ATTRIBUTE
+    'GeometryNodeAttributeStatistic'  : [("data_type", "enum"), 
+                                         ("domain", "enum")],
+    'GeometryNodeAttributeDomainSize' : [("component", "enum")],
+    'GeometryNodeBlurAttribute'       : [("data_type", "enum")],
+    'GeometryNodeCaptureAttribute'    : [("data_type", "enum"),
+                                         ("domain", "enum")],
+    'GeometryNodeRemoveAttribute'     : [],
+    'GeometryNodeStoreNamedAttribute' : [("data_type", "enum"),
+                                         ("domain", "enum")],
+    'GeometryNodeAttributeTransfer'   : [("data_type", "enum"),
+                                         ("domain", "enum"),
+                                         ("mapping", "enum")],
 
-    "GeometryNodeBlurAttribute" : ["data_type"],
-    "GeometryNodeCaptureAttribute" : ["data_type", "domain"],
-    "GeometryNodeStoreNamedAttribute" : ["data_type", "domain"],
-    "GeometryNodeAttributeTransfer" : ["data_type", "mapping"],
-
-    # Input Nodes
+    # INPUT
     # Input > Constant
-    "FunctionNodeInputBool" : ["boolean"],
-    "FunctionNodeInputColor" : ["color"],
-    "FunctionNodeInputInt" : ["integer"],
-    "GeometryNodeInputMaterial" : ["material"],
-    "FunctionNodeInputString" : ["string"],
-    "FunctionNodeInputVector" : ["vector"],
+    'FunctionNodeInputBool'     : [("boolean", "bool")],
+    'FunctionNodeInputColor'    : [("color", "Vec4")],
+    'GeometryNodeInputImage'    : [("image", "Image")],
+    'FunctionNodeInputInt'      : [("integer", "int")],
+    'GeometryNodeInputMaterial' : [("material", "Material")],
+    'FunctionNodeInputString'   : [("string", "str")],
+    'ShaderNodeValue'           : [],
+    'FunctionNodeInputVector'   : [("vector", "Vec3")],
 
+    #Input > Group
+    'NodeGroupInput' : [],
+    
     # Input > Scene
-    "GeometryNodeCollectionInfo" : ["transform_space"],
-    "GeometryNodeObjectInfo" : ["transform_space"],
+    'GeometryNodeCollectionInfo' : [("transform_space", "enum")],
+    'GeometryNodeImageInfo'      : [],
+    'GeometryNodeIsViewport'     : [],
+    'GeometryNodeObjectInfo'     : [("transform_space", "enum")],
+    'GeometryNodeSelfObject'     : [],
+    'GeometryNodeInputSceneTime' : [],
 
-    # Output Nodes
-    "GeometryNodeViewer" : ["domain"],
 
-    # Geometry Nodes
+    # OUTPUT
+    'GeometryNodeViewer'         : [("data_type", "enum"),
+                                    ("domain", "enum")],
+
+
+    # GEOMETRY
+    'GeometryNodeJoinGeometry'       : [],
+    'GeometryNodeGeometryToInstance' : [],
+
     # Geometry > Read
-    "GeometryNodeInputNamedAttribute" : ["data_type"],
+    'GeometryNodeInputID'             : [],
+    'GeometryNodeInputIndex'          : [],
+    'GeometryNodeInputNamedAttribute' : [("data_type", "enum")],
+    'GeometryNodeInputNormal'         : [],
+    'GeometryNodeInputPosition'       : [],
+    'GeometryNodeInputRadius'         : [],
 
     # Geometry > Sample
-    "GeometryNodeProximity" : ["target_element"],
-    "GeometryNodeRaycast" : ["data_type", "mapping"],
-    "GeometryNodeSampleIndex" : ["data_type", "domain", "clamp"],
-    "GeometryNodeSampleNearest" : ["domain"],
+    'GeometryNodeProximity'      : [("target_element", "enum")],
+    'GeometryNodeIndexOfNearest' : [],
+    'GeometryNodeRaycast'        : [("data_type", "enum"),
+                                    ("mapping", "enum")],
+    'GeometryNodeSampleIndex'    : [("clamp", "bool"),
+                                    ("data_type", "enum"),
+                                    ("domain", "enum")],
+    'GeometryNodeSampleNearest'  : [("domain", "enum")],
+
+    # Geometry > Write
+    'GeometryNodeSetID'       : [],
+    'GeometryNodeSetPosition' : [],
 
     # Geometry > Operations
-    "GeometryNodeDeleteGeometry" : ["domain", "mode"],
-    "GeometryNodeDuplicateElements" : ["domain"],
-    "GeometryNodeMergeByDistance" : ["mode"],
-    "GeometryNodeSeparateGeometry" : ["domain"],
+    'GeometryNodeBoundBox'           : [],
+    'GeometryNodeConvexHull'         : [],
+    'GeometryNodeDeleteGeometry'     : [("domain", "enum"),
+                                        ("mode", "enum")],
+    'GeometryNodeDuplicateElements'  : [("domain", "enum")],
+    'GeometryNodeMergeByDistance'    : [("mode", "enum")],
+    'GeometryNodeTransform'          : [],
+    'GeometryNodeSeparateComponents' : [],
+    'GeometryNodeSeparateGeometry'   : [("domain", "enum")],
 
 
-    # Curve
+    # CURVE
     # Curve > Read
-    "GeometryNodeCurveHandleTypeSelection" : ["mode", "handle_type"],
+    'GeometryNodeInputCurveHandlePositions' : [],
+    'GeometryNodeCurveLength'               : [],
+    'GeometryNodeInputTangent'              : [],
+    'GeometryNodeInputCurveTilt'            : [],
+    'GeometryNodeCurveEndpointSelection'    : [],
+    'GeometryNodeCurveHandleTypeSelection'  : [("handle_type", "enum"),
+                                               ("mode", "enum")],
+    'GeometryNodeInputSplineCyclic'         : [],
+    'GeometryNodeSplineLength'              : [],
+    'GeometryNodeSplineParameter'           : [],
+    'GeometryNodeInputSplineResolution'     : [],
 
     # Curve > Sample
-    "GeometryNodeSampleCurve" : ["data_type", "mode", "use_all_curves"],
+    'GeometryNodeSampleCurve' : [("data_type", "enum"),
+                                 ("mode", "enum"),
+                                 ("use_all_curves", "bool")],
 
     # Curve > Write
-    "GeometryNodeSetCurveNormal" : ["mode"],
-    "GeometryNodeSetCurveHandlePositions" : ["mode"],
-    "GeometryNodeCurveSetHandles" : ["mode", "handle_type"],
-    "GeometryNodeCurveSplineType" : ["spline_type"],
+    'GeometryNodeSetCurveNormal'          : [("mode", "enum")],
+    'GeometryNodeSetCurveRadius'          : [],
+    'GeometryNodeSetCurveTilt'            : [],
+    'GeometryNodeSetCurveHandlePositions' : [("mode", "enum")],
+    'GeometryNodeCurveSetHandles'         : [("handle_type", "enum"),
+                                             ("mode", "enum")],
+    'GeometryNodeSetSplineCyclic'         : [],
+    'GeometryNodeSetSplineResolution'     : [],
+    'GeometryNodeCurveSplineType'         : [("spline_type", "enum")],
 
     # Curve > Operations
-    "GeometryNodeCurveToPoints" : ["mode"],
-    "GeometryNodeFillCurve" : ["mode"], 
-    "GeometryNodeFilletCurve" : ["mode"],
-    "GeometryNodeResampleCurve" : ["mode"],
-    "GeometryNodeTrimCurve" : ["mode"],
+    'GeometryNodeCurveToMesh'           : [],
+    'GeometryNodeCurveToPoints'         : [("mode", "enum")],
+    'GeometryNodeDeformCurvesOnSurface' : [],
+    'GeometryNodeFillCurve'             : [("mode", "enum")], 
+    'GeometryNodeFilletCurve'           : [("mode", "enum")],
+    'GeometryNodeInterpolateCurves'     : [],
+    'GeometryNodeResampleCurve'         : [("mode", "enum")],
+    'GeometryNodeReverseCurve'          : [],
+    'GeometryNodeSubdivideCurve'        : [],
+    'GeometryNodeTrimCurve'             : [("mode", "enum")],
 
     # Curve > Primitives
-    "GeometryNodeCurveArc" : ["mode"],
-    "GeometryNodeCurvePrimitiveBezierSegment" : ["mode"],
-    "GeometryNodeCurvePrimitiveCircle" : ["mode"],
-    "GeometryNodeCurvePrimitiveLine" : ["mode"],
-    "GeometryNodeCurvePrimitiveQuadrilateral" : ["mode"],
+    'GeometryNodeCurveArc'                    : [("mode", "enum")],
+    'GeometryNodeCurvePrimitiveBezierSegment' : [("mode", "enum")],
+    'GeometryNodeCurvePrimitiveCircle'        : [("mode", "enum")],
+    'GeometryNodeCurvePrimitiveLine'          : [("mode", "enum")],
+    'GeometryNodeCurveSpiral'                 : [],
+    'GeometryNodeCurveQuadraticBezier'        : [],
+    'GeometryNodeCurvePrimitiveQuadrilateral' : [("mode", "enum")],
+    'GeometryNodeCurveStar'                   : [],
+
+    # Curve > Topology
+    'GeometryNodeOffsetPointInCurve' : [],
+    'GeometryNodeCurveOfPoint'       : [],
+    'GeometryNodePointsOfCurve'      : [],
 
 
-    # Mesh Nodes
+    # INSTANCES
+    'GeometryNodeInstanceOnPoints'      : [],
+    'GeometryNodeInstancesToPoints'     : [],
+    'GeometryNodeRealizeInstances'      : [("legacy_behavior", "bool")],
+    'GeometryNodeRotateInstances'       : [],
+    'GeometryNodeScaleInstances'        : [],
+    'GeometryNodeTranslateInstances'    : [],
+    'GeometryNodeInputInstanceRotation' : [],
+    'GeometryNodeInputInstanceScale'    : [],
+
+
+    # MESH
+    # Mesh > Read
+    'GeometryNodeInputMeshEdgeAngle'       : [],
+    'GeometryNodeInputMeshEdgeNeighbors'   : [],
+    'GeometryNodeInputMeshEdgeVertices'    : [],
+    'GeometryNodeEdgesToFaceGroups'        : [],
+    'GeometryNodeInputMeshFaceArea'        : [],
+    'GeometryNodeInputMeshFaceNeighbors'   : [],
+    'GeometryNodeMeshFaceSetBoundaries'    : [],
+    'GeometryNodeInputMeshFaceIsPlanar'    : [],
+    'GeometryNodeInputShadeSmooth'         : [],
+    'GeometryNodeInputMeshIsland'          : [],
+    'GeometryNodeInputShortestEdgePaths'   : [],
+    'GeometryNodeInputMeshVertexNeighbors' : [],
+
     # Mesh > Sample
-    "GeometryNodeSampleNearestSurface" : ["data_type"],
-    "GeometryNodeSampleUVSurface" : ["data_type"],
+    'GeometryNodeSampleNearestSurface' : [("data_type", "enum")],
+    'GeometryNodeSampleUVSurface'      : [("data_type", "enum")],
+
+    # Mesh > Write
+    'GeometryNodeSetShadeSmooth' : [],
 
     # Mesh > Operations
-    "GeometryNodeExtrudeMesh" : ["mode"],
-    "GeometryNodeMeshBoolean" : ["operation"],
-    "GeometryNodeMeshToPoints" : ["mode"],
-    "GeometryNodeMeshToVolume" : ["resolution_mode"],
-    "GeometryNodeScaleElements" : ["domain", "scale_mode"],
-    "GeometryNodeSubdivisionSurface" : ["uv_smooth", "boundary_smooth"],
-    "GeometryNodeTriangulate" : ["quad_method", "ngon_method"],
+    'GeometryNodeDualMesh'             : [],
+    'GeometryNodeEdgePathsToCurves'    : [],
+    'GeometryNodeEdgePathsToSelection' : [],
+    'GeometryNodeExtrudeMesh'          : [("mode", "enum")],
+    'GeometryNodeFlipFaces'            : [],
+    'GeometryNodeMeshBoolean'          : [("operation", "enum")],
+    'GeometryNodeMeshToCurve'          : [],
+    'GeometryNodeMeshToPoints'         : [("mode", "enum")],
+    'GeometryNodeMeshToVolume'         : [("resolution_mode", "enum")],
+    'GeometryNodeScaleElements'        : [("domain", "enum"),
+                                          ("scale_mode", "enum")],
+    'GeometryNodeSplitEdges'           : [],
+    'GeometryNodeSubdivideMesh'        : [],
+    'GeometryNodeSubdivisionSurface'   : [("boundary_smooth", "enum"),
+                                          ("uv_smooth", "enum")],
+    'GeometryNodeTriangulate'          : [("ngon_method", "enum"),
+                                          ("quad_method", "enum")],
 
     # Mesh > Primitives
-    "GeometryNodeMeshCone" : ["fill_type"],
-    "GeometryNodeMeshCylinder" : ["fill_type"],
-    "GeometryNodeMeshCircle" : ["fill_type"],
-    "GeometryNodeMeshLine" : ["mode"],
+    'GeometryNodeMeshCone'      : [("fill_type", "enum")],
+    'GeometryNodeMeshCube'      : [],
+    'GeometryNodeMeshCylinder'  : [("fill_type", "enum")],
+    'GeometryNodeMeshGrid'      : [],
+    'GeometryNodeMeshIcoSphere' : [],
+    'GeometryNodeMeshCircle'    : [("fill_type", "enum")],
+    'GeometryNodeMeshLine'      : [("count_mode", "enum"),
+                                   ("mode", "enum")],
+    'GeometryNodeMeshUVSphere'  : [],
+
+    # Mesh > Topology
+    'GeometryNodeCornersOfFace'      : [],
+    'GeometryNodeCornersOfVertex'    : [],
+    'GeometryNodeEdgesOfCorner'      : [],
+    'GeometryNodeEdgesOfVertex'      : [],
+    'GeometryNodeFaceOfCorner'       : [],
+    'GeometryNodeOffsetCornerInFace' : [],
+    'GeometryNodeVertexOfCorner'     : [],
 
     # Mesh > UV
-    "GeometryNodeUVUnwrap" : ["method"],
+    'GeometryNodeUVPackIslands' : [],
+    'GeometryNodeUVUnwrap'      : [("method", "enum")],
 
 
-    # Point Nodes
-    "GeometryNodeDistributePointsInVolume" : ["mode"],
-    "GeometryNodeDistributePointsOnFaces" : ["distribute_method"],
-    "GeometryNodePointsToVolume" : ["resolution_mode"],
-
-    # Volume Nodes
-    "GeometryNodeVolumeToMesh" : ["resolution_mode"],
-
-
-    # Texture Nodes
-    "ShaderNodeTexBrick" : ["offset", "offset_frequency", "squash", 
-                            "squash_frequency"],
-    "ShaderNodeTexGradient" : ["gradient_type"],
-    "GeometryNodeImageTexture" : ["interpolation", "extension"],
-    "ShaderNodeTexMagic" : ["turbulence_depth"],
-    "ShaderNodeTexNoise" : ["noise_dimensions"],
-    "ShaderNodeTexVoronoi" : ["voronoi_dimensions", "feature", "distance"],
-    "ShaderNodeTexWave" : ["wave_type", "bands_direction", "wave_profile"],
-    "ShaderNodeTexWhiteNoise" : ["noise_dimensions"],
+    # POINT
+    'GeometryNodeDistributePointsInVolume' : [("mode", "enum")],
+    'GeometryNodeDistributePointsOnFaces'  : [("distribute_method", "enum"),
+                                              ("use_legacy_normal", "bool")],
+    'GeometryNodePoints'                   : [],
+    'GeometryNodePointsToVertices'         : [],
+    'GeometryNodePointsToVolume'           : [("resolution_mode", "enum")],
+    'GeometryNodeSetPointRadius'           : [],
 
 
-    # Utilities
+    # VOLUME
+    'GeometryNodeVolumeCube'   : [],
+    'GeometryNodeVolumeToMesh' : [("resolution_mode", "enum")],
+
+    
+    # SIMULATION
+    'GeometryNodeSimulationInput'  : [],
+    'GeometryNodeSimulationOutput' : [],
+
+
+    # MATERIAL
+    'GeometryNodeReplaceMaterial'    : [],
+    'GeometryNodeInputMaterialIndex' : [],
+    'GeometryNodeMaterialSelection'  : [],
+    'GeometryNodeSetMaterial'        : [],
+    'GeometryNodeSetMaterialIndex'   : [],
+
+
+    # TEXTURE
+    'ShaderNodeTexBrick'       : [("offset", "float"),
+                                  ("offset_frequency", "int"),
+                                  ("squash", "float"), 
+                                  ("squash_frequency", "int")],
+    'ShaderNodeTexChecker'     : [],
+    'ShaderNodeTexGradient'    : [("gradient_type", "enum")],
+    'GeometryNodeImageTexture' : [("extension", "enum"),
+                                  ("interpolation", "enum")],
+    'ShaderNodeTexMagic'       : [("turbulence_depth", "int")],
+    'ShaderNodeTexMusgrave'    : [("musgrave_dimensions", "enum"),
+                                  ("musgrave_type", "enum")],
+    'ShaderNodeTexNoise'       : [("noise_dimensions", "enum")],
+    'ShaderNodeTexVoronoi'     : [("distance", "enum"),
+                                  ("feature", "enum"),
+                                  ("voronoi_dimensions", "enum")],
+    'ShaderNodeTexWave'        : [("bands_direction", "enum"),
+                                  ("rings_direction", "enum"),
+                                  ("wave_profile", "enum"),
+                                  ("wave_type", "enum")],
+    'ShaderNodeTexWhiteNoise'  : [("noise_dimensions", "enum")],
+
+
+    # UTILITIES
+    'ShaderNodeMix'           : [("blend_type", "enum"),
+                                 ("clamp_factor", "bool"),
+                                 ("clamp_result", "bool"),
+                                 ("data_type", "enum"),
+                                 ("factor_mode", "enum")],
+    'FunctionNodeRandomValue' : [("data_type", "enum")],
+    'GeometryNodeSwitch'      : [("input_type", "enum")],
+    
     # Utilities > Color
-    "FunctionNodeCombineColor" : ["mode"],
-    "ShaderNodeMixRGB" : ["blend_type", "use_clamp"], #legacy
-    "FunctionNodeSeparateColor" : ["mode"],
+    'ShaderNodeValToRGB'        : [("color_ramp", "ColorRamp")],
+    'ShaderNodeRGBCurve'        : [("mapping", "CurveMapping")],
+    'FunctionNodeCombineColor'  : [("mode", "enum")],
+    'ShaderNodeMixRGB'          : [("blend_type", "enum"),
+                                   ("use_alpha", "bool"),
+                                   ("use_clamp", "bool")], #legacy
+    'FunctionNodeSeparateColor' : [("mode", "enum")],
     
     # Utilities > Text
-    "GeometryNodeStringToCurves" : ["overflow", "align_x", "align_y", 
-                                    "pivot_mode"],
+    'GeometryNodeStringJoin'             : [],
+    'FunctionNodeReplaceString'          : [],
+    'FunctionNodeSliceString'            : [],
+    'FunctionNodeStringLength'           : [],
+    'GeometryNodeStringToCurves'         : [("align_x", "enum"),
+                                            ("align_y", "enum"),
+                                            ("font", "Font"), #TODO: font
+                                            ("overflow", "enum"),
+                                            ("pivot_mode", "enum")],
+    'FunctionNodeValueToString'          : [],
+    'FunctionNodeInputSpecialCharacters' : [],
 
     # Utilities > Vector
-    "ShaderNodeVectorMath" : ["operation"],
-    "ShaderNodeVectorRotate" : ["rotation_type", "invert"],
+    'ShaderNodeVectorCurve'  : [("mapping", "CurveMapping")],
+    'ShaderNodeVectorMath'   : [("operation", "enum")],
+    'ShaderNodeVectorRotate' : [("invert", "bool"),
+                                ("rotation_type", "enum")],
+    'ShaderNodeCombineXYZ'   : [],
+    'ShaderNodeSeparateXYZ'  : [],
 
     # Utilities > Field
-    "GeometryNodeAccumulateField" : ["data_type", "domain"],
-    "GeometryNodeFieldAtIndex" : ["data_type", "domain"],
-    "GeometryNodeFieldOnDomain" : ["data_type", "domain" ],
+    'GeometryNodeAccumulateField' : [("data_type", "enum"),
+                                     ("domain", "enum")],
+    'GeometryNodeFieldAtIndex'    : [("data_type", "enum"),
+                                     ("domain", "enum")],
+    'GeometryNodeFieldOnDomain'   : [("data_type", "enum"),
+                                     ("domain", "enum")],
 
     # Utilities > Math
-    "FunctionNodeBooleanMath" : ["operation"],
-    "ShaderNodeClamp" : ["clamp_type"],
-    "FunctionNodeCompare" : ["data_type", "operation", "mode"],
-    "FunctionNodeFloatToInt" : ["rounding_mode"],
-    "ShaderNodeMapRange" : ["data_type", "interpolation_type", "clamp"], 
-    "ShaderNodeMath" : ["operation", "use_clamp"],
+    'FunctionNodeBooleanMath' : [("operation", "enum")],
+    'ShaderNodeClamp'         : [("clamp_type", "enum")],
+    'FunctionNodeCompare'     : [("data_type", "enum"),
+                                 ("mode", "enum"),
+                                 ("operation", "enum")],
+    'ShaderNodeFloatCurve'    : [("mapping", "CurveMapping")],
+    'FunctionNodeFloatToInt'  : [("rounding_mode", "enum")],
+    'ShaderNodeMapRange'      : [("clamp", "bool"),
+                                 ("data_type", "enum"),
+                                 ("interpolation_type", "enum")], 
+    'ShaderNodeMath'          : [("operation", "enum"),
+                                 ("use_clamp", "bool")],
 
-    # Utilities > Rotate
-    "FunctionNodeAlignEulerToVector" : ["axis", "pivot_axis"],
-    "FunctionNodeRotateEuler" : ["type", "space"],
-
-    # Utilities > General
-    "ShaderNodeMix" : ["data_type", "blend_type", "clamp_result", 
-                       "clamp_factor", "factor_mode"],
-    "FunctionNodeRandomValue" : ["data_type"],
-    "GeometryNodeSwitch" : ["input_type"]
+    # Utilities > Rotation
+    'FunctionNodeAlignEulerToVector' : [("axis", "enum"),
+                                        ("pivot_axis", "enum")],
+    'FunctionNodeRotateEuler'        : [("space", "enum"),
+                                        ("type", "enum")]
 }
-
-curve_nodes = {'ShaderNodeFloatCurve', 
-               'ShaderNodeVectorCurve', 
-               'ShaderNodeRGBCurve'}
-
-image_nodes = {'GeometryNodeInputImage'}
 
 class NTPGeoNodesOperator(bpy.types.Operator):
     bl_idname = "node.ntp_geo_nodes"

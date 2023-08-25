@@ -12,141 +12,335 @@ ntp_vars = {SCENE_VAR, BASE_NAME_VAR, END_NAME_VAR}
 #TODO: do something similar for geo nodes and materials, should be useful for
 # possible conflicts between ntp_vars and node vars
 
-node_settings = {
-    #Input
-    'CompositorNodeBokehImage' : ["flaps", "angle", "rounding", "catadioptric", 
-                                  "shift"],
-    'CompositorNodeImage' : [], #TODO: handle image selection
-    'CompositorNodeMask' : ["use_feather", "size_source", "size_x", "size_y", 
-                            "use_motion_blur", 
-                            "motion_blur_samples", "motion_blur_shutter"], #TODO: handle mask selection
-    'CompositorNodeMovieClip' : [], #TODO: handle movie clip selection
-    'CompositorNodeRLayers' : ["name", "layer"],
-    'CompositorNodeRGB' : [], #should be handled by outputs
-    'CompositorNodeSceneTime' : [], #should be good
-    'CompositorNodeTexture' : [], #TODO: handle texture selection
-    'CompositorNodeTime' : ["frame_start", "frame_end"],
-    'CompositorNodeTrackPos' : [], #TODO: handle movie selection
-    'CompositorNodeValue' : [], #should be handled by outputs (why is this a separate class??)
+compositor_node_settings : dict[str, list[(str, str)]] = {
+    # INPUT
+    'CompositorNodeBokehImage' : [("angle", "float"),
+                                  ("catadioptric", "float"),
+                                  ("flaps", "int"),
+                                  ("rounding", "float"),
+                                  ("shift", "float")],
+    'CompositorNodeImage'      : [("frame_duration", "int"),
+                                  ("frame_offset", "int"),
+                                  ("frame_start", "int"),
+                                  ("image", "Image"),  #TODO: handle image selection
+                                  ("layer", "enum"),
+                                  ("use_auto_refresh", "bool"),
+                                  ("use_cyclic", "bool"),
+                                  ("use_straight_alpha_output", "bool"),
+                                  ("view", "enum")],
+    'CompositorNodeMask'       : [("mask", "Mask"), #TODO
+                                  ("motion_blur_samples", "int"),
+                                  ("motion_blur_shutter", "float"),
+                                  ("size_source", "enum"),
+                                  ("size_x", "int"),
+                                  ("size_y", "int"),
+                                  ("use_feather", "bool"),
+                                  ("use_motion_blur", "bool")],
+    'CompositorNodeMovieClip'  : [("clip", "MovieClip")], #TODO: handle movie clip selection
+    'CompositorNodeRLayers'    : [("layer", "enum"),
+                                  ("scene", "Scene")], #TODO
+    'CompositorNodeRGB'        : [],
+    'CompositorNodeSceneTime'  : [],
+    'CompositorNodeTexture'    : [("node_output", "int"), #TODO: ??
+                                  ("texture", "Texture")], #TODO: handle texture selection
+    'CompositorNodeTime'       : [("curve", "CurveMapping"),
+                                  ("frame_end", "int"),
+                                  ("frame_start", "int")],
+    'CompositorNodeTrackPos'   : [("clip", "MovieClip"), #TODO: this is probably wrong
+                                  ("frame_relative", "int")
+                                  ("position", "enum"),
+                                  ("track_name", "str"),
+                                  ("tracking_object", "str")], 
+    'CompositorNodeValue'      : [], #should be handled by outputs (why is this a separate class??)
 
-    #Output
-    'CompositorNodeComposite' : ["use_alpha"],
-    'CompositorNodeOutputFile' : ["base_path"], #TODO: doesn't seem portable
-    'CompositorNodeLevels' : ["channel"],
-    'CompositorNodeSplitViewer' : ["axis", "factor"],
-    'CompositorNodeViewer' : ["use_alpha"],
 
-    #Color
-    'CompositorNodeAlphaOver' : ["use_premultiply", "premul"],
-    'CompositorNodeBrightContrast' : ["use_premultiply"],
-    'CompositorNodeColorBalance' : ["correction_method", "lift", "gamma", 
-                                    "gain", "offset", "power", "slope", 
-                                    "offset_basis"],
-    'CompositorNodeColorCorrection' : ["red", "green", "blue", 
-                                       "master_saturation", "master_contrast", 
-                                       "master_gamma", "master_gain", 
-                                       "master_lift", 
-                                       "highlights_saturation", "highlights_contrast",
-                                       "highlights_gamma", "highlights_gain",
-                                       "highlights_lift",
-                                       "midtones_saturation", "midtones_contrast",
-                                       "midtones_gamma", "midtones_gain",
-                                       "midtones_lift",
-                                       "shadows_saturation", "shadows_contrast",
-                                       "shadows_gamma", "shadows_gain",
-                                       "shadows_lift",
-                                       "midtones_start", "midtones_end"],
-    'CompositorNodeExposure' : [],
-    'CompositorNodeGamma' : [],
-    'CompositorNodeHueCorrect' : [],
-    'CompositorNodeHueSat' : [],
-    'CompositorNodeInvert' : ["invert_rgb", "invert_alpha"],
-    'CompositorNodeMixRGB' : ["blend_type", "use_alpha", "use_clamp"], #TODO: has an update() method, may need to figure out why...
-    'CompositorNodePosterize' : [],
-    'CompositorNodeCurveRGB' : [],
-    'CompositorNodeTonemap' : ["tonemap_type", "intensity", "contrast", "adaptation", "correction", "key", "offset", "gamma"],
-    'CompositorNodeZcombine' : ["use_alpha", "use_antialias_z"],
+    # OUTPUT
+    'CompositorNodeComposite'   : [("use_alpha", "bool")],
+    'CompositorNodeOutputFile'  : [("active_input_index", "int"), #TODO: probably not right at all
+                                   ("base_path", "str"),
+                                   ("file_slots", "CompositorNodeOutputFileFileSlots"),
+                                   ("format", "ImageFormatSettings"),
+                                   ("layer_slots", "CompositorNodeOutputFileLayerSlots")],
+    'CompositorNodeLevels'      : [("channel", "enum")],
+    'CompositorNodeSplitViewer' : [("axis", "enum"),
+                                   ("factor", "int")],
+    'CompositorNodeViewer'      : [("center_x", "float"),
+                                   ("center_y", "float"),
+                                   ("tile_order", "enum"),
+                                   ("use_alpha", "bool")],
 
-    #Converter
-    'CompositorNodePremulKey' : ["mapping"],
-    'CompositorNodeValToRGB' : [], #TODO: check to see if this'll work out of the box
-    'CompositorNodeConvertColorSpace' : ["from_color_space", "to_color_space"],
-    'CompositorNodeCombineColor' : ["mode", "ycc_mode"], #why isn't this standardized across blender?
-    'CompositorNodeCombineXYZ' : [],
-    'CompositorNodeIDMask' : ["index", "use_antialiasing"],
-    'CompositorNodeMath' : ["operation", "use_clamp"],
-    'CompositorNodeRGBToBW' : [],
-    'CompositorNodeSeparateColor' : ["mode", "ycc_mode"],
-    'CompositorNodeSeparateXYZ' : [],
-    'CompositorNodeSetAlpha' : ["mode"], 
-    'CompositorNodeSwitchView' : [],
 
-    #Filter
-    'CompositorNodeAntiAliasing' : ["threshold", "contrast_limit", "corner_rounding"],
-    'CompositorNodeBilateralblur' : ["iterations", "sigma_color", "sigma_space"],
-    'CompositorNodeBlur' : ["filter_type", "use_variable_size", "use_gamma_correction", "use_relative", "aspect_correction", "factor", "factor_x", "factor_y", "use_extended_bounds"],
-    'CompositorNodeBokehBlur' : ["use_variable_size", "blur_max", "use_extended_bounds"],
-    'CompositorNodeDefocus' : ["bokeh", "angle", "use_gamma_correction", "f_stop", "blur_max", "threshold", "use_preview", "use_zbuffer", "z_scale"],
-    'CompositorNodeDespeckle' : ["threshold", "threshold_neighbor"],
-    'CompositorNodeDilateErode' : ["mode", "distance", "edge", "falloff"],
-    'CompositorNodeDBlur' : ["iterations", "center_x", "center_y", "distance", "angle", "spin", "zoom"],
-    'CompositorNodeFilter' : ["filter_type"], 
-    'CompositorNodeGlare' : ["glare_type", "quality", "iterations", "color_modulation", "mix", "threshold", "streaks", "angle_offset", "fade", "size", "use_rotate_45"],
-    'CompositorNodeInpaint' : ["distance"],
-    'CompositorNodePixelate' : [],
-    'CompositorNodeSunBeams' : ["source", "ray_length"], #TODO: check that source doesn't freak out
-    'CompositorNodeVecBlur' : ["samples", "factor", "speed_min", "speed_max", "use_curved"],
+    # COLOR
+    'CompositorNodeAlphaOver'       : [("premul", "float"),
+                                       ("use_premultiply", "bool")],
+    'CompositorNodeBrightContrast'  : [("use_premultiply", "bool")],
+    'CompositorNodeColorBalance'    : [("correction_method", "enum"),
+                                       ("gain", "Vec3"),
+                                       ("gamma", "Vec3"),
+                                       ("lift", "Vec3"),
+                                       ("offset", "Vec3"),
+                                       ("offset_basis", "float"),
+                                       ("power", "Vec3"),
+                                       ("slope", "Vec3")],
+    'CompositorNodeColorCorrection' : [("blue", "bool"),
+                                       ("green", "bool"),
+                                       ("highlights_contrast", "float"),
+                                       ("highlights_gain", "float"),
+                               CurveMapp            ("midtones_lift", "float"),
+                                       ("midtones_saturation", "float"),
+                                       ("midtones_start", "float"),
+                                       ("red", "bool"),
+                                       ("shadows_contrast", "float"),
+                                       ("shadows_gain", "float"),
+                                       ("shadows_gamma", "float"),
+                                       ("shadows_lift", "float"),
+                                       ("shadows_saturation", "float")],
+    'CompositorNodeExposure'        : [],
+    'CompositorNodeGamma'           : [],
+    'CompositorNodeHueCorrect'      : [("mapping", "CurveMapping")],
+    'CompositorNodeHueSat'          : [],
+    'CompositorNodeInvert'          : [("invert_alpha", "bool"),
+                                       ("invert_rgb", "bool")],
+    'CompositorNodeMixRGB'          : [("blend_type", "enum"),
+                                       ("use_alpha", "bool"),
+                                       ("use_clamp", "bool")], #TODO: has an update() method, may need to figure out why...
+    'CompositorNodePosterize'       : [],
+    'CompositorNodeCurveRGB'        : [("mapping", "CurveMapping")],
+    'CompositorNodeTonemap'         : [("adaptation", "float"),
+                                       ("contrast", "float"),
+                                       ("correction", "float"),
+                                       ("gamma", "float"),
+                                       ("intensity", "float"),
+                                       ("key", "float"),
+                                       ("offset", "float"),
+                                       ("tonemap_type", "enum")],
+    'CompositorNodeZcombine'        : [("use_alpha", "bool"),
+                                       ("use_antialias_z", "bool")],
 
-    #Vector
-    'CompositorNodeMapRange' : ["use_clamp"], 
-    'CompositorNodeMapValue' : ["offset", "size", "use_min", "min", "use_max", "max"], #why are all these vectors?? TODO: check to make sure it doesn't flip
-    'CompositorNodeNormal' : [], #should be handled with io system
+
+    # CONVERTER
+    'CompositorNodePremulKey'         : [("mapping", "enum")],
+    'CompositorNodeValToRGB'          : [("color_ramp", "ColorRamp")], #TODO: check to see if this'll work out of the box
+    'CompositorNodeConvertColorSpace' : [("from_color_space", "enum"),
+                                         ("to_color_space", "enum")],
+    'CompositorNodeCombineColor'      : [("mode", "enum"),
+                                         ("ycc_mode", "enum")], #why isn't this standardized across blender?
+    'CompositorNodeCombineXYZ'        : [],
+    'CompositorNodeIDMask'            : [("index", "int"),
+                                         ("use_antialiasing", "bool")],
+    'CompositorNodeMath'              : [("operation", "enum"),
+                                         ("use_clamp", "bool")],
+    'CompositorNodeRGBToBW'           : [],
+    'CompositorNodeSeparateColor'     : [("mode", "enum"),
+                                         ("ycc_mode", "enum")],
+    'CompositorNodeSeparateXYZ'       : [],
+    'CompositorNodeSetAlpha'          : [("mode", "enum")], 
+    'CompositorNodeSwitchView'        : [],
+
+
+    # FILTER
+    'CompositorNodeAntiAliasing'  : [("contrast_limit", "float"),
+                                     ("corner_rounding", "float"),
+                                     ("threshold", "float")],
+    'CompositorNodeBilateralblur' : [("iterations", "int"),
+                                     ("sigma_color", "float"),
+                                     ("sigma_space", "float")],
+    'CompositorNodeBlur'          : [("aspect_correction", "enum"),
+                                     ("factor", "float"),
+                                     ("factor_x", "float"),
+                                     ("factor_y", "float"),
+                                     ("filter_type", "enum"),
+                                     ("size_x", "int"),
+                                     ("size_y", "int"),
+                                     ("use_bokeh", "bool"),
+                                     ("use_extended_bounds", "bool"),
+                                     ("use_gamma_correction", "bool"),
+                                     ("use_relative", "bool"),
+                                     ("use_variable_size", "bool")],
+    'CompositorNodeBokehBlur'     : [("blur_max", "float"),
+                                     ("use_extended_bounds", "bool"), 
+                                     ("use_variable_size", "bool")],
+    'CompositorNodeDefocus'       : [("angle", "float"),
+                                     ("blur_max", "float"),
+                                     ("bokeh", "enum"),
+                                     ("f_stop", "float"),
+                                     ("scene", "Scene"), #TODO
+                                     ("threshold", "float"),
+                                     ("use_gamma_correction", "bool"),
+                                     ("use_preview", "bool"),
+                                     ("use_zbuffer", "bool"),
+                                     ("z_scale", "float")],
+    'CompositorNodeDespeckle'     : [("threshold", "float"),
+                                     ("threshold_neighbor", "float")],
+    'CompositorNodeDilateErode'   : [("distance", "int"),
+                                     ("edge", "float"),
+                                     ("falloff", "enum"),
+                                     ("mode", "enum")],
+    'CompositorNodeDBlur'         : [("angle", "float"),
+                                     ("center_x", "float"),
+                                     ("center_y", "float"),
+                                     ("distance", "float"),
+                                     ("iterations", "int"),
+                                     ("spin", "float"),
+                                     ("zoom", "float")],
+    'CompositorNodeFilter'        : [("filter_type", "enum")], 
+    'CompositorNodeGlare'         : [("angle_offset", "float"),
+                                     ("color_modulation", "float"),
+                                     ("fade", "float"),
+                                     ("glare_type", "enum"),
+                                     ("iterations", "int"),
+                                     ("mix", "float"),
+                                     ("quality", "enum"),
+                                     ("size", "int"),
+                                     ("streaks", "int"),
+                                     ("threshold", "float"),
+                                     ("use_rotate_45", "bool")],
+    'CompositorNodeInpaint'       : [("distance", "int")],
+    'CompositorNodePixelate'      : [],
+    'CompositorNodeSunBeams'      : [("ray_length", "float"),
+                                     ("source", "Vec2")],
+    'CompositorNodeVecBlur'       : [("factor", "float"),
+                                     ("samples", "int"),
+                                     ("speed_max", "int"),
+                                     ("speed_min", "int"),
+                                     ("use_curved", "bool")],
+
+
+    # VECTOR
+    'CompositorNodeMapRange'  : [("use_clamp", "bool")], 
+    'CompositorNodeMapValue'  : [("max", "Vec1"),
+                                 ("min", "Vec1"),
+                                 ("offset", "Vec1"),
+                                 ("size", "Vec1"),
+                                 ("use_max", "bool"),
+                                 ("use_min", "bool")], #why are all these vectors?? TODO: check to make sure it doesn't flip
+    'CompositorNodeNormal'    : [],
     'CompositorNodeNormalize' : [],
-    'CompositorNodeCurveVec' : [],
+    'CompositorNodeCurveVec'  : [("mapping", "CurveMapping")],
 
-    #Matte
-    'CompositorNodeBoxMask' : ["x", "y", "width", "height", "rotation", "mask_type"],
-    'CompositorNodeChannelMatte' : ["color_space", "matte_channel", "limit_method", "limit_channel", "limit_max", "limit_min"],
-    'CompositorNodeChromaMatte' : ["tolerance", "threshold", "gain"],
-    'CompositorNodeColorMatte' : ["color_hue", "color_saturation", "color_value"],
-    'CompositorNodeColorSpill' : ["channel", "limit_method", "ratio", "use_unspill", "unspill_red", "unspill_green", "unspill_blue"],
-    'CompositorNodeCryptomatteV2' : ["source"], #TODO: will need a lot of special handling
-    'CompositorNodeCryptomatte' : [], #TODO: will likely need same handling as above
-    'CompositorNodeDiffMatte' : ["tolerance", "falloff"],
-    'CompositorNodeDistanceMatte' : ["tolerance", "falloff", "channel"],
-    'CompositorNodeDoubleEdgeMask' : ["inner_mode", "edge_mode"],
-    'CompositorNodeEllipseMask' : ["x", "y", "width", "height", "rotation", "mask_type"],
-    'CompositorNodeKeying' : ["blur_pre", "screen_balance", "despill_factor", "despill_balance", "edge_kernel_radius", "edge_kernel_tolerance", "clip_black", "clip_white", "dilate_distance", "feather_falloff", "feather_distance", "blur_post"],
-    'CompositorNodeKeyingScreen' : [], #TODO: movie stuff
-    'CompositorNodeLumaMatte' : ["limit_max", "limit_min"],
 
-    #Distort
-    'CompositorNodeCornerPin' : [],
-    'CompositorNodeCrop' : ["use_crop_size", "relative", "min_x", "max_x", "min_y", "max_y", "rel_min_x", "rel_max_x", "rel_min_y", "rel_max_y"],
-    'CompositorNodeDisplace' : [],
-    'CompositorNodeFlip' : ["axis"],
-    'CompositorNodeLensdist' : ["use_projector", "use_jitter", "use_fit"],
-    'CompositorNodeMapUV' : ["alpha"],
-    'CompositorNodeMovieDistortion' : [], #TODO: movie stuff
-    'CompositorNodePlaneTrackDeform' : ["use_motion_blur", "motion_blur_samples", "motion_blur_shutter"], #TODO: movie stuff
-    'CompositorNodeRotate' : ["filter_type"],
-    'CompositorNodeScale' : ["space", "frame_method", "offset_x", "offset_y"],
-    'CompositorNodeStablize' : [], #TODO: movie stuff
-    'CompositorNodeTransform' : ["filter_type"],
-    'CompositorNodeTranslate' : ["use_relative", "wrapping"],
+    # MATTE
+    'CompositorNodeBoxMask'        : [("height", "float"),
+                                      ("mask_type", "enum"),
+                                      ("rotation", "float"),
+                                      ("width", "float"),
+                                      ("x", "float"),
+                                      ("y", "float")],
+    'CompositorNodeChannelMatte'   : [("color_space", "enum"),
+                                      ("limit_channel", "enum"),
+                                      ("limit_max", "float"),
+                                      ("limit_method", "enum"),
+                                      ("limit_min", "float"),
+                                      ("matte_channel", "enum")],
+    'CompositorNodeChromaMatte'    : [("gain", "float"),
+                                      ("lift", "float"),
+                                      ("shadow_adjust", "float"),
+                                      ("threshold", "float"),
+                                      ("tolerance", "float")],
+    'CompositorNodeColorMatte'     : [("color_hue", "float"),
+                                      ("color_saturation", "float"),
+                                      ("color_value", "float")],
+    'CompositorNodeColorSpill'     : [("channel", "enum"),
+                                      ("limit_channel", "enum"),
+                                      ("limit_method", "enum"),
+                                      ("ratio", "float"),
+                                      ("unspill_blue", "float"),
+                                      ("unspill_green", "float"),
+                                      ("unspill_red", "float"),
+                                      ("use_unspill", "bool")],
+    'CompositorNodeCryptomatteV2'  : [("add", "Vec3"), #TODO: will need a lot of special handling
+                                      ("entries", "CryptomatteEntry"), #TODO: (readonly?)
+                                      ("frame_duration", "int"),
+                                      ("frame_offset", "int"),
+                                      ("frame_start", "int"),
+                                      ("has_layers", "bool"), #TODO: readonly?
+                                      ("has_views", "bool"), #TODO: readonly?
+                                      ("image", "Image"),
+                                      ("layer", "enum"),
+                                      ("layer_name", "enum"),
+                                      ("matte_id", "str"),
+                                      ("remove", "Vec3"),
+                                      ("scene", "Scene"),
+                                      ("source", "enum"),
+                                      ("use_auto_refresh", "bool"),
+                                      ("use_cyclic", "bool"),
+                                      ("view", "enum")],
+    'CompositorNodeCryptomatte'    : [("add", "Vec3"), #TODO: will need a lot of special handling
+                                      ("matte_id", "str"),
+                                      ("remove", "Vec3")],
+    'CompositorNodeDiffMatte'      : [("falloff", "float"),
+                                      ("tolerance", "float")],
+    'CompositorNodeDistanceMatte'  : [("channel", "enum"),
+                                      ("falloff", "float"),
+                                      ("tolerance", "float")],
+    'CompositorNodeDoubleEdgeMask' : [("edge_mode", "enum"),
+                                      ("inner_mode", "enum")],
+    'CompositorNodeEllipseMask'    : [("height", "float"),
+                                      ("mask_type", "enum"),
+                                      ("rotation", "float"),
+                                      ("width", "float"),
+                                      ("x", "float"),
+                                      ("y", "float")],
+    'CompositorNodeKeying'         : [("blur_post", "int"),
+                                      ("blur_pre", "int"),
+                                      ("clip_black", "float"),
+                                      ("clip_white", "float"),
+                                      ("despill_balance", "float"),
+                                      ("despill_factor", "float"),
+                                      ("dilate_distance", "int"),
+                                      ("edge_kernel_radius", "int"),
+                                      ("edge_kernel_tolerance", "float"),
+                                      ("feather_distance", "int"),
+                                      ("feather_falloff", "enum"),
+                                      ("screen_balance", "float")],
+    'CompositorNodeKeyingScreen'   : [("clip", "MovieClip"),
+                                      ("tracing_object", "str")], #TODO: movie stuff
+    'CompositorNodeLumaMatte'      : [("limit_max", "float"),
+                                      ("limit_min", "float")],
 
-    #Layout
+
+    # DISTORT
+    'CompositorNodeCornerPin'        : [],
+    'CompositorNodeCrop'             : [("max_x", "int"),
+                                        ("max_y", "int"),
+                                        ("min_x", "int"),
+                                        ("min_y", "int"),
+                                        ("rel_max_x", "float"),
+                                        ("rel_max_y", "float"),
+                                        ("rel_min_x", "float"),
+                                        ("rel_min_y", "float"),
+                                        ("relative", "bool"),
+                                        ("use_crop_size", "bool")],
+    'CompositorNodeDisplace'         : [],
+    'CompositorNodeFlip'             : [("axis", "enum")],
+    'CompositorNodeLensdist'         : [("use_fit", "bool"),
+                                        ("use_jitter", "bool"),
+                                        ("use_projector", "bool")],
+    'CompositorNodeMapUV'            : [("alpha", "int")],
+    'CompositorNodeMovieDistortion'  : [("clip", "MovieClip"),
+                                        ("distortion_type", "enum")], #TODO: movie stuff
+    'CompositorNodePlaneTrackDeform' : [("clip", "MovieClip"),
+                                        ("motion_blur_samples", "int"),
+                                        ("motion_blur_shutter", "float"),
+                                        ("plane_track_name", "str"),
+                                        ("tracking_object", "str"),
+                                        ("use_motion_blur", "bool")], #TODO: movie stuff
+    'CompositorNodeRotate'           : [("filter_type", "enum")],
+    'CompositorNodeScale'            : [("frame_method", "enum"),
+                                        ("offset_x", "float"),
+                                        ("offset_y", "float"),
+                                        ("space", "enum")],
+    'CompositorNodeStablize'         : [("clip", "MovieClip"),
+                                        ("filter_type", "enum"),
+                                        ("invert", "bool")], #TODO: movie stuff
+    'CompositorNodeTransform'        : [("filter_type", "enum")],
+    'CompositorNodeTranslate'        : [("use_relative", "bool"),
+                                        ("wrap_axis", "enum")],
+
+
+    # LAYOUT
     'CompositorNodeSwitch' : ["check"]
 }
-
-curve_nodes = {
-    'CompositorNodeTime', #TODO: check this works
-    'CompositorNodeHueCorrect', #TODO: probbably will need custom work
-    'CompositorNodeCurveRGB', #may just work out of the box
-    'CompositorNodeCurveVec', #may just work out of the box
-}
-
-image_nodes = {'CompositorNodeImage',}
 
 class NTPCompositorOperator(bpy.types.Operator):
     bl_idname = "node.compositor_to_python"
@@ -266,7 +460,7 @@ class NTPCompositorOperator(bpy.types.Operator):
                         f"type = \'CompositorNodeTree\', "
                         f"name = {str_to_py_str(nt_name)})\n"))
                 file.write("\n")
-            """
+            
             inputs_set = False
             outputs_set = False
 
@@ -303,14 +497,14 @@ class NTPCompositorOperator(bpy.types.Operator):
                     group_io_settings(node, file, inner, "output", nt_var, node_tree)
                     outputs_set = True
 
-                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
-                    img = node.image
-                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
-                        save_image(img, addon_dir)
-                        load_image(img, file, inner, f"{node_var}.image")
-                        image_user_settings(node, file, inner, node_var)
-
-                elif node.bl_idname == 'ShaderNodeValToRGB':
+                # elif node.bl_idname in image_nodes and self.mode == 'ADDON':
+                #     img = node.image
+                #     if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
+                #         save_image(img, addon_dir)
+                #         load_image(img, file, inner, f"{node_var}.image")
+                #         image_user_settings(node, file, inner, node_var)
+               
+                elif node.bl_idname == 'CompositorNodeValToRGB':
                     color_ramp_settings(node, file, inner, node_var)
 
                 elif node.bl_idname in curve_nodes:
@@ -329,7 +523,7 @@ class NTPCompositorOperator(bpy.types.Operator):
             init_links(node_tree, file, inner, nt_var, node_vars)
             
             file.write(f"\n{outer}{nt_var}_node_group()\n\n")
-        """
+        
         if self.mode == 'ADDON':
             level = 2
         else:

@@ -94,6 +94,13 @@ def img_to_py_str(img) -> str:
     format = img.file_format.lower()
     return f"{name}.{format}"
 
+type_to_py_str : dict[str, function] = {
+    "enum" : enum_to_py_str,
+    "str"  : str_to_py_str,
+    "vec3" : vec3_to_py_str,
+    "vec4" : vec4_to_py_str
+}
+
 def create_header(file: TextIO, name: str):
     """
     Sets up the bl_info and imports the Blender API
@@ -384,40 +391,45 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     node_var (str): variable name for the add-on's curve node
     """
 
+    if node.bl_idname == 'CompositorNodeTime':
+        mapping = node.curve #TODO: ask for consistency here?
+    else:
+        mapping = node.mapping
+
     #mapping settings
     file.write(f"{inner}#mapping settings\n")
     mapping_var = f"{inner}{node_var}.mapping"
 
     #extend
-    extend = enum_to_py_str(node.mapping.extend)
+    extend = enum_to_py_str(mapping.extend)
     file.write(f"{mapping_var}.extend = {extend}\n")
     #tone
-    tone = enum_to_py_str(node.mapping.tone)
+    tone = enum_to_py_str(mapping.tone)
     file.write(f"{mapping_var}.tone = {tone}\n")
 
     #black level
-    b_lvl_str = vec3_to_py_str(node.mapping.black_level)
+    b_lvl_str = vec3_to_py_str(mapping.black_level)
     file.write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
     #white level
-    w_lvl_str = vec3_to_py_str(node.mapping.white_level)
+    w_lvl_str = vec3_to_py_str(mapping.white_level)
     file.write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
 
     #minima and maxima
-    min_x = node.mapping.clip_min_x
+    min_x = mapping.clip_min_x
     file.write(f"{mapping_var}.clip_min_x = {min_x}\n")
-    min_y = node.mapping.clip_min_y
+    min_y = mapping.clip_min_y
     file.write(f"{mapping_var}.clip_min_y = {min_y}\n")
-    max_x = node.mapping.clip_max_x
+    max_x = mapping.clip_max_x
     file.write(f"{mapping_var}.clip_max_x = {max_x}\n")
-    max_y = node.mapping.clip_max_y
+    max_y = mapping.clip_max_y
     file.write(f"{mapping_var}.clip_max_y = {max_y}\n")
 
     #use_clip
-    use_clip = node.mapping.use_clip
+    use_clip = mapping.use_clip
     file.write(f"{mapping_var}.use_clip = {use_clip}\n")
 
     #create curves
-    for i, curve in enumerate(node.mapping.curves):
+    for i, curve in enumerate(mapping.curves):
         file.write(f"{inner}#curve {i}\n")
         curve_i = f"{node_var}_curve_{i}"
         file.write((f"{inner}{curve_i} = {node_var}.mapping.curves[{i}]\n"))
