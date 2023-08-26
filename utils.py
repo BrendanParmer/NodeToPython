@@ -269,7 +269,7 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
         
     return node_var
 
-def set_settings_defaults(node, settings: dict[str, list[(str, str)]], file: TextIO, inner: str, 
+def set_settings_defaults(node, settings: dict[str, list[(str, ST)]], file: TextIO, inner: str, 
                             node_var: str):
     """
     Sets the defaults for any settings a node may have
@@ -286,32 +286,31 @@ def set_settings_defaults(node, settings: dict[str, list[(str, str)]], file: Tex
             attr = getattr(node, setting, None)
             if not attr:
                 continue
-            if type == "enum":
-                file.write(f"{inner}{node_var}.{setting} = {enum_to_py_str(attr)}\n")
-            elif type == "str":
-                file.write(f"{inner}{node_var}.{setting} = {str_to_py_str(attr)}\n")
-            elif type == "int":
-                file.write(f"{inner}{node_var}.{setting} = {attr}\n")
-                if type(attr) == str:
-                    attr = enum_to_py_str(attr)
-                if type(attr) == mathutils.Vector:
-                    attr = vec3_to_py_str(attr)
-                if type(attr) == bpy.types.bpy_prop_array:
-                    attr = vec4_to_py_str(list(attr))
-                if type(attr) == bpy.types.Material:
-                    name = str_to_py_str(attr.name)
-                    file.write((f"{inner}if {name} in bpy.data.materials:\n"))
-                    file.write((f"{inner}\t{node_var}.{setting} = "
-                                f"bpy.data.materials[{name}]\n"))
-                    continue
-                if type(attr) == bpy.types.Object:
-                    name = str_to_py_str(attr.name)
-                    file.write((f"{inner}if {name} in bpy.data.objects:\n"))
-                    file.write((f"{inner}\t{node_var}.{setting} = "
-                                f"bpy.data.objects[{name}]\n"))
-                    continue
-                file.write((f"{inner}{node_var}.{setting} "
-                            f"= {attr}\n"))
+            setting_str = f"{inner}{node_var}.{setting}"
+            if type == ST.ENUM:
+                file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+            elif type == ST.STRING:
+                file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
+            elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
+                file.write(f"{setting_str} = {attr}\n")
+            elif type == ST.VEC1:
+                file.write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
+            elif type == ST.VEC2:
+                file.write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
+            elif type == ST.VEC3:
+                file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
+            elif type == ST.VEC4:
+                file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
+            elif type == ST.MATERIAL:
+                name = str_to_py_str(attr.name)
+                file.write((f"{inner}if {name} in bpy.data.materials:\n"))
+                file.write((f"{inner}\t{node_var}.{setting} = "
+                            f"bpy.data.materials[{name}]\n"))
+            elif type == ST.OBJECT:
+                name = str_to_py_str(attr.name)
+                file.write((f"{inner}if {name} in bpy.data.objects:\n"))
+                file.write((f"{inner}\t{node_var}.{setting} = "
+                            f"bpy.data.objects[{name}]\n"))
 
 def hide_sockets(node, file: TextIO, inner: str, node_var: str):
     """
