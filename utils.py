@@ -1,6 +1,7 @@
 import bpy
 import mathutils
 
+from enum import Enum, auto
 import os
 import re
 import shutil
@@ -12,6 +13,37 @@ image_dir_name = "imgs"
 dont_set_defaults = {'NodeSocketGeometry',
                      'NodeSocketShader',
                      'NodeSocketVirtual'}
+
+class ST(Enum):
+    """
+    Socket and Settings Types
+    """
+    ENUM = auto()
+    STRING = auto()
+    BOOL = auto()
+    INT = auto()
+    FLOAT = auto()
+    VEC1 = auto()
+    VEC2 = auto()
+    VEC3 = auto()
+    VEC4 = auto()
+    MATERIAL = auto() #Could use a look
+    OBJECT = auto() #Could take a looking at
+    IMAGE = auto() #needs refactor
+    IMAGE_USER = auto() #unimplemented
+    MOVIE_CLIP = auto() #unimplmented
+    COLOR_RAMP = auto() #needs refactor
+    CURVE_MAPPING = auto() #needs refactor
+    TEXTURE = auto() #unimplemented
+    TEXT = auto() #unimplemented
+    SCENE = auto() #unimplemented
+    PARTICLE_SYSTEM = auto() #unimplemented
+    FONT = auto() #unimplemented
+    MASK = auto() #unimplemented
+    CRYPTOMATTE_ENTRIES = auto() #unimplemented
+    IMAGE_FORMAT_SETTINGS = auto()
+    FILE_SLOTS = auto()
+    LAYER_SLOTS = auto() #unimplemented
 
 #node tree input sockets that have default properties
 default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
@@ -56,29 +88,53 @@ def str_to_py_str(string: str) -> str:
     """
     return f"\"{string}\""
 
-def vec3_to_py_str(vec) -> str:
+def vec1_to_py_str(vec1) -> str:
+    """
+    Converts a 1D vector to a string usable by the add-on
+
+    Parameters:
+    vec1: a 1d vector
+
+    Returns:
+    (str): string representation of the vector
+    """
+    return f"({vec1[0]})"
+
+def vec2_to_py_str(vec2) -> str:
+    """
+    Converts a 2D vector to a string usable by the add-on
+
+    Parameters:
+    vec2: a 2D vector
+
+    Returns:
+    (str): string representation of the vector
+    """
+    return f"({vec2[0]}, {vec2[1]})"
+
+def vec3_to_py_str(vec3) -> str:
     """
     Converts a 3D vector to a string usable by the add-on
 
     Parameters:
-    vec (mathutils.Vector): a 3d vector
+    vec3: a 3d vector
 
     Returns:
-    (str): string version
+    (str): string representation of the vector
     """
-    return f"({vec[0]}, {vec[1]}, {vec[2]})"
+    return f"({vec3[0]}, {vec3[1]}, {vec3[2]})"
 
-def vec4_to_py_str(vec) -> str:
+def vec4_to_py_str(vec4) -> str:
     """
     Converts a 4D vector to a string usable by the add-on
 
     Parameters:
-    vec (mathutils.Vector): a 4d vector
+    vec4: a 4d vector
 
     Returns:
     (str): string version
     """
-    return f"({vec[0]}, {vec[1]}, {vec[2]}, {vec[3]})"
+    return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
 
 def img_to_py_str(img) -> str:
     """
@@ -93,13 +149,6 @@ def img_to_py_str(img) -> str:
     name = img.name.split('.', 1)[0]
     format = img.file_format.lower()
     return f"{name}.{format}"
-
-type_to_py_str : dict[str, function] = {
-    "enum" : enum_to_py_str,
-    "str"  : str_to_py_str,
-    "vec3" : vec3_to_py_str,
-    "vec4" : vec4_to_py_str
-}
 
 def create_header(file: TextIO, name: str):
     """
@@ -220,7 +269,7 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
         
     return node_var
 
-def set_settings_defaults(node, settings: dict, file: TextIO, inner: str, 
+def set_settings_defaults(node, settings: dict[str, list[(str, str)]], file: TextIO, inner: str, 
                             node_var: str):
     """
     Sets the defaults for any settings a node may have
@@ -233,9 +282,16 @@ def set_settings_defaults(node, settings: dict, file: TextIO, inner: str,
     node_var (str): name of the variable we're using for the node in our add-on
     """
     if node.bl_idname in settings:
-        for setting in settings[node.bl_idname]:
+        for (setting, type) in settings[node.bl_idname]:
             attr = getattr(node, setting, None)
-            if attr:
+            if not attr:
+                continue
+            if type == "enum":
+                file.write(f"{inner}{node_var}.{setting} = {enum_to_py_str(attr)}\n")
+            elif type == "str":
+                file.write(f"{inner}{node_var}.{setting} = {str_to_py_str(attr)}\n")
+            elif type == "int":
+                file.write(f"{inner}{node_var}.{setting} = {attr}\n")
                 if type(attr) == str:
                     attr = enum_to_py_str(attr)
                 if type(attr) == mathutils.Vector:
@@ -552,7 +608,7 @@ def set_output_defaults(node, file: TextIO, inner: str, node_var: str):
                             'ShaderNodeNormal'}
 
     if node.bl_idname in output_default_nodes:
-        dv = node.outputs[0].default_value
+        dv = node.outputs[0].default_value #TODO: see if this is still the case
         if node.bl_idname == 'ShaderNodeRGB':
             dv = vec4_to_py_str(list(dv))
         if node.bl_idname == 'ShaderNodeNormal':
@@ -641,6 +697,7 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str,
         gnashing of teeth. This is a quick fix that
         doesn't run quick
         """
+        #TODO: try using index() method
         for i, item in enumerate(link.from_node.outputs.items()):
             if item[1] == input_socket:
                 input_idx = i
