@@ -16,7 +16,7 @@ dont_set_defaults = {'NodeSocketGeometry',
 
 class ST(Enum):
     """
-    Socket and Settings Types
+    Settings Types
     """
     ENUM = auto()
     STRING = auto()
@@ -136,7 +136,7 @@ def vec4_to_py_str(vec4) -> str:
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
 
-def img_to_py_str(img) -> str:
+def img_to_py_str(img : bpy.types.Image) -> str:
     """
     Converts a Blender image into its string
 
@@ -150,7 +150,7 @@ def img_to_py_str(img) -> str:
     format = img.file_format.lower()
     return f"{name}.{format}"
 
-def create_header(file: TextIO, name: str):
+def create_header(file: TextIO, name: str) -> None:
     """
     Sets up the bl_info and imports the Blender API
 
@@ -172,7 +172,7 @@ def create_header(file: TextIO, name: str):
     file.write("import os\n")
     file.write("\n")
 
-def init_operator(file: TextIO, name: str, idname: str, label: str):
+def init_operator(file: TextIO, name: str, idname: str, label: str) -> None:
     """
     Initializes the add-on's operator 
 
@@ -229,8 +229,13 @@ def make_indents(level: int) -> Tuple[str, str]:
     inner = "\t"*(level + 1)
     return outer, inner
 
-def create_node(node, file: TextIO, inner: str, node_tree_var: str, 
-                node_vars: dict, used_vars: set) -> str:
+def create_node(node: bpy.types.Node, 
+                file: TextIO, 
+                inner: str, 
+                node_tree_var: str, 
+                node_vars: dict[bpy.types.Node, str], 
+                used_vars: set #necessary?
+               ) -> str:
     """
     Initializes a new node with location, dimension, and label info
 
@@ -239,8 +244,8 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
     file (TextIO): file containing the generated add-on
     inner (str): indentation level for this logic
     node_tree_var (str): variable name for the node tree
-    node_vars (dict): dictionary containing (bpy.types.Node, str)
-        pairs, with a Node and its corresponding variable name
+    node_vars (dict): dictionary containing Node to corresponding variable name
+        pairs
     used_vars (set): set of used variable names
 
     Returns:
@@ -269,8 +274,12 @@ def create_node(node, file: TextIO, inner: str, node_tree_var: str,
         
     return node_var
 
-def set_settings_defaults(node, settings: dict[str, list[(str, ST)]], file: TextIO, inner: str, 
-                            node_var: str):
+def set_settings_defaults(node: bpy.types.Node, 
+                          settings: dict[str, list[(str, ST)]], 
+                          file: TextIO, 
+                          inner: str, 
+                          node_var: str
+                         ) -> None:
     """
     Sets the defaults for any settings a node may have
 
@@ -312,7 +321,11 @@ def set_settings_defaults(node, settings: dict[str, list[(str, ST)]], file: Text
                 file.write((f"{inner}\t{node_var}.{setting} = "
                             f"bpy.data.objects[{name}]\n"))
 
-def hide_sockets(node, file: TextIO, inner: str, node_var: str):
+def hide_sockets(node: bpy.types.Node, 
+                 file: TextIO, 
+                 inner: str, 
+                 node_var: str
+                ) -> None:
     """
     Hide hidden sockets
 
@@ -329,7 +342,25 @@ def hide_sockets(node, file: TextIO, inner: str, node_var: str):
         if socket.hide is True:
             file.write(f"{inner}{node_var}.outputs[{i}].hide = True\n") 
 
-def group_io_settings(node, file: TextIO, inner: str, io: str, node_tree_var: str, node_tree):
+def group_io_settings(node: bpy.types.Node, 
+                      file: TextIO, 
+                      inner: str, 
+                      io: str, #TODO: convert to enum
+                      node_tree_var: str, 
+                      node_tree: bpy.types.NodeTree
+                     ) -> None:
+    """
+    Set the settings for group input and output sockets
+
+    Parameters:
+    node (bpy.types.Node) : group input/output node
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation string
+    io (str): whether we're generating the input or output settings
+    node_tree_var (str): variable name of the generated node tree
+    node_tree (bpy.types.NodeTree): node tree that we're generating input
+        and output settings for
+    """
     if io == "input":
         ios = node.outputs
         ntio = node_tree.inputs
@@ -393,7 +424,11 @@ def group_io_settings(node, file: TextIO, inner: str, io: str, node_tree_var: st
         file.write("\n")
     file.write("\n")
 
-def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
+def color_ramp_settings(node: bpy.types.Node, 
+                        file: TextIO, 
+                        inner: str, 
+                        node_var: str
+                       ) -> None:
     """
     Replicate a color ramp node
 
@@ -435,7 +470,11 @@ def color_ramp_settings(node, file: TextIO, inner: str, node_var: str):
         color_str = vec4_to_py_str(element.color)
         file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
 
-def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
+def curve_node_settings(node: bpy.types.Node, 
+                        file: TextIO, 
+                        inner: str, 
+                        node_var: str
+                       ) -> None:
     """
     Sets defaults for Float, Vector, and Color curves
 
@@ -506,8 +545,12 @@ def curve_node_settings(node, file: TextIO, inner: str, node_var: str):
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping_var}.update()\n")
 
-def set_input_defaults(node, file: TextIO, inner: str, node_var: str, 
-                       addon_dir: str = ""):
+def set_input_defaults(node: bpy.types.Node, 
+                       file: TextIO, 
+                       inner: str, 
+                       node_var: str, 
+                       addon_dir: str = ""
+                      ) -> None:
     """
     Sets defaults for input sockets
 
@@ -574,7 +617,12 @@ def set_input_defaults(node, file: TextIO, inner: str, node_var: str,
                             f" = {default_val}\n"))
     file.write("\n")
 
-def in_file_inputs(input, file: TextIO, inner: str, socket_var: str, type: str):
+def in_file_inputs(input: bpy.types.NodeSocket, 
+                   file: TextIO, 
+                   inner: str, 
+                   socket_var: str, 
+                   type: str
+                  ) -> None:
     """
     Sets inputs for a node input if one already exists in the blend file
 
@@ -592,7 +640,11 @@ def in_file_inputs(input, file: TextIO, inner: str, socket_var: str, type: str):
         file.write((f"{inner}\t{socket_var}.default_value = "
                                 f"bpy.data.{type}[{name}]\n"))
 
-def set_output_defaults(node, file: TextIO, inner: str, node_var: str):
+def set_output_defaults(node: bpy.types.Node, 
+                        file: TextIO, 
+                        inner: str, 
+                        node_var: str
+                       ) -> None:
     """
     Some output sockets need default values set. It's rather annoying
 
@@ -614,7 +666,11 @@ def set_output_defaults(node, file: TextIO, inner: str, node_var: str):
             dv = vec3_to_py_str(dv)
         file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
 
-def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
+def set_parents(node_tree: bpy.types.NodeTree, 
+                file: TextIO, 
+                inner: str, 
+                node_vars: dict[bpy.types.Node, str]
+               ) -> None:
     """
     Sets parents for all nodes, mostly used to put nodes in frames
 
@@ -622,7 +678,8 @@ def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
     file (TextIO): file for the generated add-on
     inner (str): indentation string
-    node_vars (dict): dictionary for (node, variable) name pairs
+    node_vars (dict[bpy.types.Node, str]): dictionary for node->variable name 
+        pairs
     """
     parent_comment = False
     for node in node_tree.nodes:
@@ -635,7 +692,11 @@ def set_parents(node_tree, file: TextIO, inner: str, node_vars: dict):
             file.write(f"{inner}{node_var}.parent = {parent_var}\n")
     file.write("\n")
 
-def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
+def set_locations(node_tree: bpy.types.NodeTree, 
+                  file: TextIO, 
+                  inner: str, 
+                  node_vars: dict[bpy.types.Node, str]
+                 ) -> None:
     """
     Set locations for all nodes
 
@@ -643,7 +704,8 @@ def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
     file (TextIO): file for the generated add-on
     inner (str): indentation string
-    node_vars (dict): dictionary for (node, variable) name pairs
+    node_vars (dict[bpy.types.Node, str]): dictionary for (node, variable) name 
+        pairs
     """
 
     file.write(f"{inner}#Set locations\n")
@@ -653,7 +715,11 @@ def set_locations(node_tree, file: TextIO, inner: str, node_vars: dict):
                     f"= ({node.location.x}, {node.location.y})\n"))
     file.write("\n")
 
-def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
+def set_dimensions(node_tree: bpy.types.NodeTree, 
+                   file: TextIO, 
+                   inner: str, 
+                   node_vars: dict[bpy.types.Node, str]
+                  ) -> None:
     """
     Set dimensions for all nodes
 
@@ -661,7 +727,8 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
     node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
     file (TextIO): file for the generated add-on
     inner (str): indentation string
-    node_vars (dict): dictionary for (node, variable) name pairs
+    node_vars (dict[bpy.types.Node, str]): dictionary for (node, variable) name 
+        pairs
     """
 
     file.write(f"{inner}#Set dimensions\n")
@@ -671,8 +738,12 @@ def set_dimensions(node_tree, file: TextIO, inner: str, node_vars: dict):
                         f"= {node.width}, {node.height}\n"))
     file.write("\n")
 
-def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str, 
-                node_vars: dict):
+def init_links(node_tree: bpy.types.NodeTree, 
+               file: TextIO, 
+               inner: str, 
+               node_tree_var: str, 
+               node_vars: dict[bpy.types.Node, str]
+              ) -> None:
     """
     Create all the links between nodes
 
@@ -681,7 +752,8 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str,
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
     node_tree_var (str): variable name we're using for the copied node tree
-    node_vars (dict): dictionary containing node to variable name pairs
+    node_vars (dict[bpy.types.Node, str]): dictionary containing node to 
+        variable name pairs
     """
 
     if node_tree.links:
@@ -716,7 +788,7 @@ def init_links(node_tree, file: TextIO, inner: str, node_tree_var: str,
                     f".outputs[{input_idx}], "
                     f"{out_node_var}.inputs[{output_idx}])\n"))
 
-def create_menu_func(file: TextIO, name: str):
+def create_menu_func(file: TextIO, name: str) -> None:
     """
     Creates the menu function
 
@@ -729,7 +801,7 @@ def create_menu_func(file: TextIO, name: str):
     file.write(f"\tself.layout.operator({name}.bl_idname)\n")
     file.write("\n")
 
-def create_register_func(file: TextIO, name: str):
+def create_register_func(file: TextIO, name: str) -> None:
     """
     Creates the register function
 
@@ -742,7 +814,7 @@ def create_register_func(file: TextIO, name: str):
     file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
     file.write("\n")
 
-def create_unregister_func(file: TextIO, name: str):
+def create_unregister_func(file: TextIO, name: str) -> None:
     """
     Creates the unregister function
 
@@ -755,7 +827,7 @@ def create_unregister_func(file: TextIO, name: str):
     file.write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
     file.write("\n")
 
-def create_main_func(file: TextIO):
+def create_main_func(file: TextIO) -> None:
     """
     Creates the main function
 
@@ -765,7 +837,7 @@ def create_main_func(file: TextIO):
     file.write("if __name__ == \"__main__\":\n")
     file.write("\tregister()")
 
-def save_image(img, addon_dir: str):
+def save_image(img: bpy.types.Image, addon_dir: str) -> None:
     """
     Saves an image to an image directory of the add-on
 
@@ -788,7 +860,11 @@ def save_image(img, addon_dir: str):
     if not os.path.exists(img_path):
         img.save_render(img_path)
 
-def load_image(img, file: TextIO, inner: str, img_var: str):
+def load_image(img: bpy.types.Image, 
+               file: TextIO, 
+               inner: str, 
+               img_var: str
+              ) -> None:
     """
     Loads an image from the add-on into a blend file and assigns it
 
@@ -828,7 +904,11 @@ def load_image(img, file: TextIO, inner: str, img_var: str):
     alpha_mode = enum_to_py_str(img.alpha_mode)
     file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
 
-def image_user_settings(node, file: TextIO, inner: str, node_var: str):
+def image_user_settings(node: bpy.types.Node, 
+                        file: TextIO, 
+                        inner: str, 
+                        node_var: str
+                       ) -> None:
     """
     Replicate the image user of an image node
 
@@ -852,7 +932,7 @@ def image_user_settings(node, file: TextIO, inner: str, node_var: str):
         file.write((f"{inner}{img_usr_var}.{img_usr_attr} = "
                     f"{getattr(img_usr, img_usr_attr)}\n"))
     
-def zip_addon(zip_dir: str):
+def zip_addon(zip_dir: str) -> None:
     """
     Zips up the addon and removes the directory
 
