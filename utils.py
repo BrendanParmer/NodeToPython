@@ -7,7 +7,7 @@ import re
 import shutil
 from typing import TextIO, Tuple
 
-image_dir_name = "imgs"
+IMAGE_DIR_NAME = "imgs"
 
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketGeometry',
@@ -189,13 +189,13 @@ def init_operator(file: TextIO, name: str, idname: str, label: str) -> None:
     file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
     file.write("\n")
 
-def create_var(name: str, used_vars: dict) -> str:
+def create_var(name: str, used_vars: dict[str, int]) -> str:
     """
     Creates a unique variable name for a node tree
 
     Parameters:
     name (str): basic string we'd like to create the variable name out of
-    used_vars (dict): dictionary containing variable names and usage counts
+    used_vars (dict[str, int]): dictionary containing variable names and usage counts
 
     Returns:
     clean_name (str): variable name for the node tree
@@ -235,7 +235,7 @@ def create_node(node: bpy.types.Node,
                 inner: str, 
                 node_tree_var: str, 
                 node_vars: dict[bpy.types.Node, str], 
-                used_vars: set #necessary?
+                used_vars: dict[str, int]
                ) -> str:
     """
     Initializes a new node with location, dimension, and label info
@@ -247,7 +247,7 @@ def create_node(node: bpy.types.Node,
     node_tree_var (str): variable name for the node tree
     node_vars (dict): dictionary containing Node to corresponding variable name
         pairs
-    used_vars (set): set of used variable names
+    used_vars dict[str, int]: dictionary of base variable names to usage counts
 
     Returns:
     node_var (str): variable name for the node
@@ -867,7 +867,7 @@ def save_image(img: bpy.types.Image, addon_dir: str) -> None:
         return
 
     #create image dir if one doesn't exist
-    img_dir = os.path.join(addon_dir, image_dir_name)
+    img_dir = os.path.join(addon_dir, IMAGE_DIR_NAME)
     if not os.path.exists(img_dir):
         os.mkdir(img_dir)
 
@@ -901,7 +901,7 @@ def load_image(img: bpy.types.Image,
     file.write((f"{inner}base_dir = "
                 f"os.path.dirname(os.path.abspath(__file__))\n"))
     file.write((f"{inner}image_path = "
-                f"os.path.join(base_dir, \"{image_dir_name}\", "
+                f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
                 f"\"{img_str}\")\n"))
     file.write((f"{inner}{img_var} = "
                 f"bpy.data.images.load(image_path, check_existing = True)\n"))

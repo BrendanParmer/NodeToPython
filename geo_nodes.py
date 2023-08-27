@@ -542,7 +542,7 @@ class NTPGeoNodesOperator(bpy.types.Operator):
             
             create_header(file, nt.name)
             class_name = clean_string(nt.name.replace(" ", "").replace('.', ""), 
-                                    lower = False)
+                                      lower = False) #TODO: should probably be standardized name to class name util method
             init_operator(file, class_name, nt_var, nt.name)
             file.write("\tdef execute(self, context):\n")
         else:
@@ -557,7 +557,18 @@ class NTPGeoNodesOperator(bpy.types.Operator):
         #dictionary to keep track of variables->usage count pairs
         used_vars: dict[str, int] = {}
         
-        def process_geo_nodes_group(node_tree, level, node_vars, used_vars):
+        def process_geo_nodes_group(node_tree: bpy.types.NodeTree, 
+                                    level: int,
+                                   ) -> None:
+            """
+            Generates a Python function to recreate a node tree
+
+            Parameters:
+            node_tree (bpy.types.NodeTree): node tree to be recreated
+            level (int): number of tabs to use for each line, used with
+                node groups within node groups and script/add-on differences
+            """
+            
             nt_var = create_var(node_tree.name, used_vars)
                 
             outer, inner = make_indents(level)
@@ -583,14 +594,12 @@ class NTPGeoNodesOperator(bpy.types.Operator):
                 if node.bl_idname == 'GeometryNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_geo_nodes_group(node_nt, level + 1, node_vars, 
-                                                used_vars)
+                        process_geo_nodes_group(node_nt, level + 1)
                         node_trees.add(node_nt)
                 elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
                     group_io_settings(node, file, inner, "input", nt_var, 
                                       node_tree)
                     inputs_set = True
-
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
                     group_io_settings(node, file, inner, "output", nt_var, 
                                       node_tree)
@@ -673,7 +682,7 @@ class NTPGeoNodesOperator(bpy.types.Operator):
             level = 2
         else:
             level = 0
-        process_geo_nodes_group(nt, level, node_vars, used_vars)
+        process_geo_nodes_group(nt, level)
 
         def apply_modifier():
             #get object

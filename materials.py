@@ -338,13 +338,13 @@ class NTPMaterialOperator(bpy.types.Operator):
             create_material("")
         
         #set to keep track of already created node trees
-        node_trees = set()
+        node_trees: set[bpy.types.NodeTree] = set()
 
         #dictionary to keep track of node->variable name pairs
-        node_vars = {}
+        node_vars: dict[bpy.types.Node, str] = {}
 
-        #keeps track of all used variables
-        used_vars = {}
+        #keeps track of all used base vareiable names and usage counts
+        used_vars: dict[str, int] = {}
 
         def is_outermost_node_group(level: int) -> bool:
             if self.mode == 'ADDON' and level == 2:
@@ -353,7 +353,18 @@ class NTPMaterialOperator(bpy.types.Operator):
                 return True
             return False
 
-        def process_mat_node_group(node_tree, level, node_vars, used_vars):
+        def process_mat_node_group(node_tree: bpy.types.NodeTree, 
+                                   level: int
+                                  ) -> None:
+            """
+            Generates a Python function to recreate a node tree
+
+            Parameters:
+            node_tree (bpy.types.NodeTree): node tree to be recreated
+            level (int): number of tabs to use for each line, used with
+                node groups within node groups and script/add-on differences
+            """
+            
             if is_outermost_node_group(level):
                 nt_var = create_var(self.material_name, used_vars)
                 nt_name = self.material_name
@@ -392,8 +403,7 @@ class NTPMaterialOperator(bpy.types.Operator):
                 if node.bl_idname == 'ShaderNodeGroup':
                     node_nt = node.node_tree
                     if node_nt is not None and node_nt not in node_trees:
-                        process_mat_node_group(node_nt, level + 1, node_vars, 
-                                               used_vars)
+                        process_mat_node_group(node_nt, level + 1)
                         node_trees.add(node_nt)
                 
                 node_var = create_node(node, file, inner, nt_var, node_vars, 
@@ -440,7 +450,7 @@ class NTPMaterialOperator(bpy.types.Operator):
             level = 2
         else:
             level = 0        
-        process_mat_node_group(nt, level, node_vars, used_vars)
+        process_mat_node_group(nt, level)
 
         if self.mode == 'ADDON':
             file.write("\t\treturn {'FINISHED'}\n\n")
