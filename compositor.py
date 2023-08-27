@@ -44,8 +44,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
     'CompositorNodeRLayers'    : [("layer", ST.ENUM),
                                   ("scene", ST.SCENE)],
 
-    'CompositorNodeRGB'        : [], #TODO: add output to output handler
-    #Maybe just make setting handler handle defaults?
+    'CompositorNodeRGB'        : [],
 
     'CompositorNodeSceneTime'  : [],
 
@@ -62,7 +61,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                   ("track_name",      ST.STRING), #TODO: probably not right
                                   ("tracking_object", ST.STRING)], 
 
-    'CompositorNodeValue'      : [], #TODO: double check that outputs set here
+    'CompositorNodeValue'      : [],
 
 
     # OUTPUT
@@ -267,9 +266,9 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                  ("offset",  ST.VEC1),
                                  ("size",    ST.VEC1),
                                  ("use_max", ST.BOOL),
-                                 ("use_min", ST.BOOL)], #why are all these vectors?? TODO: check to make sure it doesn't flip
+                                 ("use_min", ST.BOOL)],
 
-    'CompositorNodeNormal'    : [], #TODO: output :(
+    'CompositorNodeNormal'    : [],
 
     'CompositorNodeNormalize' : [],
 

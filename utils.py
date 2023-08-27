@@ -674,13 +674,16 @@ def set_output_defaults(node: bpy.types.Node,
     """
     output_default_nodes = {'ShaderNodeValue', 
                             'ShaderNodeRGB', 
-                            'ShaderNodeNormal'}
+                            'ShaderNodeNormal',
+                            'CompositorNodeValue', 
+                            'CompositorNodeRGB',
+                            'CompositorNodeNormal'}
 
     if node.bl_idname in output_default_nodes:
-        dv = node.outputs[0].default_value #TODO: see if this is still the case
-        if node.bl_idname == 'ShaderNodeRGB':
+        dv = node.outputs[0].default_value
+        if node.bl_idname in {'ShaderNodeRGB', 'CompositorNodeRGB'}:
             dv = vec4_to_py_str(list(dv))
-        if node.bl_idname == 'ShaderNodeNormal':
+        if node.bl_idname in {'ShaderNodeNormal', 'CompositorNodeNormal'}:
             dv = vec3_to_py_str(dv)
         file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
 
