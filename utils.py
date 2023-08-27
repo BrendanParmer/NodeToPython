@@ -99,7 +99,7 @@ def vec1_to_py_str(vec1) -> str:
     Returns:
     (str): string representation of the vector
     """
-    return f"({vec1[0]})"
+    return f"[{vec1[0]}]"
 
 def vec2_to_py_str(vec2) -> str:
     """
@@ -295,6 +295,7 @@ def set_settings_defaults(node: bpy.types.Node,
         for (setting, type) in settings[node.bl_idname]:
             attr = getattr(node, setting, None)
             if not attr:
+                print(f"\"{node_var}.{setting}\" not found")
                 continue
             setting_str = f"{inner}{node_var}.{setting}"
             if type == ST.ENUM:

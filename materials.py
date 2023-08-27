@@ -4,6 +4,8 @@ import os
 from .utils import *
 from io import StringIO
 
+MAT_VAR = "mat"
+
 #TODO: move to a json, different ones for each blender version?
 shader_node_settings : dict[str, list[(str, ST)]] = {
     # INPUT
@@ -328,9 +330,9 @@ class NTPMaterialOperator(bpy.types.Operator):
             file = StringIO("")
 
         def create_material(indent: str):
-            file.write((f"{indent}mat = bpy.data.materials.new(" #TODO: see if using mat effects nodes named mat
+            file.write((f"{indent}{MAT_VAR} = bpy.data.materials.new("
                         f"name = {str_to_py_str(self.material_name)})\n"))
-            file.write(f"{indent}mat.use_nodes = True\n")
+            file.write(f"{indent}{MAT_VAR}.use_nodes = True\n")
         
         if self.mode == 'ADDON':
             create_material("\t\t")
@@ -364,7 +366,7 @@ class NTPMaterialOperator(bpy.types.Operator):
             level (int): number of tabs to use for each line, used with
                 node groups within node groups and script/add-on differences
             """
-            
+
             if is_outermost_node_group(level):
                 nt_var = create_var(self.material_name, used_vars)
                 nt_name = self.material_name
@@ -379,7 +381,7 @@ class NTPMaterialOperator(bpy.types.Operator):
             file.write(f"{outer}def {nt_var}_node_group():\n")
 
             if is_outermost_node_group(level): #outermost node group
-                file.write(f"{inner}{nt_var} = mat.node_tree\n")
+                file.write(f"{inner}{nt_var} = {MAT_VAR}.node_tree\n")
                 file.write(f"{inner}#start with a clean node tree\n")
                 file.write(f"{inner}for node in {nt_var}.nodes:\n")
                 file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")

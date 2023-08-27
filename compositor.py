@@ -44,7 +44,8 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
     'CompositorNodeRLayers'    : [("layer", ST.ENUM),
                                   ("scene", ST.SCENE)],
 
-    'CompositorNodeRGB'        : [],
+    'CompositorNodeRGB'        : [], #TODO: add output to output handler
+    #Maybe just make setting handler handle defaults?
 
     'CompositorNodeSceneTime'  : [],
 
@@ -268,7 +269,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                  ("use_max", ST.BOOL),
                                  ("use_min", ST.BOOL)], #why are all these vectors?? TODO: check to make sure it doesn't flip
 
-    'CompositorNodeNormal'    : [],
+    'CompositorNodeNormal'    : [], #TODO: output :(
 
     'CompositorNodeNormalize' : [],
 
