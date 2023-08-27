@@ -19,6 +19,7 @@ class ST(Enum):
     Settings Types
     """
     ENUM = auto()
+    ENUM_SET = auto()
     STRING = auto()
     BOOL = auto()
     INT = auto()
@@ -298,6 +299,8 @@ def set_settings_defaults(node: bpy.types.Node,
             setting_str = f"{inner}{node_var}.{setting}"
             if type == ST.ENUM:
                 file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+            elif type == ST.ENUM_SET:
+                file.write(f"{setting_str} = {attr}\n")
             elif type == ST.STRING:
                 file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
             elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
@@ -320,6 +323,10 @@ def set_settings_defaults(node: bpy.types.Node,
                 file.write((f"{inner}if {name} in bpy.data.objects:\n"))
                 file.write((f"{inner}\t{node_var}.{setting} = "
                             f"bpy.data.objects[{name}]\n"))
+            elif type == ST.COLOR_RAMP:
+                color_ramp_settings(node, file, inner, node_var, setting)
+            elif type == ST.CURVE_MAPPING:
+                curve_mapping_settings(node, file, inner, node_var, setting)
 
 def hide_sockets(node: bpy.types.Node, 
                  file: TextIO, 
@@ -427,7 +434,8 @@ def group_io_settings(node: bpy.types.Node,
 def color_ramp_settings(node: bpy.types.Node, 
                         file: TextIO, 
                         inner: str, 
-                        node_var: str
+                        node_var: str,
+                        color_ramp_name: str
                        ) -> None:
     """
     Replicate a color ramp node
@@ -437,43 +445,51 @@ def color_ramp_settings(node: bpy.types.Node,
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
     node_var (str): name of the variable we're using for the color ramp
+    color_ramp_name (str): name of the color ramp to be copied
     """
 
-    color_ramp = node.color_ramp
+    color_ramp: bpy.types.ColorRamp = getattr(node, color_ramp_name)
+    if not color_ramp:
+        raise ValueError(f"No color ramp named \"{color_ramp_name}\" found")
+
     #settings
+    ramp_str = f"{inner}{node_var}.{color_ramp_name}"
+
     color_mode = enum_to_py_str(color_ramp.color_mode)
-    file.write(f"{inner}{node_var}.color_ramp.color_mode = {color_mode}\n")
+    file.write(f"{ramp_str}.color_mode = {color_mode}\n")
 
     hue_interpolation = enum_to_py_str(color_ramp.hue_interpolation)
-    file.write((f"{inner}{node_var}.color_ramp.hue_interpolation = "
+    file.write((f"{ramp_str}.hue_interpolation = "
                 f"{hue_interpolation}\n"))
     interpolation = enum_to_py_str(color_ramp.interpolation)
-    file.write((f"{inner}{node_var}.color_ramp.interpolation "
+    file.write((f"{ramp_str}.interpolation "
                 f"= {interpolation}\n"))
     file.write("\n")
 
     #key points
-    file.write((f"{inner}{node_var}.color_ramp.elements.remove"
-                f"({node_var}.color_ramp.elements[0])\n"))
+    file.write(f"{inner}#initialize color ramp elements\n")
+    file.write((f"{ramp_str}.elements.remove"
+                f"({ramp_str}.elements[0])\n"))
     for i, element in enumerate(color_ramp.elements):
         element_var = f"{node_var}_cre_{i}"
         if i == 0:
             file.write(f"{inner}{element_var} = "
-                       f"{node_var}.color_ramp.elements[{i}]\n")
+                       f"{ramp_str}.elements[{i}]\n")
             file.write(f"{inner}{element_var}.position = {element.position}\n")
         else:
             file.write((f"{inner}{element_var} = "
-                        f"{node_var}.color_ramp.elements"
+                        f"{ramp_str}.elements"
                         f".new({element.position})\n"))
         file.write((f"{inner}{element_var}.alpha = "
                     f"{element.alpha}\n"))
         color_str = vec4_to_py_str(element.color)
         file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
 
-def curve_node_settings(node: bpy.types.Node, 
+def curve_mapping_settings(node: bpy.types.Node, 
                         file: TextIO, 
                         inner: str, 
-                        node_var: str
+                        node_var: str,
+                        curve_mapping_name: str
                        ) -> None:
     """
     Sets defaults for Float, Vector, and Color curves
@@ -483,16 +499,16 @@ def curve_node_settings(node: bpy.types.Node,
     file (TextIO): file we're generating the add-on into
     inner (str): indentation
     node_var (str): variable name for the add-on's curve node
+    curve_mapping_name (str): name of the curve mapping to be set
     """
 
-    if node.bl_idname == 'CompositorNodeTime':
-        mapping = node.curve #TODO: ask for consistency here?
-    else:
-        mapping = node.mapping
+    mapping = getattr(node, curve_mapping_name)
+    if not mapping:
+        raise ValueError(f"Curve mapping \"{curve_mapping_name}\" not found in node \"{node.bl_idname}\"")
 
     #mapping settings
     file.write(f"{inner}#mapping settings\n")
-    mapping_var = f"{inner}{node_var}.mapping"
+    mapping_var = f"{inner}{node_var}.{curve_mapping_name}"
 
     #extend
     extend = enum_to_py_str(mapping.extend)
@@ -526,7 +542,8 @@ def curve_node_settings(node: bpy.types.Node,
     for i, curve in enumerate(mapping.curves):
         file.write(f"{inner}#curve {i}\n")
         curve_i = f"{node_var}_curve_{i}"
-        file.write((f"{inner}{curve_i} = {node_var}.mapping.curves[{i}]\n"))
+        file.write((f"{inner}{curve_i} = "
+                    f"{node_var}.{curve_mapping_name}.curves[{i}]\n"))
         for j, point in enumerate(curve.points):
             point_j = f"{inner}{curve_i}_point_{j}"
 

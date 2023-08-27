@@ -56,7 +56,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                   ("frame_start", ST.INT)],
 
     'CompositorNodeTrackPos'   : [("clip",            ST.MOVIE_CLIP),
-                                  ("frame_relative",  ST.INT)
+                                  ("frame_relative",  ST.INT),
                                   ("position",        ST.ENUM),
                                   ("track_name",      ST.STRING), #TODO: probably not right
                                   ("tracking_object", ST.STRING)], 
@@ -515,7 +515,7 @@ class NTPCompositorOperator(bpy.types.Operator):
             elif self.mode == 'SCRIPT' and level == 0:
                 return True
             return False
-        """
+        
         def process_comp_node_group(node_tree, level, node_vars, used_vars):
             
             if is_outermost_node_group(level):
@@ -585,12 +585,6 @@ class NTPCompositorOperator(bpy.types.Operator):
                 #         save_image(img, addon_dir)
                 #         load_image(img, file, inner, f"{node_var}.image")
                 #         image_user_settings(node, file, inner, node_var)
-               
-                elif node.bl_idname == 'CompositorNodeValToRGB':
-                    color_ramp_settings(node, file, inner, node_var)
-
-                elif node.bl_idname in curve_nodes:
-                    curve_node_settings(node, file, inner, node_var)
 
                 if self.mode == 'ADDON':
                     set_input_defaults(node, file, inner, node_var, addon_dir)
@@ -626,7 +620,7 @@ class NTPCompositorOperator(bpy.types.Operator):
         
         if self.mode == 'ADDON':
             zip_addon(zip_dir)
-        """
+        
         if self.mode == 'SCRIPT':
             location = "clipboard"
         else:

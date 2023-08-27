@@ -178,7 +178,7 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                                    ("sun_elevation", ST.FLOAT),
                                    ("sun_intensity", ST.FLOAT),
                                    ("sun_rotation",  ST.FLOAT),
-                                   ("sun_size",      ST.FLOAT)
+                                   ("sun_size",      ST.FLOAT),
                                    ("turbidity",     ST.FLOAT)],
 
     'ShaderNodeTexVoronoi'      : [("distance",           ST.ENUM),
@@ -276,10 +276,6 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                           ("script",          ST.TEXT),
                           ("use_auto_update", ST.BOOL)]
 }
-
-curve_nodes = {'ShaderNodeFloatCurve', 
-               'ShaderNodeVectorCurve', 
-               'ShaderNodeRGBCurve'}
 
 image_nodes = {'ShaderNodeTexEnvironment',
                'ShaderNodeTexImage'}
@@ -403,7 +399,7 @@ class NTPMaterialOperator(bpy.types.Operator):
                 node_var = create_node(node, file, inner, nt_var, node_vars, 
                                        used_vars)
                 
-                set_settings_defaults(node, node_settings, file, inner, node_var)
+                set_settings_defaults(node, shader_node_settings, file, inner, node_var)
                 hide_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'ShaderNodeGroup':
@@ -425,12 +421,6 @@ class NTPMaterialOperator(bpy.types.Operator):
                         save_image(img, addon_dir)
                         load_image(img, file, inner, f"{node_var}.image")
                         image_user_settings(node, file, inner, node_var)
-
-                elif node.bl_idname == 'ShaderNodeValToRGB':
-                    color_ramp_settings(node, file, inner, node_var)
-
-                elif node.bl_idname in curve_nodes:
-                    curve_node_settings(node, file, inner, node_var)
 
                 if self.mode == 'ADDON':
                     set_input_defaults(node, file, inner, node_var, addon_dir)

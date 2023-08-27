@@ -135,7 +135,7 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeCurveEndpointSelection'    : [],
 
     'GeometryNodeCurveHandleTypeSelection'  : [("handle_type", ST.ENUM),
-                                               ("mode",        ST.ENUM)],
+                                               ("mode",        ST.ENUM_SET)],
 
     'GeometryNodeInputSplineCyclic'         : [],
 
@@ -160,7 +160,7 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeSetCurveHandlePositions' : [("mode", ST.ENUM)],
 
     'GeometryNodeCurveSetHandles'         : [("handle_type", ST.ENUM),
-                                             ("mode",        ST.ENUM)],
+                                             ("mode",        ST.ENUM_SET)],
 
     'GeometryNodeSetSplineCyclic'         : [],
 
@@ -549,13 +549,13 @@ class NTPGeoNodesOperator(bpy.types.Operator):
             file = StringIO("")
 
         #set to keep track of already created node trees
-        node_trees = set()
+        node_trees: set[bpy.types.NodeTree] = set()
 
         #dictionary to keep track of node->variable name pairs
-        node_vars = {}
+        node_vars: dict[bpy.types.Node, str] = {}
 
         #dictionary to keep track of variables->usage count pairs
-        used_vars = {}
+        used_vars: dict[str, int] = {}
         
         def process_geo_nodes_group(node_tree, level, node_vars, used_vars):
             nt_var = create_var(node_tree.name, used_vars)
@@ -608,19 +608,6 @@ class NTPGeoNodesOperator(bpy.types.Operator):
                         file.write((f"{inner}{node_var}.node_tree = "
                                     f"bpy.data.node_groups"
                                     f"[{str_to_py_str(node.node_tree.name)}]\n"))
-
-                elif node.bl_idname == 'ShaderNodeValToRGB':
-                    color_ramp_settings(node, file, inner, node_var)
-
-                elif node.bl_idname in curve_nodes:
-                    curve_node_settings(node, file, inner, node_var)
-
-                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
-                    img = node.image
-                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
-                        save_image(img, addon_dir)
-                        load_image(img, file, inner, f"{node_var}.image")
-
                 elif node.bl_idname == 'GeometryNodeSimulationInput':
                     sim_inputs.append(node)
 
@@ -639,7 +626,13 @@ class NTPGeoNodesOperator(bpy.types.Operator):
                         attr_domain = enum_to_py_str(si.attribute_domain)
                         file.write((f"{inner}{si_var}.attribute_domain = "
                                     f"{attr_domain}\n"))
-
+                """
+                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
+                    img = node.image
+                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
+                        save_image(img, addon_dir)
+                        load_image(img, file, inner, f"{node_var}.image")
+                """
                 if node.bl_idname != 'GeometryNodeSimulationInput':
                     if self.mode == 'ADDON':
                         set_input_defaults(node, file, inner, node_var, addon_dir)
