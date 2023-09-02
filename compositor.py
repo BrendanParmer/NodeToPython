@@ -476,10 +476,9 @@ class NTPCompositorOperator(bpy.types.Operator):
             file.write("\tdef execute(self, context):\n")
         else:
             file = StringIO("")
+
         if self.is_scene:
             def create_scene(indent: str):
-                file.write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") #TODO: see if using scene as name effects nodes named scene
-
                 #TODO: wrap in more general unique name util function
                 file.write(f"{indent}# Generate unique scene name\n")
                 file.write(f"{indent}{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}\n")
@@ -491,6 +490,7 @@ class NTPCompositorOperator(bpy.types.Operator):
                 file.write(f"{indent}\t\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
                 file.write(f"{indent}\t\ti += 1\n\n")
 
+                file.write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") 
                 file.write(f"{indent}{SCENE_VAR}.name = {END_NAME_VAR}\n")
                 file.write(f"{indent}{SCENE_VAR}.use_fake_user = True\n")
                 file.write(f"{indent}bpy.context.window.scene = {SCENE_VAR}\n")
@@ -516,8 +516,7 @@ class NTPCompositorOperator(bpy.types.Operator):
                 return True
             return False
         
-        def process_comp_node_group(node_tree, level, node_vars, used_vars):
-            
+        def process_comp_node_group(node_tree, level, node_vars, used_vars):       
             if is_outermost_node_group(level):
                 nt_var = create_var(self.compositor_name, used_vars)
                 nt_name = self.compositor_name
