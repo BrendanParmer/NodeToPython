@@ -667,7 +667,7 @@ class NTPCompositorGroupsMenu(bpy.types.Menu):
                 op.compositor_name = node_group.name
                 op.is_scene = False
     
-class NTPCompositingPanel(bpy.types.Panel):
+class NTPCompositorPanel(bpy.types.Panel):
     bl_label = "Compositor to Python"
     bl_idname = "NODE_PT_ntp_compositor"
     bl_space_type = 'NODE_EDITOR'
