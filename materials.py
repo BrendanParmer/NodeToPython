@@ -346,7 +346,7 @@ class NTPMaterialOperator(bpy.types.Operator):
         #dictionary to keep track of node->variable name pairs
         node_vars: dict[bpy.types.Node, str] = {}
 
-        #keeps track of all used base vareiable names and usage counts
+        #keeps track of all used base variable names and usage counts
         used_vars: dict[str, int] = {}
 
         def is_outermost_node_group(level: int) -> bool:
