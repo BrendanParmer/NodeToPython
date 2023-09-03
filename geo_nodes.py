@@ -523,6 +523,7 @@ class NTPGeoNodesOperator(bpy.types.Operator):
         #set up names to use in generated addon
         nt_var = clean_string(nt.name)
 
+        addon_dir = None
         if self.mode == 'ADDON':
             #find base directory to save new addon
             dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
@@ -608,8 +609,8 @@ class NTPGeoNodesOperator(bpy.types.Operator):
                 #create node
                 node_var = create_node(node, file, inner, nt_var, 
                                        node_vars, used_vars)
-                set_settings_defaults(node, geo_node_settings, file, inner, 
-                                      node_var)
+                set_settings_defaults(node, geo_node_settings, file, addon_dir, 
+                                      inner, node_var)
                 hide_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'GeometryNodeGroup':
@@ -635,13 +636,6 @@ class NTPGeoNodesOperator(bpy.types.Operator):
                         attr_domain = enum_to_py_str(si.attribute_domain)
                         file.write((f"{inner}{si_var}.attribute_domain = "
                                     f"{attr_domain}\n"))
-                """
-                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
-                    img = node.image
-                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
-                        save_image(img, addon_dir)
-                        load_image(img, file, inner, f"{node_var}.image")
-                """
                 if node.bl_idname != 'GeometryNodeSimulationInput':
                     if self.mode == 'ADDON':
                         set_input_defaults(node, file, inner, node_var, addon_dir)

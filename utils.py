@@ -18,6 +18,7 @@ class ST(Enum):
     """
     Settings Types
     """
+    # Primitives
     ENUM = auto()
     ENUM_SET = auto()
     STRING = auto()
@@ -28,13 +29,20 @@ class ST(Enum):
     VEC2 = auto()
     VEC3 = auto()
     VEC4 = auto()
-    MATERIAL = auto() #Could use a look
-    OBJECT = auto() #Could take a looking at
+
+    # Special settings
+    COLOR_RAMP = auto()
+    CURVE_MAPPING = auto()
+
+    # Asset Library
+    MATERIAL = auto() # Handle with asset library
+    OBJECT = auto() # Handle with asset library
+
+    # Image
     IMAGE = auto() #needs refactor
-    IMAGE_USER = auto() #unimplemented
+    IMAGE_USER = auto() #needs refactor
     MOVIE_CLIP = auto() #unimplmented
-    COLOR_RAMP = auto() #needs refactor
-    CURVE_MAPPING = auto() #needs refactor
+
     TEXTURE = auto() #unimplemented
     TEXT = auto() #unimplemented
     SCENE = auto() #unimplemented
@@ -277,7 +285,8 @@ def create_node(node: bpy.types.Node,
 
 def set_settings_defaults(node: bpy.types.Node, 
                           settings: dict[str, list[(str, ST)]], 
-                          file: TextIO, 
+                          file: TextIO,
+                          addon_dir: str,
                           inner: str, 
                           node_var: str
                          ) -> None:
@@ -288,16 +297,17 @@ def set_settings_defaults(node: bpy.types.Node,
     node (bpy.types.Node): the node object we're copying settings from
     settings (dict): a predefined dictionary of all settings every node has
     file (TextIO): file we're generating the add-on into
+    addon_dir (str): directory that the addon is saved into
     inner (str): indentation
     node_var (str): name of the variable we're using for the node in our add-on
     """
     if node.bl_idname in settings:
-        for (setting, type) in settings[node.bl_idname]:
-            attr = getattr(node, setting, None)
+        for (attr_name, type) in settings[node.bl_idname]:
+            attr = getattr(node, attr_name, None)
             if not attr:
-                print(f"\"{node_var}.{setting}\" not found")
+                print(f"\"{node_var}.{attr_name}\" not found")
                 continue
-            setting_str = f"{inner}{node_var}.{setting}"
+            setting_str = f"{inner}{node_var}.{attr_name}"
             if type == ST.ENUM:
                 file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
             elif type == ST.ENUM_SET:
@@ -317,17 +327,24 @@ def set_settings_defaults(node: bpy.types.Node,
             elif type == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
                 file.write((f"{inner}if {name} in bpy.data.materials:\n"))
-                file.write((f"{inner}\t{node_var}.{setting} = "
+                file.write((f"{inner}\t{node_var}.{attr_name} = "
                             f"bpy.data.materials[{name}]\n"))
             elif type == ST.OBJECT:
                 name = str_to_py_str(attr.name)
                 file.write((f"{inner}if {name} in bpy.data.objects:\n"))
-                file.write((f"{inner}\t{node_var}.{setting} = "
+                file.write((f"{inner}\t{node_var}.{attr_name} = "
                             f"bpy.data.objects[{name}]\n"))
             elif type == ST.COLOR_RAMP:
-                color_ramp_settings(node, file, inner, node_var, setting)
+                color_ramp_settings(node, file, inner, node_var, attr_name)
             elif type == ST.CURVE_MAPPING:
-                curve_mapping_settings(node, file, inner, node_var, setting)
+                curve_mapping_settings(node, file, inner, node_var, attr_name)
+            elif type == ST.IMAGE:
+                if addon_dir is not None and attr is not None:
+                    if attr.source in {'FILE', 'GENERATED', 'TILED'}:
+                        save_image(attr, addon_dir)
+                        load_image(attr, file, inner, f"{node_var}.{attr_name}")
+            elif type == ST.IMAGE_USER:
+                image_user_settings(attr, file, inner, f"{node_var}.{attr_name}")
 
 def hide_sockets(node: bpy.types.Node, 
                  file: TextIO, 
@@ -563,6 +580,96 @@ def curve_mapping_settings(node: bpy.types.Node,
     file.write(f"{inner}#update curve after changes\n")
     file.write(f"{mapping_var}.update()\n")
 
+def save_image(img: bpy.types.Image, addon_dir: str) -> None:
+    """
+    Saves an image to an image directory of the add-on
+
+    Parameters:
+    img (bpy.types.Image): image to be saved
+    addon_dir (str): directory of the addon
+    """
+
+    if img is None:
+        return
+
+    #create image dir if one doesn't exist
+    img_dir = os.path.join(addon_dir, IMAGE_DIR_NAME)
+    if not os.path.exists(img_dir):
+        os.mkdir(img_dir)
+
+    #save the image
+    img_str = img_to_py_str(img)
+    img_path = f"{img_dir}/{img_str}"
+    if not os.path.exists(img_path):
+        img.save_render(img_path)
+
+def load_image(img: bpy.types.Image, 
+               file: TextIO, 
+               inner: str, 
+               img_var: str
+              ) -> None:
+    """
+    Loads an image from the add-on into a blend file and assigns it
+
+    Parameters:
+    img (bpy.types.Image): Blender image from the original node group
+    file (TextIO): file for the generated add-on
+    inner (str): indentation string
+    img_var (str): variable name to be used for the image
+    """
+
+    if img is None:
+        return
+        
+    img_str = img_to_py_str(img)
+
+    #TODO: convert to special variables
+    file.write(f"{inner}#load image {img_str}\n")
+    file.write((f"{inner}base_dir = "
+                f"os.path.dirname(os.path.abspath(__file__))\n"))
+    file.write((f"{inner}image_path = "
+                f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
+                f"\"{img_str}\")\n"))
+    file.write((f"{inner}{img_var} = "
+                f"bpy.data.images.load(image_path, check_existing = True)\n"))
+
+    #copy image settings
+    file.write(f"{inner}#set image settings\n")
+
+    #source
+    source = enum_to_py_str(img.source)
+    file.write(f"{inner}{img_var}.source = {source}\n")
+
+    #color space settings
+    color_space = enum_to_py_str(img.colorspace_settings.name)
+    file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
+    
+    #alpha mode
+    alpha_mode = enum_to_py_str(img.alpha_mode)
+    file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
+
+def image_user_settings(img_user: bpy.types.ImageUser, 
+                        file: TextIO, 
+                        inner: str, 
+                        img_user_var: str
+                       ) -> None:
+    """
+    Replicate the image user of an image node
+
+    Parameters
+    img_usr (bpy.types.ImageUser): image user to be copied
+    file (TextIO): file we're generating the add-on into
+    inner (str): indentation
+    img_usr_var (str): variable name for the generated image user
+    """
+
+    img_usr_attrs = ["frame_current", "frame_duration", "frame_offset",
+                     "frame_start", "tile", "use_auto_refresh", "use_cyclic"]
+    
+    for img_usr_attr in img_usr_attrs:
+        file.write((f"{inner}{img_user_var}.{img_usr_attr} = "
+                    f"{getattr(img_user, img_usr_attr)}\n"))
+   
 def set_input_defaults(node: bpy.types.Node, 
                        file: TextIO, 
                        inner: str, 
@@ -857,102 +964,7 @@ def create_main_func(file: TextIO) -> None:
     """
     file.write("if __name__ == \"__main__\":\n")
     file.write("\tregister()")
-
-def save_image(img: bpy.types.Image, addon_dir: str) -> None:
-    """
-    Saves an image to an image directory of the add-on
-
-    Parameters:
-    img (bpy.types.Image): image to be saved
-    addon_dir (str): directory of the addon
-    """
-
-    if img is None:
-        return
-
-    #create image dir if one doesn't exist
-    img_dir = os.path.join(addon_dir, IMAGE_DIR_NAME)
-    if not os.path.exists(img_dir):
-        os.mkdir(img_dir)
-
-    #save the image
-    img_str = img_to_py_str(img)
-    img_path = f"{img_dir}/{img_str}"
-    if not os.path.exists(img_path):
-        img.save_render(img_path)
-
-def load_image(img: bpy.types.Image, 
-               file: TextIO, 
-               inner: str, 
-               img_var: str
-              ) -> None:
-    """
-    Loads an image from the add-on into a blend file and assigns it
-
-    Parameters:
-    img (bpy.types.Image): Blender image from the original node group
-    file (TextIO): file for the generated add-on
-    inner (str): indentation string
-    img_var (str): variable name to be used for the image
-    """
-
-    if img is None:
-        return
-        
-    img_str = img_to_py_str(img)
-
-    file.write(f"{inner}#load image {img_str}\n")
-    file.write((f"{inner}base_dir = "
-                f"os.path.dirname(os.path.abspath(__file__))\n"))
-    file.write((f"{inner}image_path = "
-                f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
-                f"\"{img_str}\")\n"))
-    file.write((f"{inner}{img_var} = "
-                f"bpy.data.images.load(image_path, check_existing = True)\n"))
-
-    #copy image settings
-    file.write(f"{inner}#set image settings\n")
-
-    #source
-    source = enum_to_py_str(img.source)
-    file.write(f"{inner}{img_var}.source = {source}\n")
-
-    #color space settings
-    color_space = enum_to_py_str(img.colorspace_settings.name)
-    file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
-    
-    #alpha mode
-    alpha_mode = enum_to_py_str(img.alpha_mode)
-    file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
-
-def image_user_settings(node: bpy.types.Node, 
-                        file: TextIO, 
-                        inner: str, 
-                        node_var: str
-                       ) -> None:
-    """
-    Replicate the image user of an image node
-
-    Parameters
-    node (bpy.types.Node): node object we're copying settings from
-    file (TextIO): file we're generating the add-on into
-    inner (str): indentation
-    node_var (str): name of the variable we're using for the color ramp
-    """
-
-    if not hasattr(node, "image_user"):
-        raise ValueError("Node must have attribute \"image_user\"")
-
-    img_usr = node.image_user
-    img_usr_var = f"{node_var}.image_user"
-
-    img_usr_attrs = ["frame_current", "frame_duration", "frame_offset",
-                     "frame_start", "tile", "use_auto_refresh", "use_cyclic"]
-    
-    for img_usr_attr in img_usr_attrs:
-        file.write((f"{inner}{img_usr_var}.{img_usr_attr} = "
-                    f"{getattr(img_usr, img_usr_attr)}\n"))
-    
+ 
 def zip_addon(zip_dir: str) -> None:
     """
     Zips up the addon and removes the directory

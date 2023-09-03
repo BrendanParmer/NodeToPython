@@ -307,6 +307,7 @@ class NTPMaterialOperator(bpy.types.Operator):
         #set up names to use in generated addon
         mat_var = clean_string(self.material_name)
         
+        addon_dir = None
         if self.mode == 'ADDON':
             dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
             if not dir or dir == "":
@@ -411,7 +412,8 @@ class NTPMaterialOperator(bpy.types.Operator):
                 node_var = create_node(node, file, inner, nt_var, node_vars, 
                                        used_vars)
                 
-                set_settings_defaults(node, shader_node_settings, file, inner, node_var)
+                set_settings_defaults(node, shader_node_settings, file, 
+                                      addon_dir, inner, node_var)
                 hide_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'ShaderNodeGroup':
@@ -426,13 +428,6 @@ class NTPMaterialOperator(bpy.types.Operator):
                 elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
                     group_io_settings(node, file, inner, "output", nt_var, node_tree)
                     outputs_set = True
-
-                elif node.bl_idname in image_nodes and self.mode == 'ADDON':
-                    img = node.image
-                    if img is not None and img.source in {'FILE', 'GENERATED', 'TILED'}:
-                        save_image(img, addon_dir)
-                        load_image(img, file, inner, f"{node_var}.image")
-                        image_user_settings(node, file, inner, node_var)
 
                 if self.mode == 'ADDON':
                     set_input_defaults(node, file, inner, node_var, addon_dir)
