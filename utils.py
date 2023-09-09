@@ -562,6 +562,14 @@ def curve_mapping_settings(node: bpy.types.Node,
         curve_i = f"{node_var}_curve_{i}"
         file.write((f"{inner}{curve_i} = "
                     f"{node_var}.{curve_mapping_name}.curves[{i}]\n"))
+
+        # Remove default points when CurveMap is initialized with more than
+        # two points (just CompositorNodeHueCorrect)
+        if (node.bl_idname == 'CompositorNodeHueCorrect'):
+            file.write((f"{inner}for i in "
+                    f"range(len({curve_i}.points.values()) - 1, 1, -1):\n"))
+            file.write(f"{inner}\t{curve_i}.points.remove({curve_i}.points[i])\n")
+        
         for j, point in enumerate(curve.points):
             point_j = f"{inner}{curve_i}_point_{j}"
 
