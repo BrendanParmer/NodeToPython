@@ -2,7 +2,7 @@
 
 ![Node To Python Logo](./img/ntp.jpg "Node To Python Logo")
 
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython) ![](https://img.shields.io/github/downloads/BrendanParmer/NodeToPython/total.svg)
  
 ## About
 A Blender add-on to create scripts and add-ons! This add-on will take your Geometry Nodes or Materials and convert them into legible Python code.
