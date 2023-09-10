@@ -304,12 +304,13 @@ def set_settings_defaults(node: bpy.types.Node,
     if node.bl_idname in settings:
         for (attr_name, type) in settings[node.bl_idname]:
             attr = getattr(node, attr_name, None)
-            if not attr:
+            if attr is None:
                 print(f"\"{node_var}.{attr_name}\" not found")
                 continue
             setting_str = f"{inner}{node_var}.{attr_name}"
             if type == ST.ENUM:
-                file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+                if attr != '':
+                    file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
             elif type == ST.ENUM_SET:
                 file.write(f"{setting_str} = {attr}\n")
             elif type == ST.STRING:

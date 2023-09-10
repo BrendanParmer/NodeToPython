@@ -314,8 +314,8 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                       ("frame_duration",   ST.INT),
                                       ("frame_offset",     ST.INT),
                                       ("frame_start",      ST.INT),
-                                      ("has_layers",       ST.BOOL), #TODO: readonly?
-                                      ("has_views",        ST.BOOL), #TODO: readonly?
+                                      #("has_layers",       ST.BOOL), #TODO: readonly?
+                                      #("has_views",        ST.BOOL), #TODO: readonly?
                                       ("image",            ST.IMAGE),
                                       ("layer",            ST.ENUM),
                                       ("layer_name",       ST.ENUM),
