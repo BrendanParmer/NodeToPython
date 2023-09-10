@@ -362,7 +362,7 @@ def set_settings_defaults(node: bpy.types.Node,
             elif type == ST.IMAGE_USER:
                 image_user_settings(attr, file, inner, f"{node_var}.{attr_name}")
 
-def hide_sockets(node: bpy.types.Node, 
+def hide_hidden_sockets(node: bpy.types.Node, 
                  file: TextIO, 
                  inner: str, 
                  node_var: str

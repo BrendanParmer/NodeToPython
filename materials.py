@@ -414,7 +414,7 @@ class NTPMaterialOperator(bpy.types.Operator):
                 
                 set_settings_defaults(node, shader_node_settings, file, 
                                       addon_dir, inner, node_var)
-                hide_sockets(node, file, inner, node_var)
+                hide_hidden_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'ShaderNodeGroup':
                     if node.node_tree is not None:

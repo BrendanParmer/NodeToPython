@@ -597,7 +597,7 @@ class NTPCompositorOperator(bpy.types.Operator):
 
                 set_settings_defaults(node, compositor_node_settings, file, 
                                       addon_dir, inner, node_var)
-                hide_sockets(node, file, inner, node_var)
+                hide_hidden_sockets(node, file, inner, node_var)
 
                 if node.bl_idname == 'CompositorNodeGroup':
                     if node.node_tree is not None:
