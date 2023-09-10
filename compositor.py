@@ -92,19 +92,19 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
     'CompositorNodeBrightContrast'  : [("use_premultiply", ST.BOOL)],
 
     'CompositorNodeColorBalance'    : [("correction_method", ST.ENUM),
-                                       ("gain",              ST.VEC3),
-                                       ("gamma",             ST.VEC3),
-                                       ("lift",              ST.VEC3),
-                                       ("offset",            ST.VEC3),
+                                       ("gain",              ST.COLOR),
+                                       ("gamma",             ST.COLOR),
+                                       ("lift",              ST.COLOR),
+                                       ("offset",            ST.COLOR),
                                        ("offset_basis",      ST.FLOAT),
-                                       ("power",             ST.VEC3),
-                                       ("slope",             ST.VEC3)],
+                                       ("power",             ST.COLOR),
+                                       ("slope",             ST.COLOR)],
 
     'CompositorNodeColorCorrection' : [("blue",                ST.BOOL),
                                        ("green",               ST.BOOL),
                                        ("highlights_contrast", ST.FLOAT),
                                        ("highlights_gain",     ST.FLOAT),
-                                        ("midtones_lift",      ST.FLOAT),
+                                       ("midtones_lift",       ST.FLOAT),
                                        ("midtones_saturation", ST.FLOAT),
                                        ("midtones_start",      ST.FLOAT),
                                        ("red",                 ST.BOOL),
@@ -309,7 +309,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                       ("unspill_red",   ST.FLOAT),
                                       ("use_unspill",   ST.BOOL)],
 
-    'CompositorNodeCryptomatteV2'  : [("add",              ST.VEC3),
+    'CompositorNodeCryptomatteV2'  : [("add",              ST.COLOR),
                                       ("entries",          ST.CRYPTOMATTE_ENTRIES),
                                       ("frame_duration",   ST.INT),
                                       ("frame_offset",     ST.INT),
@@ -320,16 +320,16 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                       ("layer",            ST.ENUM),
                                       ("layer_name",       ST.ENUM),
                                       ("matte_id",         ST.STRING),
-                                      ("remove",           ST.VEC3),
+                                      ("remove",           ST.COLOR),
                                       ("scene",            ST.SCENE),
                                       ("source",           ST.ENUM),
                                       ("use_auto_refresh", ST.BOOL),
                                       ("use_cyclic",       ST.BOOL),
                                       ("view",             ST.ENUM)],
 
-    'CompositorNodeCryptomatte'    : [("add",      ST.VEC3), #TODO: may need special handling
+    'CompositorNodeCryptomatte'    : [("add",      ST.COLOR), #TODO: may need special handling
                                       ("matte_id", ST.STRING),
-                                      ("remove",   ST.VEC3)],
+                                      ("remove",   ST.COLOR)],
 
     'CompositorNodeDiffMatte'      : [("falloff",   ST.FLOAT),
                                       ("tolerance", ST.FLOAT)],
@@ -563,6 +563,21 @@ class NTPCompositorOperator(bpy.types.Operator):
                 node_var = create_node(node, file, inner, nt_var, node_vars, 
                                        used_vars)
                 
+                if node.bl_idname == 'CompositorNodeColorBalance':
+                    if node.correction_method == 'LIFT_GAMMA_GAIN':
+                        lst = [("correction_method", ST.ENUM),                 
+                               ("gain",              ST.COLOR),
+                               ("gamma",             ST.COLOR),
+                               ("lift",              ST.COLOR)]
+                    else:
+                        lst = [("correction_method", ST.ENUM),
+                               ("offset",            ST.COLOR),
+                               ("offset_basis",      ST.FLOAT),
+                               ("power",             ST.COLOR),
+                               ("slope",             ST.COLOR)]
+
+                    compositor_node_settings['CompositorNodeColorBalance'] = lst
+
                 set_settings_defaults(node, compositor_node_settings, file, 
                                       addon_dir, inner, node_var)
                 hide_sockets(node, file, inner, node_var)

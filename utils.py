@@ -29,6 +29,7 @@ class ST(Enum):
     VEC2 = auto()
     VEC3 = auto()
     VEC4 = auto()
+    COLOR = auto()
 
     # Special settings
     COLOR_RAMP = auto()
@@ -144,6 +145,18 @@ def vec4_to_py_str(vec4) -> str:
     (str): string version
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
+
+def color_to_py_str(color: mathutils.Color) -> str:
+    """
+    Converts a mathutils.Color into a string
+
+    Parameters:
+    color (mathutils.Color): a Blender color
+
+    Returns:
+    (str): string version
+    """
+    return f"mathutils.Color(({color.r}, {color.g}, {color.b}))"
 
 def img_to_py_str(img : bpy.types.Image) -> str:
     """
@@ -325,6 +338,8 @@ def set_settings_defaults(node: bpy.types.Node,
                 file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
             elif type == ST.VEC4:
                 file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
+            elif type == ST.COLOR:
+                file.write(f"{setting_str} = {color_to_py_str(attr)}\n")
             elif type == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
                 file.write((f"{inner}if {name} in bpy.data.materials:\n"))
