@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Blender node groups to a Python add-on!",
     "author": "Brendan Parmer",
-    "version": (2, 2, 0),
+    "version": (3, 0, 0),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
@@ -10,12 +10,14 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(materials)
+    importlib.reload(compositor)
     importlib.reload(geo_nodes)
+    importlib.reload(materials)
     importlib.reload(options)
 else:
-    from . import materials
+    from . import compositor
     from . import geo_nodes
+    from . import materials
     from . import options
 
 import bpy
@@ -37,12 +39,16 @@ class NodeToPythonMenu(bpy.types.Menu):
 
 classes = [NodeToPythonMenu,
             options.NTPOptions,
-            geo_nodes.GeoNodesToPython,
-            geo_nodes.SelectGeoNodesMenu,
-            geo_nodes.GeoNodesToPythonPanel,
-            materials.MaterialToPython,
-            materials.SelectMaterialMenu,
-            materials.MaterialToPythonPanel,
+            compositor.NTPCompositorOperator,
+            compositor.NTPCompositorScenesMenu,
+            compositor.NTPCompositorGroupsMenu,
+            compositor.NTPCompositorPanel,
+            geo_nodes.NTPGeoNodesOperator,
+            geo_nodes.NTPGeoNodesMenu,
+            geo_nodes.NTPGeoNodesPanel,
+            materials.NTPMaterialOperator,
+            materials.NTPMaterialMenu,
+            materials.NTPMaterialPanel,
             options.NTPOptionsPanel
             ]
 
