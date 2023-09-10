@@ -100,19 +100,36 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                        ("power",             ST.COLOR),
                                        ("slope",             ST.COLOR)],
 
-    'CompositorNodeColorCorrection' : [("blue",                ST.BOOL),
-                                       ("green",               ST.BOOL),
-                                       ("highlights_contrast", ST.FLOAT),
-                                       ("highlights_gain",     ST.FLOAT),
-                                       ("midtones_lift",       ST.FLOAT),
+    'CompositorNodeColorCorrection' : [("red",   ST.BOOL),
+                                       ("green", ST.BOOL),
+                                       ("blue",  ST.BOOL),
+                                       #master
+                                       ("master_saturation", ST.FLOAT),
+                                       ("master_contrast",   ST.FLOAT),
+                                       ("master_gamma",      ST.FLOAT),
+                                       ("master_gain",       ST.FLOAT),
+                                       ("master_lift",       ST.FLOAT),
+                                       #highlights
+                                       ("highlights_saturation", ST.FLOAT),
+                                       ("highlights_contrast",   ST.FLOAT),
+                                       ("highlights_gamma",      ST.FLOAT),
+                                       ("highlights_gain",       ST.FLOAT),
+                                       ("highlights_lift",       ST.FLOAT),
+                                       #midtones
                                        ("midtones_saturation", ST.FLOAT),
-                                       ("midtones_start",      ST.FLOAT),
-                                       ("red",                 ST.BOOL),
-                                       ("shadows_contrast",    ST.FLOAT),
-                                       ("shadows_gain",        ST.FLOAT),
-                                       ("shadows_gamma",       ST.FLOAT),
-                                       ("shadows_lift",        ST.FLOAT),
-                                       ("shadows_saturation",  ST.FLOAT)],
+                                       ("midtones_contrast",   ST.FLOAT),
+                                       ("midtones_gamma",      ST.FLOAT),
+                                       ("midtones_gain",       ST.FLOAT),
+                                       ("midtones_lift",       ST.FLOAT),
+                                       #shadows
+                                       ("shadows_saturation", ST.FLOAT),
+                                       ("shadows_contrast",   ST.FLOAT),
+                                       ("shadows_gamma",      ST.FLOAT),
+                                       ("shadows_gain",       ST.FLOAT),
+                                       ("shadows_lift",       ST.FLOAT),
+                                       #midtones location
+                                       ("midtones_start", ST.FLOAT),
+                                       ("midtones_end",   ST.FLOAT)],
 
     'CompositorNodeExposure'        : [],
 
