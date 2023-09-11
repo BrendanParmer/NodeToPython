@@ -11,12 +11,12 @@ bl_info = {
 if "bpy" in locals():
     import importlib
     importlib.reload(compositor)
-    importlib.reload(geo_nodes)
+    importlib.reload(geometry)
     importlib.reload(materials)
     importlib.reload(options)
 else:
     from . import compositor
-    from . import geo_nodes
+    from . import geometry
     from . import materials
     from . import options
 
@@ -43,9 +43,9 @@ classes = [NodeToPythonMenu,
             compositor.NTPCompositorScenesMenu,
             compositor.NTPCompositorGroupsMenu,
             compositor.NTPCompositorPanel,
-            geo_nodes.NTPGeoNodesOperator,
-            geo_nodes.NTPGeoNodesMenu,
-            geo_nodes.NTPGeoNodesPanel,
+            geometry.operator.NTPGeoNodesOperator,
+            geometry.menu.NTPGeoNodesMenu,
+            geometry.panel.NTPGeoNodesPanel,
             materials.NTPMaterialOperator,
             materials.NTPMaterialMenu,
             materials.NTPMaterialPanel,
