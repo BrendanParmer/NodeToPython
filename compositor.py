@@ -671,10 +671,10 @@ class NTPCompositorScenesMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
         for scene in bpy.data.scenes:
             if scene.node_tree:
-                op = layout.operator(NTPCompositorOperator.bl_idname, text=scene.name)
+                op = layout.operator(NTPCompositorOperator.bl_idname, 
+                                     text=scene.name)
                 op.compositor_name = scene.name
                 op.is_scene = True
-                print(scene.node_tree.name)
 
 class NTPCompositorGroupsMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_ntp_comp_groups"
@@ -688,8 +688,9 @@ class NTPCompositorGroupsMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
         for node_group in bpy.data.node_groups:
-            if isinstance(node_group, bpy.types.CompositorNodeTree):
-                op = layout.operator(NTPCompositorOperator.bl_idname, text=node_group.name)
+            if node_group.bl_idname == 'CompositorNodeTree':
+                op = layout.operator(NTPCompositorOperator.bl_idname, 
+                                     text=node_group.name)
                 op.compositor_name = node_group.name
                 op.is_scene = False
     
@@ -712,9 +713,8 @@ class NTPCompositorPanel(bpy.types.Panel):
         layout = self.layout
         scenes_row = layout.row()
         
-        # Disables menu when there are no materials
-        scenes = [scene for scene in bpy.data.scenes 
-                    if scene.node_tree is not None]
+        # Disables menu when there are no compositing node groups
+        scenes = [scene for scene in bpy.data.scenes if scene.node_tree]
         scenes_exist = len(scenes) > 0
         scenes_row.enabled = scenes_exist
         
@@ -724,8 +724,8 @@ class NTPCompositorPanel(bpy.types.Panel):
                         text="Scene Compositor Nodes")
 
         groups_row = layout.row()
-        groups = [ng for ng in bpy.data.node_groups 
-                            if isinstance(ng, bpy.types.CompositorNodeTree)]
+        groups = [node_tree for node_tree in bpy.data.node_groups 
+                  if node_tree.bl_idname == 'CompositorNodeTree']
         groups_exist = len(groups) > 0
         groups_row.enabled = groups_exist
 

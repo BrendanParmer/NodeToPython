@@ -486,9 +486,11 @@ class NTPMaterialMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
-        for mat in bpy.data.materials: #TODO: filter by node tree exists
-            op = layout.operator(NTPMaterialOperator.bl_idname, text=mat.name)
-            op.material_name = mat.name
+        for mat in bpy.data.materials:
+            if mat.node_tree:
+                op = layout.operator(NTPMaterialOperator.bl_idname, 
+                                     text=mat.name)
+                op.material_name = mat.name
     
 class NTPMaterialPanel(bpy.types.Panel):
     bl_label = "Material to Python"
@@ -510,7 +512,7 @@ class NTPMaterialPanel(bpy.types.Panel):
         row = layout.row()
         
         # Disables menu when there are no materials
-        materials = bpy.data.materials #TODO: filter by node tree exist
+        materials = [mat for mat in bpy.data.materials if mat.node_tree]
         materials_exist = len(materials) > 0
         row.enabled = materials_exist
         

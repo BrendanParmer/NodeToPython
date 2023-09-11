@@ -510,11 +510,6 @@ class NTP_GeoNodeTree:
         self.outputs_set: bool = False
         self.sim_inputs: list[bpy.types.GeometryNodeSimulationInput] = []
 
-class NTP_GeoNode:
-    def __init__(self, node: bpy.types.GeometryNode, var_name: str):
-        self.node = node
-        self.var_name = var_name
-
 class NTPGeoNodesOperator(bpy.types.Operator):
     bl_idname = "node.ntp_geo_nodes"
     bl_label = "Geo Nodes to Python"
@@ -779,12 +774,14 @@ class NTPGeoNodesMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
 
-        geo_node_groups = [node for node in bpy.data.node_groups 
-                           if node.type == 'GEOMETRY']
+        geo_node_groups = [node_tree for node_tree in bpy.data.node_groups 
+                           if node_tree.bl_idname == 'GeometryNodeTree']
 
-        for geo_ng in geo_node_groups:
-            op = layout.operator(NTPGeoNodesOperator.bl_idname, text=geo_ng.name)
-            op.geo_nodes_group_name = geo_ng.name
+        for node_tree in bpy.data.node_groups:
+            if node_tree.bl_idname == 'GeometryNodeTree':
+                op = layout.operator(NTPGeoNodesOperator.bl_idname, 
+                                     text=node_tree.name)
+                op.geo_nodes_group_name = node_tree.name
             
 class NTPGeoNodesPanel(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"
@@ -807,12 +804,11 @@ class NTPGeoNodesPanel(bpy.types.Panel):
         row = col.row()
         
         # Disables menu when len of geometry nodes is 0
-        geo_node_groups = [node 
-                            for node in bpy.data.node_groups 
-                            if node.type == 'GEOMETRY']
+        geo_node_groups = [node_tree for node_tree in bpy.data.node_groups 
+                            if node_tree.bl_idname == 'GeometryNodeTree']
         geo_node_groups_exist = len(geo_node_groups) > 0
         row.enabled = geo_node_groups_exist
-        
+
         row.alignment = 'EXPAND'
         row.operator_context = 'INVOKE_DEFAULT'
         row.menu("NODE_MT_ntp_geo_nodes", text="Geometry Nodes")
