@@ -12,12 +12,12 @@ if "bpy" in locals():
     import importlib
     importlib.reload(compositor)
     importlib.reload(geometry)
-    importlib.reload(materials)
+    importlib.reload(node_settings)
     importlib.reload(options)
 else:
     from . import compositor
     from . import geometry
-    from . import materials
+    from .material import node_settings
     from . import options
 
 import bpy
@@ -38,18 +38,22 @@ class NodeToPythonMenu(bpy.types.Menu):
 
 
 classes = [NodeToPythonMenu,
+            #options
             options.NTPOptions,
+            options.NTPOptionsPanel,
+            #compositor
             compositor.NTPCompositorOperator,
             compositor.NTPCompositorScenesMenu,
             compositor.NTPCompositorGroupsMenu,
             compositor.NTPCompositorPanel,
+            #geometry
             geometry.operator.NTPGeoNodesOperator,
             geometry.menu.NTPGeoNodesMenu,
             geometry.panel.NTPGeoNodesPanel,
-            materials.NTPMaterialOperator,
-            materials.NTPMaterialMenu,
-            materials.NTPMaterialPanel,
-            options.NTPOptionsPanel
+            #material
+            material.operator.NTPMaterialOperator,
+            material.menu.NTPMaterialMenu,
+            material.panel.NTPMaterialPanel,
             ]
 
 def register():

@@ -1,4 +1,4 @@
-from ..utils import *
+from ..utils import ST
 
 geo_node_settings : dict[str, list[(str, ST)]] = {
     # ATTRIBUTE
