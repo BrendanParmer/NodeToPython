@@ -8,11 +8,11 @@ from bpy.types import Node
 from bpy.types import Operator
 
 import os
+from io import StringIO
 
 from ..utils import *
 from .node_tree import NTP_GeoNodeTree
 from .node_settings import geo_node_settings
-from io import StringIO
 
 class NTPGeoNodesOperator(Operator):
     bl_idname = "node.ntp_geo_nodes"
@@ -33,6 +33,9 @@ class NTPGeoNodesOperator(Operator):
         # File/string the add-on/script is generated into
         self._file: TextIO = None
 
+        # Path to the save directory
+        self._dir: str = None
+
         # Path to the directory of the zip file
         self._zip_dir: str = None
 
@@ -50,14 +53,14 @@ class NTPGeoNodesOperator(Operator):
     
     def _setup_addon_directories(self, context: Context, nt_var: str):
         #find base directory to save new addon
-        dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
-        if not dir or dir == "":
+        self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
+        if not self._dir or self._dir == "":
             self.report({'ERROR'}, 
                         ("NodeToPython: Save your blend file before using "
                          "NodeToPython!")) #TODO: Still valid??
-            return {'CANCELLED'}
+            return {'CANCELLED'} #TODO
 
-        self._zip_dir = os.path.join(dir, nt_var)
+        self._zip_dir = os.path.join(self._dir, nt_var)
         self._addon_dir = os.path.join(self._zip_dir, nt_var)
 
         if not os.path.exists(self._addon_dir):
@@ -163,6 +166,7 @@ class NTPGeoNodesOperator(Operator):
         
         nt_var = create_var(node_tree.name, self._used_vars)    
         outer, inner = make_indents(level) #TODO: put in NTP_NodeTree class?
+        # Eventually these should go away anyways, and level of indentation depends just on the mode
 
         #initialize node group
         self._file.write(f"{outer}#initialize {nt_var} node group\n")
@@ -211,7 +215,7 @@ class NTPGeoNodesOperator(Operator):
         if self.mode == 'SCRIPT':
             location = "clipboard"
         else:
-            location = dir
+            location = self._dir
         self.report({'INFO'}, 
                     f"NodeToPython: Saved geometry nodes group to {location}")
 
