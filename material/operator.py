@@ -8,83 +8,37 @@ import os
 from io import StringIO
 
 from ..utils import *
+from ..NTP_Operator import NTP_Operator
 from .node_settings import shader_node_settings
 from .node_tree import NTP_ShaderNodeTree
 
 MAT_VAR = "mat"
 
-class NTPMaterialOperator(Operator):
+class NTPMaterialOperator(NTP_Operator):
     bl_idname = "node.ntp_material"
     bl_label =  "Material to Python"
     bl_options = {'REGISTER', 'UNDO'}
-
-    mode : bpy.props.EnumProperty(
-        name = "Mode",
-        items = [
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON', "Addon", "Create a full addon")
-        ]
-    )
     
     #TODO: add option for general shader node groups
     material_name: bpy.props.StringProperty(name="Node Group")
 
     def __init__(self):
-        # File/string the add-on/script is generated into
-        self._file: TextIO = None
-
-        # Path to the current directory
-        self._dir: str = None
-
-        # Path to the directory of the zip file
-        self._zip_dir: str = None
-
-        # Path to the directory for the generated addon
-        self._addon_dir: str = None
-
-        # Class named for the generated operator
-        self._class_name: str = None
-
-        # Set to keep track of already created node trees
-        self._node_trees: set[ShaderNodeTree] = set()
-
-        # Dictionary to keep track of node->variable name pairs
-        self._node_vars: dict[Node, str] = {}
-
-        # Dictionary to keep track of variables->usage count pairs
-        self._used_vars: dict[str, int] = {}
-
-    def _setup_addon_directories(self, context: Context, mat_var: str):
-        self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
-        if not self._dir or self._dir == "":
-            self.report({'ERROR'},
-                        ("NodeToPython: Save your blender file before using "
-                        "NodeToPython!"))
-            return {'CANCELLED'} #TODO: check this doesn't make sad
-
-        self._zip_dir = os.path.join(self._dir, mat_var)
-        self._addon_dir = os.path.join(self._zip_dir, mat_var)
-        if not os.path.exists(self._addon_dir):
-            os.makedirs(self._addon_dir)
-        self._file = open(f"{self._addon_dir}/__init__.py", "w")
-
-        create_header(self._file, self.material_name)
-        self._class_name = clean_string(self.material_name, lower=False)
-        init_operator(self._file, self._class_name, mat_var, self.material_name)
-
-        self._file.write("\tdef execute(self, context):\n")
-
+        super().__init__()
+        self._settings = shader_node_settings
+    
     def _create_material(self, indent: str):
         self._file.write((f"{indent}{MAT_VAR} = bpy.data.materials.new("
                     f"name = {str_to_py_str(self.material_name)})\n"))
         self._file.write(f"{indent}{MAT_VAR}.use_nodes = True\n")
     
+
     def _is_outermost_node_group(self, level: int) -> bool:
         if self.mode == 'ADDON' and level == 2:
             return True
         elif self.mode == 'SCRIPT' and level == 0:
             return True
         return False
+
 
     def _initialize_shader_node_tree(self, outer, nt_var, level, inner, nt_name):
          #initialize node group
@@ -98,52 +52,35 @@ class NTPMaterialOperator(Operator):
             self._file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
         else:
             self._file.write((f"{inner}{nt_var}"
-                    f"= bpy.data.node_groups.new("
-                    f"type = \'ShaderNodeTree\', "
-                    f"name = {str_to_py_str(nt_name)})\n"))
+                              f"= bpy.data.node_groups.new("
+                              f"type = \'ShaderNodeTree\', "
+                              f"name = {str_to_py_str(nt_name)})\n"))
             self._file.write("\n")
 
-    def _process_shader_group_node(self, node, level, inner, node_var):
-        node_nt = node.node_tree
-        if node_nt is not None:
-            if node_nt not in self._node_trees:
-                self._process_shader_node_tree(node_nt, level + 1)
-                self._node_trees.add(node_nt)
-
-            self._file.write((f"{inner}{node_var}.node_tree = "
-                                f"bpy.data.node_groups"
-                                f"[\"{node.node_tree.name}\"]\n"))
-
-    def _set_socket_defaults(self, node, inner, node_var):
-        if self.mode == 'ADDON':
-            set_input_defaults(node, self._file, inner, node_var, self._addon_dir)
-        else:
-            set_input_defaults(node, self._file, inner, node_var)
-        set_output_defaults(node, self._file, inner, node_var)
-
-    def _process_shader_node(self, node: Node, ntp_node_tree: NTP_ShaderNodeTree, inner: str, level: int) -> None:
-        node_var = create_node(node, self._file, inner, ntp_node_tree.var_name, self._node_vars, 
-                                self._used_vars)
-        set_settings_defaults(node, shader_node_settings, self._file, 
+    def _process_node(self, node: Node, ntp_node_tree: NTP_ShaderNodeTree, inner: str, level: int) -> None:
+        #create node
+        node_var: str = create_node(node, self._file, inner, ntp_node_tree.var, 
+                                    self._node_vars, self._used_vars)
+        set_settings_defaults(node, self._settings, self._file, 
                                 self._addon_dir, inner, node_var)
-
         if node.bl_idname == 'ShaderNodeGroup':
-            self._process_shader_group_node(node, level, inner, node_var)
+            self._process_group_node_tree(node, node_var, level, inner)
 
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            group_io_settings(node, self._file, inner, "input", ntp_node_tree.var_name, ntp_node_tree.node_tree)
+            group_io_settings(node, self._file, inner, "input", 
+                              ntp_node_tree.var, ntp_node_tree.node_tree)
             ntp_node_tree.inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
-            group_io_settings(node, self._file, inner, "output", ntp_node_tree.var_name, ntp_node_tree.node_tree)
+            group_io_settings(node, self._file, inner, "output", 
+                              ntp_node_tree.var, ntp_node_tree.node_tree)
             ntp_node_tree.outputs_set = True
 
         hide_hidden_sockets(node, self._file, inner, node_var)
-        self._set_socket_defaults(node, inner, node_var)
-        
-    def _process_shader_node_tree(self, node_tree: bpy.types.NodeTree, 
-                            level: int
-                            ) -> None:
+        self._set_socket_defaults(node, node_var, inner)
+
+
+    def _process_node_tree(self, node_tree: ShaderNodeTree, level: int) -> None:
         """
         Generates a Python function to recreate a node tree
 
@@ -170,7 +107,7 @@ class NTPMaterialOperator(Operator):
         self._file.write(f"{inner}#initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
-            self._process_shader_node(node, ntp_nt, inner, level)
+            self._process_node(node, ntp_nt, inner, level)
 
         set_parents(node_tree, self._file, inner, self._node_vars)
         set_locations(node_tree, self._file, inner, self._node_vars)
@@ -178,15 +115,9 @@ class NTPMaterialOperator(Operator):
 
         init_links(node_tree, self._file, inner, nt_var, self._node_vars)
 
+        self._file.write(f"{inner}return {nt_var}\n")
+
         self._file.write(f"\n{outer}{nt_var}_node_group()\n\n")
-
-    def _report_finished(self):
-        if self.mode == 'SCRIPT':
-            location = "clipboard"
-        else:
-            location = self._dir
-
-        self.report({'INFO'}, f"NodeToPython: Saved material to {location}")
 
     def execute(self, context):
         #find node group to replicate
@@ -201,6 +132,14 @@ class NTPMaterialOperator(Operator):
         
         if self.mode == 'ADDON':
             self._setup_addon_directories(context, mat_var)
+
+            self._file = open(f"{self._addon_dir}/__init__.py", "w")
+
+            create_header(self._file, self.material_name)
+            self._class_name = clean_string(self.material_name, lower=False)
+            init_operator(self._file, self._class_name, mat_var, self.material_name)
+
+            self._file.write("\tdef execute(self, context):\n")
         else:
             self._file = StringIO("")
 
@@ -214,7 +153,7 @@ class NTPMaterialOperator(Operator):
             level = 2
         else:
             level = 0        
-        self._process_shader_node_tree(nt, level)
+        self._process_node_tree(nt, level)
 
         if self.mode == 'ADDON':
             self._file.write("\t\treturn {'FINISHED'}\n\n")
@@ -230,12 +169,6 @@ class NTPMaterialOperator(Operator):
         if self.mode == 'ADDON':
             zip_addon(self._zip_dir)
 
-        self._report_finished()
+        self._report_finished("material")
 
         return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-    def draw(self, context):
-        self.layout.prop(self, "mode")

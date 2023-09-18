@@ -1,10 +1,8 @@
 from bpy.types import GeometryNodeTree, GeometryNodeSimulationInput
 
-class NTP_GeoNodeTree:
-    def __init__(self, node_tree: GeometryNodeTree, var_name: str):
-        self.node_tree: GeometryNodeTree = node_tree 
-        self.var_name: str = var_name
+from ..NTP_NodeTree import NTP_NodeTree
 
-        self.inputs_set: bool = False
-        self.outputs_set: bool = False
+class NTP_GeoNodeTree(NTP_NodeTree):
+    def __init__(self, node_tree: GeometryNodeTree, var: str):
+        super().__init__(node_tree, var)
         self.sim_inputs: list[GeometryNodeSimulationInput] = []

@@ -5,16 +5,16 @@ from bpy.types import GeometryNodeSimulationInput
 from bpy.types import GeometryNodeSimulationOutput
 from bpy.types import GeometryNodeTree
 from bpy.types import Node
-from bpy.types import Operator
 
 import os
 from io import StringIO
 
+from ..NTP_Operator import NTP_Operator
 from ..utils import *
 from .node_tree import NTP_GeoNodeTree
 from .node_settings import geo_node_settings
 
-class NTPGeoNodesOperator(Operator):
+class NTPGeoNodesOperator(NTP_Operator):
     bl_idname = "node.ntp_geo_nodes"
     bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
@@ -28,55 +28,11 @@ class NTPGeoNodesOperator(Operator):
     )
 
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
-    
+
     def __init__(self):
-        # File/string the add-on/script is generated into
-        self._file: TextIO = None
+        super().__init__()
+        self._settings = geo_node_settings
 
-        # Path to the save directory
-        self._dir: str = None
-
-        # Path to the directory of the zip file
-        self._zip_dir: str = None
-
-        # Path to the directory for the generated addon
-        self._addon_dir: str = None
-
-        # Set to keep track of already created node trees
-        self._node_trees: set[GeometryNodeTree] = set()
-
-        # Dictionary to keep track of node->variable name pairs
-        self._node_vars: dict[Node, str] = {}
-
-        # Dictionary to keep track of variables->usage count pairs
-        self._used_vars: dict[str, int] = {}
-    
-    def _setup_addon_directories(self, context: Context, nt_var: str):
-        #find base directory to save new addon
-        self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
-        if not self._dir or self._dir == "":
-            self.report({'ERROR'}, 
-                        ("NodeToPython: Save your blend file before using "
-                         "NodeToPython!")) #TODO: Still valid??
-            return {'CANCELLED'} #TODO
-
-        self._zip_dir = os.path.join(self._dir, nt_var)
-        self._addon_dir = os.path.join(self._zip_dir, nt_var)
-
-        if not os.path.exists(self._addon_dir):
-            os.makedirs(self._addon_dir)
-
-    def _process_geo_node_group_node(self, node: GeometryNodeGroup, 
-                                     level: int, inner: str, node_var: str
-                                    ) -> None:
-        nt = node.node_tree
-        if nt is not None:
-            if nt not in self._node_trees:
-                self._process_geo_node_tree(nt, level + 1)
-            self._file.write((f"{inner}{node_var}.node_tree = "
-                                      f"bpy.data.node_groups"
-                                      f"[{str_to_py_str(nt.name)}]\n"))
-    
     def _process_sim_output_node(self, node: GeometryNodeSimulationOutput,
                                  inner: str, node_var: str) -> None:
         self._file.write(f"{inner}# Remove generated sim state items\n")
@@ -94,32 +50,24 @@ class NTPGeoNodesOperator(Operator):
             self._file.write((f"{inner}{si_var}.attribute_domain "
                               f"= {attr_domain}\n"))
 
-    def _set_socket_defaults(self, node: Node, inner: str,
-                             node_var: str) -> None:
-        if self.mode == 'ADDON':
-            set_input_defaults(node, self._file, inner, node_var, self._addon_dir)
-        else:
-            set_input_defaults(node, self._file, inner, node_var)
-        set_output_defaults(node, self._file, inner, node_var)
-
     def _process_node(self, node: Node, ntp_node_tree: NTP_GeoNodeTree,
                       inner: str, level: int) -> None:
         #create node
-        node_var: str = create_node(node, self._file, inner, ntp_node_tree.var_name, 
+        node_var: str = create_node(node, self._file, inner, ntp_node_tree.var, 
                                     self._node_vars, self._used_vars)
-        set_settings_defaults(node, geo_node_settings, self._file, 
+        set_settings_defaults(node, self._settings, self._file, 
                                 self._addon_dir, inner, node_var)
         if node.bl_idname == 'GeometryNodeGroup':
-            self._process_geo_node_group_node(node, level, inner, node_var)
+            self._process_group_node_tree(node, node_var, level, inner)
 
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            group_io_settings(node, self._file, inner, "input", ntp_node_tree.var_name, 
+            group_io_settings(node, self._file, inner, "input", ntp_node_tree.var, 
                               ntp_node_tree.node_tree) #TODO: convert to using NTP_NodeTrees
             ntp_node_tree.inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
             group_io_settings(node, self._file, inner, "output", 
-                              ntp_node_tree.var_name, ntp_node_tree.node_tree)
+                              ntp_node_tree.var, ntp_node_tree.node_tree)
             ntp_node_tree.outputs_set = True
 
         elif node.bl_idname == 'GeometryNodeSimulationInput':
@@ -131,7 +79,8 @@ class NTPGeoNodesOperator(Operator):
         hide_hidden_sockets(node, self._file, inner, node_var)
 
         if node.bl_idname != 'GeometryNodeSimulationInput':
-            self._set_socket_defaults(node, inner, node_var)
+            self._set_socket_defaults(node, node_var, inner)
+
 
     def _process_sim_zones(self, sim_inputs: list[GeometryNodeSimulationInput], 
                            inner: str) -> None:
@@ -150,10 +99,11 @@ class NTPGeoNodesOperator(Operator):
                               f"({sim_output_var})\n"))
 
             #must set defaults after paired with output
-            self._set_socket_defaults(sim_input, inner, sim_input_var)
-            self._set_socket_defaults(sim_output, inner, sim_output_var)
+            self._set_socket_defaults(sim_input, sim_input_var, inner)
+            self._set_socket_defaults(sim_output, sim_output_var, inner)
 
-    def _process_geo_node_tree(self, node_tree: GeometryNodeTree, 
+
+    def _process_node_tree(self, node_tree: GeometryNodeTree, 
                                level: int) -> None:
         """
         Generates a Python function to recreate a node tree
@@ -180,6 +130,7 @@ class NTPGeoNodesOperator(Operator):
         self._file.write(f"{inner}#initialize {nt_var} nodes\n")
 
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
+
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
 
@@ -199,6 +150,7 @@ class NTPGeoNodesOperator(Operator):
         self._file.write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
         return self._used_vars
 
+
     def _apply_modifier(self, nt: GeometryNodeTree, nt_var: str):
         #get object
         self._file.write(f"\t\tname = bpy.context.object.name\n")
@@ -210,14 +162,6 @@ class NTPGeoNodesOperator(Operator):
                     f"type = 'NODES')\n"))
         self._file.write(f"\t\tmod.node_group = {nt_var}\n")
 
-    def _report_finished(self):
-        #alert user that NTP is finished
-        if self.mode == 'SCRIPT':
-            location = "clipboard"
-        else:
-            location = self._dir
-        self.report({'INFO'}, 
-                    f"NodeToPython: Saved geometry nodes group to {location}")
 
     def execute(self, context):
         #find node group to replicate
@@ -232,8 +176,7 @@ class NTPGeoNodesOperator(Operator):
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
             
             create_header(self._file, nt.name)
-            class_name = clean_string(nt.name.replace(" ", "").replace('.', ""), 
-                                      lower = False) #TODO: should probably be standardized name to class name util method
+            class_name = clean_string(nt.name, lower = False)
             init_operator(self._file, class_name, nt_var, nt.name)
             self._file.write("\tdef execute(self, context):\n")
         else:
@@ -243,7 +186,7 @@ class NTPGeoNodesOperator(Operator):
             level = 2
         else:
             level = 0
-        self._process_geo_node_tree(nt, level)
+        self._process_node_tree(nt, level)
 
         if self.mode == 'ADDON':
             self._apply_modifier(nt, nt_var)
@@ -259,12 +202,6 @@ class NTPGeoNodesOperator(Operator):
         if self.mode == 'ADDON':
             zip_addon(self._zip_dir)
 
-        self._report_finished()
+        self._report_finished("geometry node group")
 
         return {'FINISHED'}
-    
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-    def draw(self, context):
-        self.layout.prop(self, "mode")
