@@ -18,8 +18,7 @@ class NTPGeoNodesMenu(Menu):
         geo_node_groups = [node_tree for node_tree in bpy.data.node_groups 
                            if node_tree.bl_idname == 'GeometryNodeTree']
 
-        for node_tree in bpy.data.node_groups:
-            if node_tree.bl_idname == 'GeometryNodeTree':
-                op = layout.operator(NTPGeoNodesOperator.bl_idname, 
-                                     text=node_tree.name)
-                op.geo_nodes_group_name = node_tree.name
+        for node_tree in geo_node_groups:
+            op = layout.operator(NTPGeoNodesOperator.bl_idname, 
+                                    text=node_tree.name)
+            op.geo_nodes_group_name = node_tree.name

@@ -186,7 +186,7 @@ def create_header(file: TextIO, name: str) -> None:
     file.write("\t\"author\" : \"Node To Python\",\n")
     file.write("\t\"version\" : (1, 0, 0),\n")
     file.write(f"\t\"blender\" : {bpy.app.version},\n")
-    file.write("\t\"location\" : \"Object\",\n")
+    file.write("\t\"location\" : \"Object\",\n") #TODO
     file.write("\t\"category\" : \"Node\"\n")
     file.write("}\n")
     file.write("\n")
@@ -232,6 +232,7 @@ def create_var(name: str, used_vars: dict[str, int]) -> str:
         used_vars[var] = 0
         return clean_name
 
+#TODO: reconsider node tree definitions within node tree definitions
 def make_indents(level: int) -> Tuple[str, str]:
     """
     Returns strings with the correct number of indentations 
@@ -314,53 +315,57 @@ def set_settings_defaults(node: bpy.types.Node,
     inner (str): indentation
     node_var (str): name of the variable we're using for the node in our add-on
     """
-    if node.bl_idname in settings:
-        for (attr_name, type) in settings[node.bl_idname]:
-            attr = getattr(node, attr_name, None)
-            if attr is None:
-                print(f"\"{node_var}.{attr_name}\" not found")
-                continue
-            setting_str = f"{inner}{node_var}.{attr_name}"
-            if type == ST.ENUM:
-                if attr != '':
-                    file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
-            elif type == ST.ENUM_SET:
-                file.write(f"{setting_str} = {attr}\n")
-            elif type == ST.STRING:
-                file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
-            elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
-                file.write(f"{setting_str} = {attr}\n")
-            elif type == ST.VEC1:
-                file.write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
-            elif type == ST.VEC2:
-                file.write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
-            elif type == ST.VEC3:
-                file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
-            elif type == ST.VEC4:
-                file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
-            elif type == ST.COLOR:
-                file.write(f"{setting_str} = {color_to_py_str(attr)}\n")
-            elif type == ST.MATERIAL:
-                name = str_to_py_str(attr.name)
-                file.write((f"{inner}if {name} in bpy.data.materials:\n"))
-                file.write((f"{inner}\t{node_var}.{attr_name} = "
-                            f"bpy.data.materials[{name}]\n"))
-            elif type == ST.OBJECT:
-                name = str_to_py_str(attr.name)
-                file.write((f"{inner}if {name} in bpy.data.objects:\n"))
-                file.write((f"{inner}\t{node_var}.{attr_name} = "
-                            f"bpy.data.objects[{name}]\n"))
-            elif type == ST.COLOR_RAMP:
-                color_ramp_settings(node, file, inner, node_var, attr_name)
-            elif type == ST.CURVE_MAPPING:
-                curve_mapping_settings(node, file, inner, node_var, attr_name)
-            elif type == ST.IMAGE:
-                if addon_dir is not None and attr is not None:
-                    if attr.source in {'FILE', 'GENERATED', 'TILED'}:
-                        save_image(attr, addon_dir)
-                        load_image(attr, file, inner, f"{node_var}.{attr_name}")
-            elif type == ST.IMAGE_USER:
-                image_user_settings(attr, file, inner, f"{node_var}.{attr_name}")
+    if node.bl_idname not in settings:
+        print((f"NodeToPython: couldn't find {node.bl_idname} in settings."
+               f"Your Blender version may not be supported"))
+        return
+
+    for (attr_name, type) in settings[node.bl_idname]:
+        attr = getattr(node, attr_name, None)
+        if attr is None:
+            print(f"\"{node_var}.{attr_name}\" not found")
+            continue
+        setting_str = f"{inner}{node_var}.{attr_name}"
+        if type == ST.ENUM:
+            if attr != '':
+                file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+        elif type == ST.ENUM_SET:
+            file.write(f"{setting_str} = {attr}\n")
+        elif type == ST.STRING:
+            file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
+        elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
+            file.write(f"{setting_str} = {attr}\n")
+        elif type == ST.VEC1:
+            file.write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
+        elif type == ST.VEC2:
+            file.write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
+        elif type == ST.VEC3:
+            file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
+        elif type == ST.VEC4:
+            file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
+        elif type == ST.COLOR:
+            file.write(f"{setting_str} = {color_to_py_str(attr)}\n")
+        elif type == ST.MATERIAL:
+            name = str_to_py_str(attr.name)
+            file.write((f"{inner}if {name} in bpy.data.materials:\n"))
+            file.write((f"{inner}\t{node_var}.{attr_name} = "
+                        f"bpy.data.materials[{name}]\n"))
+        elif type == ST.OBJECT:
+            name = str_to_py_str(attr.name)
+            file.write((f"{inner}if {name} in bpy.data.objects:\n"))
+            file.write((f"{inner}\t{node_var}.{attr_name} = "
+                        f"bpy.data.objects[{name}]\n"))
+        elif type == ST.COLOR_RAMP:
+            color_ramp_settings(node, file, inner, node_var, attr_name)
+        elif type == ST.CURVE_MAPPING:
+            curve_mapping_settings(node, file, inner, node_var, attr_name)
+        elif type == ST.IMAGE:
+            if addon_dir is not None and attr is not None:
+                if attr.source in {'FILE', 'GENERATED', 'TILED'}:
+                    save_image(attr, addon_dir)
+                    load_image(attr, file, inner, f"{node_var}.{attr_name}")
+        elif type == ST.IMAGE_USER:
+            image_user_settings(attr, file, inner, f"{node_var}.{attr_name}")
 
 def hide_hidden_sockets(node: bpy.types.Node, 
                  file: TextIO, 
@@ -408,6 +413,7 @@ def group_io_settings(node: bpy.types.Node,
     else:
         ios = node.inputs
         ntio = node_tree.outputs
+
     file.write(f"{inner}#{node_tree_var} {io}s\n")
     for i, inout in enumerate(ios):
         if inout.bl_idname == 'NodeSocketVirtual':
@@ -420,6 +426,7 @@ def group_io_settings(node: bpy.types.Node,
         socket_var = f"{node_tree_var}.{io}s[{i}]"
 
         if inout.type in default_sockets:
+            #TODO: separate default socket function
             #default value
             if inout.type == 'RGBA':
                 dv = vec4_to_py_str(socket.default_value)
@@ -514,17 +521,18 @@ def color_ramp_settings(node: bpy.types.Node,
             file.write((f"{inner}{element_var} = "
                         f"{ramp_str}.elements"
                         f".new({element.position})\n"))
+
         file.write((f"{inner}{element_var}.alpha = "
                     f"{element.alpha}\n"))
         color_str = vec4_to_py_str(element.color)
         file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
 
 def curve_mapping_settings(node: bpy.types.Node, 
-                        file: TextIO, 
-                        inner: str, 
-                        node_var: str,
-                        curve_mapping_name: str
-                       ) -> None:
+                           file: TextIO, 
+                           inner: str, 
+                           node_var: str,
+                           curve_mapping_name: str
+                          ) -> None:
     """
     Sets defaults for Float, Vector, and Color curves
 
@@ -538,7 +546,8 @@ def curve_mapping_settings(node: bpy.types.Node,
 
     mapping = getattr(node, curve_mapping_name)
     if not mapping:
-        raise ValueError(f"Curve mapping \"{curve_mapping_name}\" not found in node \"{node.bl_idname}\"")
+        raise ValueError((f"Curve mapping \"{curve_mapping_name}\" not found "
+                          f"in node \"{node.bl_idname}\""))
 
     #mapping settings
     file.write(f"{inner}#mapping settings\n")
@@ -574,6 +583,7 @@ def curve_mapping_settings(node: bpy.types.Node,
 
     #create curves
     for i, curve in enumerate(mapping.curves):
+        #TODO: curve function
         file.write(f"{inner}#curve {i}\n")
         curve_i = f"{node_var}_curve_{i}"
         file.write((f"{inner}{curve_i} = "
@@ -587,6 +597,7 @@ def curve_mapping_settings(node: bpy.types.Node,
             file.write(f"{inner}\t{curve_i}.points.remove({curve_i}.points[i])\n")
         
         for j, point in enumerate(curve.points):
+            #TODO: point function
             point_j = f"{inner}{curve_i}_point_{j}"
 
             loc = point.location
@@ -716,6 +727,7 @@ def set_input_defaults(node: bpy.types.Node,
 
     for i, input in enumerate(node.inputs):
         if input.bl_idname not in dont_set_defaults and not input.is_linked:
+            #TODO: this could be cleaner
             socket_var = f"{node_var}.inputs[{i}]"
 
             #colors
@@ -787,7 +799,7 @@ def in_file_inputs(input: bpy.types.NodeSocket,
         name = str_to_py_str(input.default_value.name)
         file.write(f"{inner}if {name} in bpy.data.{type}:\n")
         file.write((f"{inner}\t{socket_var}.default_value = "
-                                f"bpy.data.{type}[{name}]\n"))
+                    f"bpy.data.{type}[{name}]\n"))
 
 def set_output_defaults(node: bpy.types.Node, 
                         file: TextIO, 

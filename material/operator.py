@@ -1,6 +1,4 @@
 import bpy
-from bpy.types import Context
-from bpy.types import Operator
 from bpy.types import Node
 from bpy.types import ShaderNodeTree
 
@@ -85,7 +83,7 @@ class NTPMaterialOperator(NTP_Operator):
         Generates a Python function to recreate a node tree
 
         Parameters:
-        node_tree (bpy.types.NodeTree): node tree to be recreated
+        node_tree (NodeTree): node tree to be recreated
         level (int): number of tabs to use for each line, used with
             node groups within node groups and script/add-on differences
         """

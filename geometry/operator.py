@@ -1,6 +1,4 @@
 import bpy
-from bpy.types import Context
-from bpy.types import GeometryNodeGroup
 from bpy.types import GeometryNodeSimulationInput
 from bpy.types import GeometryNodeSimulationOutput
 from bpy.types import GeometryNodeTree
