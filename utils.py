@@ -191,6 +191,7 @@ def create_header(file: TextIO, name: str) -> None:
     file.write("}\n")
     file.write("\n")
     file.write("import bpy\n")
+    file.write("import mathutils\n")
     file.write("import os\n")
     file.write("\n")
 

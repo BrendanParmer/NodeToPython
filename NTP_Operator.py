@@ -30,7 +30,7 @@ class NTP_Operator(Operator):
         super().__init__()
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
-        self._file = None
+        self._file : TextIO = None
 
         # Path to the current directory
         self._dir: str = None
@@ -73,6 +73,13 @@ class NTP_Operator(Operator):
 
         if not os.path.exists(self._addon_dir):
             os.makedirs(self._addon_dir)
+
+    def _is_outermost_node_group(self, level: int) -> bool:
+        if self.mode == 'ADDON' and level == 2:
+            return True
+        elif self.mode == 'SCRIPT' and level == 0:
+            return True
+        return False
 
     def _process_group_node_tree(self, node: Node, node_var: str, level: int, inner: str) -> None:
         """

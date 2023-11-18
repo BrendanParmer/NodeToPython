@@ -28,15 +28,6 @@ class NTPMaterialOperator(NTP_Operator):
         self._file.write((f"{indent}{MAT_VAR} = bpy.data.materials.new("
                     f"name = {str_to_py_str(self.material_name)})\n"))
         self._file.write(f"{indent}{MAT_VAR}.use_nodes = True\n")
-    
-
-    def _is_outermost_node_group(self, level: int) -> bool:
-        if self.mode == 'ADDON' and level == 2:
-            return True
-        elif self.mode == 'SCRIPT' and level == 0:
-            return True
-        return False
-
 
     def _initialize_shader_node_tree(self, outer, nt_var, level, inner, nt_name):
          #initialize node group
@@ -61,6 +52,7 @@ class NTPMaterialOperator(NTP_Operator):
                                     self._node_vars, self._used_vars)
         set_settings_defaults(node, self._settings, self._file, 
                                 self._addon_dir, inner, node_var)
+                                
         if node.bl_idname == 'ShaderNodeGroup':
             self._process_group_node_tree(node, node_var, level, inner)
 
