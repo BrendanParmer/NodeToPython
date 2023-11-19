@@ -48,12 +48,12 @@ classes = [NodeToPythonMenu,
             compositor.ui.NTPCompositorPanel,
             #geometry
             geometry.operator.NTPGeoNodesOperator,
-            geometry.menu.NTPGeoNodesMenu,
-            geometry.panel.NTPGeoNodesPanel,
+            geometry.ui.NTPGeoNodesMenu,
+            geometry.ui.NTPGeoNodesPanel,
             #material
             material.operator.NTPMaterialOperator,
-            material.menu.NTPMaterialMenu,
-            material.panel.NTPMaterialPanel,
+            material.ui.NTPMaterialMenu,
+            material.ui.NTPMaterialPanel,
             ]
 
 def register():
