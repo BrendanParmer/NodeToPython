@@ -78,8 +78,7 @@ class NTPCompositorOperator(NTP_Operator):
                                         self._used_vars)
                 self._node_trees.add(node_nt)
         
-        node_var: str = create_node(node, self._file, inner, ntp_nt.var, self._node_vars, 
-                                self._used_vars)
+        node_var: str = self._create_node(node, inner, ntp_nt.var)
         
         if node.bl_idname == 'CompositorNodeColorBalance':
             if node.correction_method == 'LIFT_GAMMA_GAIN':
@@ -94,11 +93,10 @@ class NTPCompositorOperator(NTP_Operator):
                         ("power",             ST.COLOR),
                         ("slope",             ST.COLOR)]
 
-            compositor_node_settings['CompositorNodeColorBalance'] = lst
+            self._settings['CompositorNodeColorBalance'] = lst
 
-        set_settings_defaults(node, compositor_node_settings, self._file, 
-                                self._addon_dir, inner, node_var)
-        hide_hidden_sockets(node, self._file, inner, node_var)
+        self._set_settings_defaults(node, inner, node_var)
+        self._hide_hidden_sockets(node, inner, node_var)
 
         if node.bl_idname == 'CompositorNodeGroup':
             if node.node_tree is not None:
@@ -106,11 +104,11 @@ class NTPCompositorOperator(NTP_Operator):
                             f"bpy.data.node_groups"
                             f"[\"{node.node_tree.name}\"]\n"))
         elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-            group_io_settings(node, self._file, inner, "input", ntp_nt.var, ntp_nt.node_tree)
+            self._group_io_settings(node, inner, "input", ntp_nt.var, ntp_nt.node_tree)
             inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-            group_io_settings(node, self._file, inner, "output", ntp_nt.var, ntp_nt.node_tree)
+            self._group_io_settings(node, inner, "output", ntp_nt.var, ntp_nt.node_tree)
             outputs_set = True
 
         self._set_socket_defaults(node, node_var, inner)
@@ -125,10 +123,10 @@ class NTPCompositorOperator(NTP_Operator):
 
         """  
         if self._is_outermost_node_group(level):
-            nt_var = create_var(self.compositor_name, self._used_vars)
+            nt_var = self._create_var(self.compositor_name)
             nt_name = self.compositor_name
         else:
-            nt_var = create_var(node_tree.name, self._used_vars)
+            nt_var = self._create_var(node_tree.name)
             nt_name = node_tree.name
 
         outer, inner = make_indents(level)
@@ -143,11 +141,11 @@ class NTPCompositorOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
 
-        set_parents(node_tree, self._file, inner, self._node_vars)
-        set_locations(node_tree, self._file, inner, self._node_vars)
-        set_dimensions(node_tree, self._file, inner, self._node_vars)
+        self._set_parents(node_tree, inner)
+        self._set_locations(node_tree, inner)
+        self._set_dimensions(node_tree, inner)
         
-        init_links(node_tree, self._file, inner, nt_var, self._node_vars)
+        self._init_links(node_tree, inner, nt_var)
         
         self._file.write(f"\n{outer}{nt_var}_node_group()\n\n")
     
@@ -173,9 +171,9 @@ class NTPCompositorOperator(NTP_Operator):
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
 
-            create_header(self._file, self.compositor_name)
-            class_name = clean_string(self.compositor_name, lower=False)
-            init_operator(self._file, class_name, comp_var, self.compositor_name)
+            self._create_header(self.compositor_name)
+            self._class_name = clean_string(self.compositor_name, lower=False)
+            self._init_operator(comp_var, self.compositor_name)
 
             self._file.write("\tdef execute(self, context):\n")
         else:
@@ -196,17 +194,17 @@ class NTPCompositorOperator(NTP_Operator):
         if self.mode == 'ADDON':
             self._file.write("\t\treturn {'FINISHED'}\n\n")
 
-            create_menu_func(self._file, class_name)
-            create_register_func(self._file, class_name)
-            create_unregister_func(self._file, class_name)
-            create_main_func(self._file)
+            self._create_menu_func()
+            self._create_register_func()
+            self._create_unregister_func()
+            self._create_main_func()
         else:
             context.window_manager.clipboard = self._file.getvalue()
 
         self._file.close()
         
         if self.mode == 'ADDON':
-            zip_addon(self._zip_dir)
+            self._zip_addon()
         
         self._report_finished("compositor nodes")
 

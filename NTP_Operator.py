@@ -74,6 +74,45 @@ class NTP_Operator(Operator):
         if not os.path.exists(self._addon_dir):
             os.makedirs(self._addon_dir)
 
+    def _create_header(self, name: str) -> None:
+        """
+        Sets up the bl_info and imports the Blender API
+
+        Parameters:
+        file (TextIO): the file for the generated add-on
+        name (str): name of the add-on
+        """
+
+        self._file.write("bl_info = {\n")
+        self._file.write(f"\t\"name\" : \"{name}\",\n")
+        self._file.write("\t\"author\" : \"Node To Python\",\n")
+        self._file.write("\t\"version\" : (1, 0, 0),\n")
+        self._file.write(f"\t\"blender\" : {bpy.app.version},\n")
+        self._file.write("\t\"location\" : \"Object\",\n") #TODO
+        self._file.write("\t\"category\" : \"Node\"\n")
+        self._file.write("}\n")
+        self._file.write("\n")
+        self._file.write("import bpy\n")
+        self._file.write("import mathutils\n")
+        self._file.write("import os\n")
+        self._file.write("\n")
+
+    def _init_operator(self, idname: str, label: str) -> None:
+        """
+        Initializes the add-on's operator 
+
+        Parameters:
+        file (TextIO): the file for the generated add-on
+        name (str): name for the class
+        idname (str): name for the operator
+        label (str): appearence inside Blender
+        """
+        self._file.write(f"class {self._class_name}(bpy.types.Operator):\n")
+        self._file.write(f"\tbl_idname = \"object.{idname}\"\n")
+        self._file.write(f"\tbl_label = \"{label}\"\n")
+        self._file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
+        self._file.write("\n")
+
     def _is_outermost_node_group(self, level: int) -> bool:
         if self.mode == 'ADDON' and level == 2:
             return True
@@ -81,7 +120,8 @@ class NTP_Operator(Operator):
             return True
         return False
 
-    def _process_group_node_tree(self, node: Node, node_var: str, level: int, inner: str) -> None:
+    def _process_group_node_tree(self, node: Node, node_var: str, level: int, 
+                                 inner: str) -> None:
         """
         Processes node tree of group node if one is present
         """
@@ -94,12 +134,704 @@ class NTP_Operator(Operator):
                               f"bpy.data.node_groups"
                               f"[\"{node.node_tree.name}\"]\n"))
 
+    def _create_var(self, name: str) -> str:
+        """
+        Creates a unique variable name for a node tree
+
+        Parameters:
+        name (str): basic string we'd like to create the variable name out of
+        used_vars (dict[str, int]): dictionary containing variable names and usage counts
+
+        Returns:
+        clean_name (str): variable name for the node tree
+        """
+        if name == "":
+            name = "unnamed"
+        clean_name = clean_string(name)
+        var = clean_name
+        if var in self._used_vars:
+            self._used_vars[var] += 1
+            return f"{clean_name}_{self._used_vars[var]}"
+        else:
+            self._used_vars[var] = 0
+            return clean_name
+
+    def _create_node(self, node: bpy.types.Node, inner: str, node_tree_var: str
+                    ) -> str:
+        """
+        Initializes a new node with location, dimension, and label info
+
+        Parameters:
+        node (bpy.types.Node): node to be copied
+        inner (str): indentation level for this logic
+        node_tree_var (str): variable name for the node tree
+        Returns:
+        node_var (str): variable name for the node
+        """
+
+        self._file.write(f"{inner}#node {node.name}\n")
+
+        node_var = self._create_var(node.name)
+        self._node_vars[node] = node_var
+
+        self._file.write((f"{inner}{node_var} "
+                    f"= {node_tree_var}.nodes.new(\"{node.bl_idname}\")\n"))
+        #label
+        if node.label:
+            self._file.write(f"{inner}{node_var}.label = \"{node.label}\"\n")
+
+        #color
+        if node.use_custom_color:
+            self._file.write(f"{inner}{node_var}.use_custom_color = True\n")
+            self._file.write(f"{inner}{node_var}.color = {vec3_to_py_str(node.color)}\n")
+
+        #mute
+        if node.mute:
+            self._file.write(f"{inner}{node_var}.mute = True\n")
+            
+        return node_var
+
+    def _set_settings_defaults(self, node: bpy.types.Node, inner: str, 
+                               node_var: str) -> None:
+        """
+        Sets the defaults for any settings a node may have
+
+        Parameters:
+        node (bpy.types.Node): the node object we're copying settings from
+        inner (str): indentation
+        node_var (str): name of the variable we're using for the node in our add-on
+        """
+        if node.bl_idname not in self._settings:
+            print((f"NodeToPython: couldn't find {node.bl_idname} in settings."
+                f"Your Blender version may not be supported"))
+            return
+
+        for (attr_name, type) in self._settings[node.bl_idname]:
+            attr = getattr(node, attr_name, None)
+            if attr is None:
+                print(f"\"{node_var}.{attr_name}\" not found")
+                continue
+            setting_str = f"{inner}{node_var}.{attr_name}"
+            if type == ST.ENUM:
+                if attr != '':
+                    self._file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+            elif type == ST.ENUM_SET:
+                self._file.write(f"{setting_str} = {attr}\n")
+            elif type == ST.STRING:
+                self._file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
+            elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
+                self._file.write(f"{setting_str} = {attr}\n")
+            elif type == ST.VEC1:
+                self._file.write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
+            elif type == ST.VEC2:
+                self._file.write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
+            elif type == ST.VEC3:
+                self._file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
+            elif type == ST.VEC4:
+                self._file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
+            elif type == ST.COLOR:
+                self._file.write(f"{setting_str} = {color_to_py_str(attr)}\n")
+            elif type == ST.MATERIAL:
+                name = str_to_py_str(attr.name)
+                self._file.write((f"{inner}if {name} in bpy.data.materials:\n"))
+                self._file.write((f"{inner}\t{node_var}.{attr_name} = "
+                            f"bpy.data.materials[{name}]\n"))
+            elif type == ST.OBJECT:
+                name = str_to_py_str(attr.name)
+                self._file.write((f"{inner}if {name} in bpy.data.objects:\n"))
+                self._file.write((f"{inner}\t{node_var}.{attr_name} = "
+                            f"bpy.data.objects[{name}]\n"))
+            elif type == ST.COLOR_RAMP:
+                self._color_ramp_settings(node, inner, node_var, attr_name)
+            elif type == ST.CURVE_MAPPING:
+                self._curve_mapping_settings(node, inner, node_var, attr_name)
+            elif type == ST.IMAGE:
+                if self._addon_dir is not None and attr is not None:
+                    if attr.source in {'FILE', 'GENERATED', 'TILED'}:
+                        self._save_image(attr)
+                        self._load_image(attr, inner, f"{node_var}.{attr_name}")
+            elif type == ST.IMAGE_USER:
+                self._image_user_settings(attr, inner, f"{node_var}.{attr_name}")
+
+    def _group_io_settings(self, node: bpy.types.Node, inner: str, 
+                           io: str, #TODO: convert to enum
+                           node_tree_var: str, 
+                           node_tree: bpy.types.NodeTree) -> None:
+        """
+        Set the settings for group input and output sockets
+
+        Parameters:
+        node (bpy.types.Node) : group input/output node
+        inner (str): indentation string
+        io (str): whether we're generating the input or output settings
+        node_tree_var (str): variable name of the generated node tree
+        node_tree (bpy.types.NodeTree): node tree that we're generating input
+            and output settings for
+        """
+        if io == "input":
+            ios = node.outputs #TODO: this doesn't seem right
+            """
+            Are sockets and node tree default ios really coupled like this??
+            """
+            ntio = node_tree.inputs
+        else:
+            ios = node.inputs
+            ntio = node_tree.outputs
+
+        self._file.write(f"{inner}#{node_tree_var} {io}s\n")
+        for i, inout in enumerate(ios):
+            if inout.bl_idname == 'NodeSocketVirtual':
+                continue
+            self._file.write(f"{inner}#{io} {inout.name}\n")
+            idname = enum_to_py_str(inout.bl_idname)
+            name = str_to_py_str(inout.name)
+            self._file.write(f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
+            socket = ntio[i]
+            socket_var = f"{node_tree_var}.{io}s[{i}]"
+
+            if inout.type in default_sockets:
+                #TODO: separate default socket function
+                #default value
+                if inout.type == 'RGBA':
+                    dv = vec4_to_py_str(socket.default_value)
+                elif inout.type == 'VECTOR':
+                    dv = vec3_to_py_str(socket.default_value)
+                else:
+                    dv = socket.default_value
+                self._file.write(f"{inner}{socket_var}.default_value = {dv}\n")
+
+                #min value
+                if hasattr(socket, "min_value"):
+                    self._file.write(f"{inner}{socket_var}.min_value = {socket.min_value}\n")
+                #max value
+                if hasattr(socket, "min_value"):
+                    self._file.write((f"{inner}{socket_var}.max_value = {socket.max_value}\n"))
+            
+            #default attribute name
+            if hasattr(socket, "default_attribute_name"):
+                if socket.default_attribute_name != "":
+                    dan = str_to_py_str(socket.default_attribute_name)
+                    self._file.write((f"{inner}{socket_var}"
+                                f".default_attribute_name = {dan}\n"))
+
+            #attribute domain
+            if hasattr(socket, "attribute_domain"):
+                ad = enum_to_py_str(socket.attribute_domain)
+                self._file.write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+
+            #tooltip
+            if socket.description != "":
+                description = str_to_py_str(socket.description)
+                self._file.write((f"{inner}{socket_var}.description = {description}\n"))
+
+            #hide_value
+            if socket.hide_value is True:
+                self._file.write(f"{inner}{socket_var}.hide_value = True\n")
+
+            #hide in modifier
+            if hasattr(socket, "hide_in_modifier"):
+                if socket.hide_in_modifier is True:
+                    self._file.write(f"{inner}{socket_var}.hide_in_modifier = True\n")
+
+            self._file.write("\n")
+        self._file.write("\n")
+
+    def _set_input_defaults(self, node: bpy.types.Node, inner: str, 
+                            node_var: str) -> None:
+        """
+        Sets defaults for input sockets
+
+        Parameters:
+        node (bpy.types.Node): node we're setting inputs for
+        inner (str): indentation
+        node_var (str): variable name we're using for the copied node
+        addon_dir (str): directory of the add-on, for if we need to save other
+            objects for the add-on
+        """
+        if node.bl_idname == 'NodeReroute':
+            return
+
+        for i, input in enumerate(node.inputs):
+            if input.bl_idname not in dont_set_defaults and not input.is_linked:
+                #TODO: this could be cleaner
+                socket_var = f"{node_var}.inputs[{i}]"
+
+                #colors
+                if input.bl_idname == 'NodeSocketColor':
+                    default_val = vec4_to_py_str(input.default_value)
+
+                #vector types
+                elif "Vector" in input.bl_idname:
+                    default_val = vec3_to_py_str(input.default_value)
+
+                #strings
+                elif input.bl_idname == 'NodeSocketString':
+                    default_val = str_to_py_str(input.default_value)
+
+                #images
+                elif input.bl_idname == 'NodeSocketImage':
+                    img = input.default_value
+                    if img is not None and self._addon_dir != None: #write in a better way
+                        self._save_image(img)
+                        self._load_image(img, inner, f"{socket_var}.default_value")
+                    default_val = None
+
+                #materials 
+                elif input.bl_idname == 'NodeSocketMaterial':
+                    self._in_file_inputs(input, inner, socket_var, "materials")
+                    default_val = None
+
+                #collections
+                elif input.bl_idname == 'NodeSocketCollection':
+                    self._in_file_inputs(input, inner, socket_var, "collections")
+                    default_val = None
+
+                #objects
+                elif input.bl_idname == 'NodeSocketObject':
+                    self._in_file_inputs(input, inner, socket_var, "objects")
+                    default_val = None
+                
+                #textures
+                elif input.bl_idname == 'NodeSocketTexture':
+                    self._in_file_inputs(input, inner, socket_var, "textures")
+                    default_val = None
+
+                else:
+                    default_val = input.default_value
+                if default_val is not None:
+                    self._file.write(f"{inner}#{input.identifier}\n")
+                    self._file.write((f"{inner}{socket_var}.default_value"
+                                f" = {default_val}\n"))
+        self._file.write("\n")
+
+    def _set_output_defaults(self, node: bpy.types.Node,
+                             inner: str, node_var: str) -> None:
+        """
+        Some output sockets need default values set. It's rather annoying
+
+        Parameters:
+        node (bpy.types.Node): node for the output we're setting
+        inner (str): indentation string
+        node_var (str): variable name for the node we're setting output defaults for
+        """
+        #TODO: probably should define elsewhere
+        output_default_nodes = {'ShaderNodeValue', 
+                                'ShaderNodeRGB', 
+                                'ShaderNodeNormal',
+                                'CompositorNodeValue', 
+                                'CompositorNodeRGB',
+                                'CompositorNodeNormal'}
+
+        if node.bl_idname not in output_default_nodes:
+            return
+
+        dv = node.outputs[0].default_value
+        if node.bl_idname in {'ShaderNodeRGB', 'CompositorNodeRGB'}:
+            dv = vec4_to_py_str(list(dv))
+        if node.bl_idname in {'ShaderNodeNormal', 'CompositorNodeNormal'}:
+            dv = vec3_to_py_str(dv)
+        self._file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
+
+    def _in_file_inputs(self, input: bpy.types.NodeSocket, 
+                   inner: str, 
+                   socket_var: str, 
+                   type: str
+                  ) -> None:
+        """
+        Sets inputs for a node input if one already exists in the blend file
+
+        Parameters:
+        input (bpy.types.NodeSocket): input socket we're setting the value for
+        inner (str): indentation string
+        socket_var (str): variable name we're using for the socket
+        type (str): from what section of bpy.data to pull the default value from
+        """
+
+        if input.default_value is None:
+            return
+        name = str_to_py_str(input.default_value.name)
+        self._file.write(f"{inner}if {name} in bpy.data.{type}:\n")
+        self._file.write((f"{inner}\t{socket_var}.default_value = "
+                        f"bpy.data.{type}[{name}]\n"))
+
+    def _color_ramp_settings(self, node: bpy.types.Node, 
+                             inner: str, 
+                             node_var: str,
+                             color_ramp_name: str) -> None:
+        """
+        Replicate a color ramp node
+
+        Parameters
+        node (bpy.types.Node): node object we're copying settings from
+        inner (str): indentation
+        node_var (str): name of the variable we're using for the color ramp
+        color_ramp_name (str): name of the color ramp to be copied
+        """
+
+        color_ramp: bpy.types.ColorRamp = getattr(node, color_ramp_name)
+        if not color_ramp:
+            raise ValueError(f"No color ramp named \"{color_ramp_name}\" found")
+
+        #settings
+        ramp_str = f"{inner}{node_var}.{color_ramp_name}"
+
+        color_mode = enum_to_py_str(color_ramp.color_mode)
+        self._file.write(f"{ramp_str}.color_mode = {color_mode}\n")
+
+        hue_interpolation = enum_to_py_str(color_ramp.hue_interpolation)
+        self._file.write((f"{ramp_str}.hue_interpolation = "
+                    f"{hue_interpolation}\n"))
+        interpolation = enum_to_py_str(color_ramp.interpolation)
+        self._file.write((f"{ramp_str}.interpolation "
+                    f"= {interpolation}\n"))
+        self._file.write("\n")
+
+        #key points
+        self._file.write(f"{inner}#initialize color ramp elements\n")
+        self._file.write((f"{ramp_str}.elements.remove"
+                    f"({ramp_str}.elements[0])\n"))
+        for i, element in enumerate(color_ramp.elements):
+            element_var = f"{node_var}_cre_{i}"
+            if i == 0:
+                self._file.write(f"{inner}{element_var} = "
+                        f"{ramp_str}.elements[{i}]\n")
+                self._file.write(f"{inner}{element_var}.position = {element.position}\n")
+            else:
+                self._file.write((f"{inner}{element_var} = "
+                            f"{ramp_str}.elements"
+                            f".new({element.position})\n"))
+
+            self._file.write((f"{inner}{element_var}.alpha = "
+                        f"{element.alpha}\n"))
+            color_str = vec4_to_py_str(element.color)
+            self._file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
+
+    def _curve_mapping_settings(self, node: bpy.types.Node, inner: str, 
+                               node_var: str, curve_mapping_name: str
+                              ) -> None:
+        """
+        Sets defaults for Float, Vector, and Color curves
+
+        Parameters:
+        node (bpy.types.Node): curve node we're copying settings from
+        file (TextIO): file we're generating the add-on into
+        inner (str): indentation
+        node_var (str): variable name for the add-on's curve node
+        curve_mapping_name (str): name of the curve mapping to be set
+        """
+
+        mapping = getattr(node, curve_mapping_name)
+        if not mapping:
+            raise ValueError((f"Curve mapping \"{curve_mapping_name}\" not found "
+                            f"in node \"{node.bl_idname}\""))
+
+        #mapping settings
+        self._file.write(f"{inner}#mapping settings\n")
+        mapping_var = f"{inner}{node_var}.{curve_mapping_name}"
+
+        #extend
+        extend = enum_to_py_str(mapping.extend)
+        self._file.write(f"{mapping_var}.extend = {extend}\n")
+        #tone
+        tone = enum_to_py_str(mapping.tone)
+        self._file.write(f"{mapping_var}.tone = {tone}\n")
+
+        #black level
+        b_lvl_str = vec3_to_py_str(mapping.black_level)
+        self._file.write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
+        #white level
+        w_lvl_str = vec3_to_py_str(mapping.white_level)
+        self._file.write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
+
+        #minima and maxima
+        min_x = mapping.clip_min_x
+        self._file.write(f"{mapping_var}.clip_min_x = {min_x}\n")
+        min_y = mapping.clip_min_y
+        self._file.write(f"{mapping_var}.clip_min_y = {min_y}\n")
+        max_x = mapping.clip_max_x
+        self._file.write(f"{mapping_var}.clip_max_x = {max_x}\n")
+        max_y = mapping.clip_max_y
+        self._file.write(f"{mapping_var}.clip_max_y = {max_y}\n")
+
+        #use_clip
+        use_clip = mapping.use_clip
+        self._file.write(f"{mapping_var}.use_clip = {use_clip}\n")
+
+        #create curves
+        for i, curve in enumerate(mapping.curves):
+            #TODO: curve function
+            self._file.write(f"{inner}#curve {i}\n")
+            curve_i = f"{node_var}_curve_{i}"
+            self._file.write((f"{inner}{curve_i} = "
+                        f"{node_var}.{curve_mapping_name}.curves[{i}]\n"))
+
+            # Remove default points when CurveMap is initialized with more than
+            # two points (just CompositorNodeHueCorrect)
+            if (node.bl_idname == 'CompositorNodeHueCorrect'):
+                self._file.write((f"{inner}for i in "
+                        f"range(len({curve_i}.points.values()) - 1, 1, -1):\n"))
+                self._file.write(f"{inner}\t{curve_i}.points.remove({curve_i}.points[i])\n")
+            
+            for j, point in enumerate(curve.points):
+                #TODO: point function
+                point_j = f"{inner}{curve_i}_point_{j}"
+
+                loc = point.location
+                loc_str = f"{loc[0]}, {loc[1]}"
+                if j < 2:
+                    self._file.write(f"{point_j} = {curve_i}.points[{j}]\n")
+                    self._file.write(f"{point_j}.location = ({loc_str})\n")
+                else:
+                    self._file.write((f"{point_j} = {curve_i}.points.new({loc_str})\n"))
+
+                handle = enum_to_py_str(point.handle_type)
+                self._file.write(f"{point_j}.handle_type = {handle}\n")
+        
+        #update curve
+        self._file.write(f"{inner}#update curve after changes\n")
+        self._file.write(f"{mapping_var}.update()\n")
+
+    def _save_image(self, img: bpy.types.Image) -> None:
+        """
+        Saves an image to an image directory of the add-on
+
+        Parameters:
+        img (bpy.types.Image): image to be saved
+        """
+
+        if img is None:
+            return
+
+        #create image dir if one doesn't exist
+        img_dir = os.path.join(self._addon_dir, IMAGE_DIR_NAME)
+        if not os.path.exists(img_dir):
+            os.mkdir(img_dir)
+
+        #save the image
+        img_str = img_to_py_str(img)
+        img_path = f"{img_dir}/{img_str}"
+        if not os.path.exists(img_path):
+            img.save_render(img_path)
+
+    def _load_image(self, img: bpy.types.Image,
+                    inner: str, 
+                    img_var: str
+                    ) -> None:
+        """
+        Loads an image from the add-on into a blend file and assigns it
+
+        Parameters:
+        img (bpy.types.Image): Blender image from the original node group
+        inner (str): indentation string
+        img_var (str): variable name to be used for the image
+        """
+
+        if img is None:
+            return
+            
+        img_str = img_to_py_str(img)
+
+        #TODO: convert to special variables
+        self._file.write(f"{inner}#load image {img_str}\n")
+        self._file.write((f"{inner}base_dir = "
+                    f"os.path.dirname(os.path.abspath(__file__))\n"))
+        self._file.write((f"{inner}image_path = "
+                    f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
+                    f"\"{img_str}\")\n"))
+        self._file.write((f"{inner}{img_var} = "
+                    f"bpy.data.images.load(image_path, check_existing = True)\n"))
+
+        #copy image settings
+        self._file.write(f"{inner}#set image settings\n")
+
+        #source
+        source = enum_to_py_str(img.source)
+        self._file.write(f"{inner}{img_var}.source = {source}\n")
+
+        #color space settings
+        color_space = enum_to_py_str(img.colorspace_settings.name)
+        self._file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
+        
+        #alpha mode
+        alpha_mode = enum_to_py_str(img.alpha_mode)
+        self._file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
+
+    def _image_user_settings(self, img_user: bpy.types.ImageUser,
+                            inner: str, 
+                            img_user_var: str) -> None:
+        """
+        Replicate the image user of an image node
+
+        Parameters
+        img_usr (bpy.types.ImageUser): image user to be copied
+        inner (str): indentation
+        img_usr_var (str): variable name for the generated image user
+        """
+
+        img_usr_attrs = ["frame_current", "frame_duration", "frame_offset",
+                        "frame_start", "tile", "use_auto_refresh", "use_cyclic"]
+        
+        for img_usr_attr in img_usr_attrs:
+            self._file.write((f"{inner}{img_user_var}.{img_usr_attr} = "
+                        f"{getattr(img_user, img_usr_attr)}\n"))
+
+    def _set_parents(self, node_tree: bpy.types.NodeTree,
+                    inner: str) -> None:
+        """
+        Sets parents for all nodes, mostly used to put nodes in frames
+
+        Parameters:
+        node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+        inner (str): indentation string
+        """
+        parent_comment = False
+        for node in node_tree.nodes:
+            if node is not None and node.parent is not None:
+                if not parent_comment:
+                    self._file.write(f"{inner}#Set parents\n")
+                    parent_comment = True
+                node_var = self._node_vars[node]
+                parent_var = self._node_vars[node.parent]
+                self._file.write(f"{inner}{node_var}.parent = {parent_var}\n")
+        self._file.write("\n")
+
+    def _set_locations(self, node_tree: bpy.types.NodeTree, inner: str) -> None:
+        """
+        Set locations for all nodes
+
+        Parameters:
+        node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+        inner (str): indentation string
+        """
+
+        self._file.write(f"{inner}#Set locations\n")
+        for node in node_tree.nodes:
+            node_var = self._node_vars[node]
+            self._file.write((f"{inner}{node_var}.location "
+                        f"= ({node.location.x}, {node.location.y})\n"))
+        self._file.write("\n")
+
+    def _set_dimensions(self, node_tree: bpy.types.NodeTree, inner: str, 
+                       ) -> None:
+        """
+        Set dimensions for all nodes
+
+        Parameters:
+        node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
+        inner (str): indentation string
+        """
+        self._file.write(f"{inner}#Set dimensions\n")
+        for node in node_tree.nodes:
+            node_var = self._node_vars[node]
+            self._file.write((f"{inner}{node_var}.width, {node_var}.height "
+                            f"= {node.width}, {node.height}\n"))
+        self._file.write("\n")
+
+    def _init_links(self, node_tree: bpy.types.NodeTree, 
+                    inner: str, 
+                    node_tree_var: str) -> None:
+        """
+        Create all the links between nodes
+
+        Parameters:
+        node_tree (bpy.types.NodeTree): node tree we're copying
+        inner (str): indentation
+        node_tree_var (str): variable name we're using for the copied node tree
+        """
+
+        if node_tree.links:
+            self._file.write(f"{inner}#initialize {node_tree_var} links\n")     
+        for link in node_tree.links:
+            in_node_var = self._node_vars[link.from_node]
+            input_socket = link.from_socket
+            
+            """
+            Blender's socket dictionary doesn't guarantee 
+            unique keys, which has caused much wailing and
+            gnashing of teeth. This is a quick fix that
+            doesn't run quick
+            """
+            #TODO: try using index() method
+            for i, item in enumerate(link.from_node.outputs.items()):
+                if item[1] == input_socket:
+                    input_idx = i
+                    break
+            
+            out_node_var = self._node_vars[link.to_node]
+            output_socket = link.to_socket
+            
+            for i, item in enumerate(link.to_node.inputs.items()):
+                if item[1] == output_socket:
+                    output_idx = i
+                    break
+            
+            self._file.write((f"{inner}#{in_node_var}.{input_socket.name} "
+                        f"-> {out_node_var}.{output_socket.name}\n"))
+            self._file.write((f"{inner}{node_tree_var}.links.new({in_node_var}"
+                        f".outputs[{input_idx}], "
+                        f"{out_node_var}.inputs[{output_idx}])\n"))
+
+    def _hide_hidden_sockets(self, node: bpy.types.Node, inner: str, 
+                            node_var: str) -> None:
+        """
+        Hide hidden sockets
+
+        Parameters:
+        node (bpy.types.Node): node object we're copying socket settings from
+        inner (str): indentation string
+        node_var (str): name of the variable we're using for this node
+        """
+        for i, socket in enumerate(node.inputs):
+            if socket.hide is True:
+                self._file.write(f"{inner}{node_var}.inputs[{i}].hide = True\n")
+        for i, socket in enumerate(node.outputs):
+            if socket.hide is True:
+                self._file.write(f"{inner}{node_var}.outputs[{i}].hide = True\n")   
+
     def _set_socket_defaults(self, node: Node, node_var: str, inner: str):
-        if self.mode == 'ADDON':
-            set_input_defaults(node, self._file, inner, node_var, self._addon_dir)
-        elif self.mode == 'SCRIPT':
-            set_input_defaults(node, self._file, inner, node_var)
-        set_output_defaults(node, self._file, inner, node_var)
+        self._set_input_defaults(node, inner, node_var)
+        self._set_output_defaults(node, inner, node_var)
+
+    def _create_menu_func(self) -> None:
+        """
+        Creates the menu function
+        """
+
+        self._file.write("def menu_func(self, context):\n")
+        self._file.write(f"\tself.layout.operator({self._class_name}.bl_idname)\n")
+        self._file.write("\n")
+
+    def _create_register_func(self) -> None:
+        """
+        Creates the register function
+        """
+        self._file.write("def register():\n")
+        self._file.write(f"\tbpy.utils.register_class({self._class_name})\n")
+        self._file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
+        self._file.write("\n")
+
+    def _create_unregister_func(self) -> None:
+        """
+        Creates the unregister function
+        """
+        self._file.write("def unregister():\n")
+        self._file.write(f"\tbpy.utils.unregister_class({self._class_name})\n")
+        self._file.write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
+        self._file.write("\n")
+
+    def _create_main_func(self) -> None:
+        """
+        Creates the main function
+        """
+        self._file.write("if __name__ == \"__main__\":\n")
+        self._file.write("\tregister()")
+    
+    def _zip_addon(self) -> None:
+        """
+        Zips up the addon and removes the directory
+        """
+        shutil.make_archive(self._zip_dir, "zip", self._zip_dir)
+        shutil.rmtree(self._zip_dir)
 
     # ABSTRACT
     def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str, 

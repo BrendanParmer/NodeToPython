@@ -48,27 +48,25 @@ class NTPMaterialOperator(NTP_Operator):
 
     def _process_node(self, node: Node, ntp_node_tree: NTP_ShaderNodeTree, inner: str, level: int) -> None:
         #create node
-        node_var: str = create_node(node, self._file, inner, ntp_node_tree.var, 
-                                    self._node_vars, self._used_vars)
-        set_settings_defaults(node, self._settings, self._file, 
-                                self._addon_dir, inner, node_var)
+        node_var: str = self._create_node(node, inner, ntp_node_tree.var)
+        self._set_settings_defaults(node, inner, node_var)
                                 
         if node.bl_idname == 'ShaderNodeGroup':
             self._process_group_node_tree(node, node_var, level, inner)
-
+        #TODO: should probably be lumped into one function,
+        #it's always called like this and we're double checking it
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            group_io_settings(node, self._file, inner, "input", 
+            self._group_io_settings(node, inner, "input", 
                               ntp_node_tree.var, ntp_node_tree.node_tree)
             ntp_node_tree.inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
-            group_io_settings(node, self._file, inner, "output", 
+            self._group_io_settings(node, inner, "output", 
                               ntp_node_tree.var, ntp_node_tree.node_tree)
             ntp_node_tree.outputs_set = True
 
-        hide_hidden_sockets(node, self._file, inner, node_var)
+        self._hide_hidden_sockets(node, inner, node_var)
         self._set_socket_defaults(node, node_var, inner)
-
 
     def _process_node_tree(self, node_tree: ShaderNodeTree, level: int) -> None:
         """
@@ -81,10 +79,10 @@ class NTPMaterialOperator(NTP_Operator):
         """
 
         if self._is_outermost_node_group(level):
-            nt_var = create_var(self.material_name, self._used_vars)
+            nt_var = self._create_var(self.material_name)
             nt_name = self.material_name #TODO: this is probably overcomplicating things if we move to a harder material vs shader node tree difference
         else:
-            nt_var = create_var(node_tree.name, self._used_vars)
+            nt_var = self._create_var(node_tree.name)
             nt_name = node_tree.name
 
         outer, inner = make_indents(level)
@@ -99,11 +97,11 @@ class NTPMaterialOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
 
-        set_parents(node_tree, self._file, inner, self._node_vars)
-        set_locations(node_tree, self._file, inner, self._node_vars)
-        set_dimensions(node_tree, self._file, inner, self._node_vars)
+        self._set_parents(node_tree, inner)
+        self._set_locations(node_tree, inner)
+        self._set_dimensions(node_tree, inner)
 
-        init_links(node_tree, self._file, inner, nt_var, self._node_vars)
+        self._init_links(node_tree, inner, nt_var)
 
         self._file.write(f"{inner}return {nt_var}\n")
 
@@ -125,9 +123,9 @@ class NTPMaterialOperator(NTP_Operator):
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
 
-            create_header(self._file, self.material_name)
+            self._create_header(self.material_name)
             self._class_name = clean_string(self.material_name, lower=False)
-            init_operator(self._file, self._class_name, mat_var, self.material_name)
+            self._init_operator(mat_var, self.material_name)
 
             self._file.write("\tdef execute(self, context):\n")
         else:
@@ -147,17 +145,17 @@ class NTPMaterialOperator(NTP_Operator):
 
         if self.mode == 'ADDON':
             self._file.write("\t\treturn {'FINISHED'}\n\n")
-            create_menu_func(self._file, self._class_name)
-            create_register_func(self._file, self._class_name)
-            create_unregister_func(self._file, self._class_name)
-            create_main_func(self._file)
+            self._create_menu_func()
+            self._create_register_func()
+            self._create_unregister_func()
+            self._create_main_func()
         else:
             context.window_manager.clipboard = self._file.getvalue()
 
         self._file.close()
         
         if self.mode == 'ADDON':
-            zip_addon(self._zip_dir)
+            self._zip_addon(self._zip_dir)
 
         self._report_finished("material")
 
