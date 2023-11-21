@@ -33,20 +33,19 @@ class NTPGeoNodesOperator(NTP_Operator):
 
     def _process_sim_output_node(self, node: GeometryNodeSimulationOutput,
                                  inner: str, node_var: str) -> None:
-        self._file.write(f"{inner}# Remove generated sim state items\n")
-        self._file.write(f"{inner}for item in {node_var}.state_items:\n")
-        self._file.write(f"{inner}\t{node_var}.state_items.remove(item)\n")
+        self._write(f"{inner}# Remove generated sim state items\n")
+        self._write(f"{inner}for item in {node_var}.state_items:\n")
+        self._write(f"{inner}\t{node_var}.state_items.remove(item)\n")
 
         for i, si in enumerate(node.state_items):
             socket_type = enum_to_py_str(si.socket_type)
             name = str_to_py_str(si.name)
-            self._file.write(f"{inner}#create SSI {name}\n")
-            self._file.write((f"{inner}{node_var}.state_items.new"
-                              f"({socket_type}, {name})\n"))
+            self._write(f"{inner}#create SSI {name}\n")
+            self._write((f"{inner}{node_var}.state_items.new"
+                         f"({socket_type}, {name})\n"))
             si_var = f"{node_var}.state_items[{i}]"
             attr_domain = enum_to_py_str(si.attribute_domain)
-            self._file.write((f"{inner}{si_var}.attribute_domain "
-                              f"= {attr_domain}\n"))
+            self._write((f"{inner}{si_var}.attribute_domain = {attr_domain}\n"))
 
     def _process_node(self, node: Node, ntp_node_tree: NTP_GeoNodeTree,
                       inner: str, level: int) -> None:
@@ -91,8 +90,8 @@ class NTPGeoNodesOperator(NTP_Operator):
 
             sim_input_var = self._node_vars[sim_input]
             sim_output_var = self._node_vars[sim_output]
-            self._file.write((f"{inner}{sim_input_var}.pair_with_output"
-                              f"({sim_output_var})\n"))
+            self._write((f"{inner}{sim_input_var}.pair_with_output"
+                         f"({sim_output_var})\n"))
 
             #must set defaults after paired with output
             self._set_socket_defaults(sim_input, sim_input_var, inner)
@@ -115,15 +114,15 @@ class NTPGeoNodesOperator(NTP_Operator):
         # Eventually these should go away anyways, and level of indentation depends just on the mode
 
         #initialize node group
-        self._file.write(f"{outer}#initialize {nt_var} node group\n")
-        self._file.write(f"{outer}def {nt_var}_node_group():\n")
-        self._file.write((f"{inner}{nt_var} = bpy.data.node_groups.new("
-                          f"type = \'GeometryNodeTree\', "
-                          f"name = {str_to_py_str(node_tree.name)})\n"))
-        self._file.write("\n")
+        self._write(f"{outer}#initialize {nt_var} node group\n")
+        self._write(f"{outer}def {nt_var}_node_group():\n")
+        self._write((f"{inner}{nt_var} = bpy.data.node_groups.new("
+                     f"type = \'GeometryNodeTree\', "
+                     f"name = {str_to_py_str(node_tree.name)})\n"))
+        self._write("\n")
 
         #initialize nodes
-        self._file.write(f"{inner}#initialize {nt_var} nodes\n")
+        self._write(f"{inner}#initialize {nt_var} nodes\n")
 
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
 
@@ -140,23 +139,23 @@ class NTPGeoNodesOperator(NTP_Operator):
         #create connections
         self._init_links(node_tree, inner, nt_var)
         
-        self._file.write(f"{inner}return {nt_var}\n")
+        self._write(f"{inner}return {nt_var}\n")
 
         #create node group
-        self._file.write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
+        self._write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
         return self._used_vars
 
 
     def _apply_modifier(self, nt: GeometryNodeTree, nt_var: str):
         #get object
-        self._file.write(f"\t\tname = bpy.context.object.name\n")
-        self._file.write(f"\t\tobj = bpy.data.objects[name]\n")
+        self._write(f"\t\tname = bpy.context.object.name\n")
+        self._write(f"\t\tobj = bpy.data.objects[name]\n")
 
         #set modifier to the one we just created
         mod_name = str_to_py_str(nt.name)
-        self._file.write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
-                    f"type = 'NODES')\n"))
-        self._file.write(f"\t\tmod.node_group = {nt_var}\n")
+        self._write((f"\t\tmod = obj.modifiers.new(name = {mod_name}, "
+                     f"type = 'NODES')\n"))
+        self._write(f"\t\tmod.node_group = {nt_var}\n")
 
 
     def execute(self, context):
@@ -174,7 +173,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._create_header(nt.name)
             self._class_name = clean_string(nt.name, lower = False)
             self._init_operator(nt_var, nt.name)
-            self._file.write("\tdef execute(self, context):\n")
+            self._write("\tdef execute(self, context):\n")
         else:
             self._file = StringIO("")
         
@@ -186,7 +185,7 @@ class NTPGeoNodesOperator(NTP_Operator):
 
         if self.mode == 'ADDON':
             self._apply_modifier(nt, nt_var)
-            self._file.write("\t\treturn {'FINISHED'}\n\n")
+            self._write("\t\treturn {'FINISHED'}\n\n")
             self._create_menu_func()
             self._create_register_func()
             self._create_unregister_func()

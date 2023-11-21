@@ -55,6 +55,9 @@ class NTP_Operator(Operator):
         # Dictionary used for setting node properties
         self._settings: dict[str, list[(str, ST)]] = {}
 
+    def _write(self, string: str):
+        self._file.write(string)
+
     def _setup_addon_directories(self, context: Context, nt_var: str) -> None:
         """
         Finds/creates directories to save add-on to
@@ -82,19 +85,19 @@ class NTP_Operator(Operator):
         name (str): name of the add-on
         """
 
-        self._file.write("bl_info = {\n")
-        self._file.write(f"\t\"name\" : \"{name}\",\n")
-        self._file.write("\t\"author\" : \"Node To Python\",\n")
-        self._file.write("\t\"version\" : (1, 0, 0),\n")
-        self._file.write(f"\t\"blender\" : {bpy.app.version},\n")
-        self._file.write("\t\"location\" : \"Object\",\n") #TODO
-        self._file.write("\t\"category\" : \"Node\"\n")
-        self._file.write("}\n")
-        self._file.write("\n")
-        self._file.write("import bpy\n")
-        self._file.write("import mathutils\n")
-        self._file.write("import os\n")
-        self._file.write("\n")
+        self._write("bl_info = {\n")
+        self._write(f"\t\"name\" : \"{name}\",\n")
+        self._write("\t\"author\" : \"Node To Python\",\n")
+        self._write("\t\"version\" : (1, 0, 0),\n")
+        self._write(f"\t\"blender\" : {bpy.app.version},\n")
+        self._write("\t\"location\" : \"Object\",\n") #TODO
+        self._write("\t\"category\" : \"Node\"\n")
+        self._write("}\n")
+        self._write("\n")
+        self._write("import bpy\n")
+        self._write("import mathutils\n")
+        self._write("import os\n")
+        self._write("\n")
 
     def _init_operator(self, idname: str, label: str) -> None:
         """
@@ -106,11 +109,11 @@ class NTP_Operator(Operator):
         idname (str): name for the operator
         label (str): appearence inside Blender
         """
-        self._file.write(f"class {self._class_name}(bpy.types.Operator):\n")
-        self._file.write(f"\tbl_idname = \"object.{idname}\"\n")
-        self._file.write(f"\tbl_label = \"{label}\"\n")
-        self._file.write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
-        self._file.write("\n")
+        self._write(f"class {self._class_name}(bpy.types.Operator):\n")
+        self._write(f"\tbl_idname = \"object.{idname}\"\n")
+        self._write(f"\tbl_label = \"{label}\"\n")
+        self._write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
+        self._write("\n")
 
     def _is_outermost_node_group(self, level: int) -> bool:
         if self.mode == 'ADDON' and level == 2:
@@ -129,9 +132,8 @@ class NTP_Operator(Operator):
             if node_tree not in self._node_trees:
                 self._process_node_tree(node_tree, level + 1)
                 self._node_trees.add(node_tree)
-            self._file.write((f"{inner}{node_var}.node_tree = "
-                              f"bpy.data.node_groups"
-                              f"[\"{node.node_tree.name}\"]\n"))
+            self._write((f"{inner}{node_var}.node_tree = bpy.data.node_groups"
+                         f"[\"{node.node_tree.name}\"]\n"))
 
     def _create_var(self, name: str) -> str:
         """
@@ -167,25 +169,25 @@ class NTP_Operator(Operator):
         node_var (str): variable name for the node
         """
 
-        self._file.write(f"{inner}#node {node.name}\n")
+        self._write(f"{inner}#node {node.name}\n")
 
         node_var = self._create_var(node.name)
         self._node_vars[node] = node_var
 
-        self._file.write((f"{inner}{node_var} "
+        self._write((f"{inner}{node_var} "
                     f"= {node_tree_var}.nodes.new(\"{node.bl_idname}\")\n"))
         #label
         if node.label:
-            self._file.write(f"{inner}{node_var}.label = \"{node.label}\"\n")
+            self._write(f"{inner}{node_var}.label = \"{node.label}\"\n")
 
         #color
         if node.use_custom_color:
-            self._file.write(f"{inner}{node_var}.use_custom_color = True\n")
-            self._file.write(f"{inner}{node_var}.color = {vec3_to_py_str(node.color)}\n")
+            self._write(f"{inner}{node_var}.use_custom_color = True\n")
+            self._write(f"{inner}{node_var}.color = {vec3_to_py_str(node.color)}\n")
 
         #mute
         if node.mute:
-            self._file.write(f"{inner}{node_var}.mute = True\n")
+            self._write(f"{inner}{node_var}.mute = True\n")
             
         return node_var
 
@@ -212,33 +214,33 @@ class NTP_Operator(Operator):
             setting_str = f"{inner}{node_var}.{attr_name}"
             if type == ST.ENUM:
                 if attr != '':
-                    self._file.write(f"{setting_str} = {enum_to_py_str(attr)}\n")
+                    self._write(f"{setting_str} = {enum_to_py_str(attr)}\n")
             elif type == ST.ENUM_SET:
-                self._file.write(f"{setting_str} = {attr}\n")
+                self._write(f"{setting_str} = {attr}\n")
             elif type == ST.STRING:
-                self._file.write(f"{setting_str} = {str_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {str_to_py_str(attr)}\n")
             elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
-                self._file.write(f"{setting_str} = {attr}\n")
+                self._write(f"{setting_str} = {attr}\n")
             elif type == ST.VEC1:
-                self._file.write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {vec1_to_py_str(attr)}\n")
             elif type == ST.VEC2:
-                self._file.write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {vec2_to_py_str(attr)}\n")
             elif type == ST.VEC3:
-                self._file.write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {vec3_to_py_str(attr)}\n")
             elif type == ST.VEC4:
-                self._file.write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {vec4_to_py_str(attr)}\n")
             elif type == ST.COLOR:
-                self._file.write(f"{setting_str} = {color_to_py_str(attr)}\n")
+                self._write(f"{setting_str} = {color_to_py_str(attr)}\n")
             elif type == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
-                self._file.write((f"{inner}if {name} in bpy.data.materials:\n"))
-                self._file.write((f"{inner}\t{node_var}.{attr_name} = "
-                            f"bpy.data.materials[{name}]\n"))
+                self._write((f"{inner}if {name} in bpy.data.materials:\n"))
+                self._write((f"{inner}\t{node_var}.{attr_name} = "
+                             f"bpy.data.materials[{name}]\n"))
             elif type == ST.OBJECT:
                 name = str_to_py_str(attr.name)
-                self._file.write((f"{inner}if {name} in bpy.data.objects:\n"))
-                self._file.write((f"{inner}\t{node_var}.{attr_name} = "
-                            f"bpy.data.objects[{name}]\n"))
+                self._write((f"{inner}if {name} in bpy.data.objects:\n"))
+                self._write((f"{inner}\t{node_var}.{attr_name} = "
+                             f"bpy.data.objects[{name}]\n"))
             elif type == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, inner, node_var, attr_name)
             elif type == ST.CURVE_MAPPING:
@@ -271,14 +273,16 @@ class NTP_Operator(Operator):
             dv = vec3_to_py_str(socket_interface.default_value)
         else:
             dv = socket_interface.default_value
-        self._file.write(f"{inner}{socket_var}.default_value = {dv}\n")
+        self._write(f"{inner}{socket_var}.default_value = {dv}\n")
 
         #min value
         if hasattr(socket_interface, "min_value"):
-            self._file.write(f"{inner}{socket_var}.min_value = {socket_interface.min_value}\n")
+            min_val = socket_interface.min_value
+            self._write(f"{inner}{socket_var}.min_value = {min_val}\n")
         #max value
         if hasattr(socket_interface, "min_value"):
-            self._file.write((f"{inner}{socket_var}.max_value = {socket_interface.max_value}\n"))
+            max_val = socket_interface.max_value
+            self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
     def _group_io_settings(self, node: bpy.types.Node, inner: str, 
                            io: str, #TODO: convert to enum
@@ -302,14 +306,14 @@ class NTP_Operator(Operator):
             io_sockets = node.inputs
             io_socket_interfaces = node_tree.outputs
 
-        self._file.write(f"{inner}#{node_tree_var} {io}s\n")
+        self._write(f"{inner}#{node_tree_var} {io}s\n")
         for i, inout in enumerate(io_sockets):
             if inout.bl_idname == 'NodeSocketVirtual':
                 continue
-            self._file.write(f"{inner}#{io} {inout.name}\n")
+            self._write(f"{inner}#{io} {inout.name}\n")
             idname = enum_to_py_str(inout.bl_idname)
             name = str_to_py_str(inout.name)
-            self._file.write(f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
+            self._write(f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
             socket_interface = io_socket_interfaces[i]
             socket_var = f"{node_tree_var}.{io}s[{i}]"
 
@@ -319,30 +323,30 @@ class NTP_Operator(Operator):
             if hasattr(socket_interface, "default_attribute_name"):
                 if socket_interface.default_attribute_name != "":
                     dan = str_to_py_str(socket_interface.default_attribute_name)
-                    self._file.write((f"{inner}{socket_var}"
-                                f".default_attribute_name = {dan}\n"))
+                    self._write((f"{inner}{socket_var}"
+                                 f".default_attribute_name = {dan}\n"))
 
             #attribute domain
             if hasattr(socket_interface, "attribute_domain"):
                 ad = enum_to_py_str(socket_interface.attribute_domain)
-                self._file.write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+                self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
 
             #tooltip
             if socket_interface.description != "":
                 description = str_to_py_str(socket_interface.description)
-                self._file.write((f"{inner}{socket_var}.description = {description}\n"))
+                self._write((f"{inner}{socket_var}.description = {description}\n"))
 
             #hide_value
             if socket_interface.hide_value is True:
-                self._file.write(f"{inner}{socket_var}.hide_value = True\n")
+                self._write(f"{inner}{socket_var}.hide_value = True\n")
 
             #hide in modifier
             if hasattr(socket_interface, "hide_in_modifier"):
                 if socket_interface.hide_in_modifier is True:
-                    self._file.write(f"{inner}{socket_var}.hide_in_modifier = True\n")
+                    self._write(f"{inner}{socket_var}.hide_in_modifier = True\n")
 
-            self._file.write("\n")
-        self._file.write("\n")
+            self._write("\n")
+        self._write("\n")
 
     def _set_input_defaults(self, node: bpy.types.Node, inner: str, 
                             node_var: str) -> None:
@@ -407,10 +411,10 @@ class NTP_Operator(Operator):
                 else:
                     default_val = input.default_value
                 if default_val is not None:
-                    self._file.write(f"{inner}#{input.identifier}\n")
-                    self._file.write((f"{inner}{socket_var}.default_value"
+                    self._write(f"{inner}#{input.identifier}\n")
+                    self._write((f"{inner}{socket_var}.default_value"
                                 f" = {default_val}\n"))
-        self._file.write("\n")
+        self._write("\n")
 
     def _set_output_defaults(self, node: bpy.types.Node,
                              inner: str, node_var: str) -> None:
@@ -438,7 +442,7 @@ class NTP_Operator(Operator):
             dv = vec4_to_py_str(list(dv))
         if node.bl_idname in {'ShaderNodeNormal', 'CompositorNodeNormal'}:
             dv = vec3_to_py_str(dv)
-        self._file.write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
+        self._write((f"{inner}{node_var}.outputs[0].default_value = {dv}\n"))
 
     def _in_file_inputs(self, input: bpy.types.NodeSocket, 
                    inner: str, 
@@ -458,9 +462,9 @@ class NTP_Operator(Operator):
         if input.default_value is None:
             return
         name = str_to_py_str(input.default_value.name)
-        self._file.write(f"{inner}if {name} in bpy.data.{type}:\n")
-        self._file.write((f"{inner}\t{socket_var}.default_value = "
-                        f"bpy.data.{type}[{name}]\n"))
+        self._write(f"{inner}if {name} in bpy.data.{type}:\n")
+        self._write((f"{inner}\t{socket_var}.default_value = "
+                     f"bpy.data.{type}[{name}]\n"))
 
     def _color_ramp_settings(self, node: bpy.types.Node, 
                              inner: str, 
@@ -484,35 +488,35 @@ class NTP_Operator(Operator):
         ramp_str = f"{inner}{node_var}.{color_ramp_name}"
 
         color_mode = enum_to_py_str(color_ramp.color_mode)
-        self._file.write(f"{ramp_str}.color_mode = {color_mode}\n")
+        self._write(f"{ramp_str}.color_mode = {color_mode}\n")
 
         hue_interpolation = enum_to_py_str(color_ramp.hue_interpolation)
-        self._file.write((f"{ramp_str}.hue_interpolation = "
-                    f"{hue_interpolation}\n"))
+        self._write((f"{ramp_str}.hue_interpolation = "
+                     f"{hue_interpolation}\n"))
         interpolation = enum_to_py_str(color_ramp.interpolation)
-        self._file.write((f"{ramp_str}.interpolation "
-                    f"= {interpolation}\n"))
-        self._file.write("\n")
+        self._write((f"{ramp_str}.interpolation "
+                     f"= {interpolation}\n"))
+        self._write("\n")
 
         #key points
-        self._file.write(f"{inner}#initialize color ramp elements\n")
-        self._file.write((f"{ramp_str}.elements.remove"
+        self._write(f"{inner}#initialize color ramp elements\n")
+        self._write((f"{ramp_str}.elements.remove"
                     f"({ramp_str}.elements[0])\n"))
         for i, element in enumerate(color_ramp.elements):
             element_var = f"{node_var}_cre_{i}"
             if i == 0:
-                self._file.write(f"{inner}{element_var} = "
-                        f"{ramp_str}.elements[{i}]\n")
-                self._file.write(f"{inner}{element_var}.position = {element.position}\n")
+                self._write(f"{inner}{element_var} = "
+                            f"{ramp_str}.elements[{i}]\n")
+                self._write(f"{inner}{element_var}.position = {element.position}\n")
             else:
-                self._file.write((f"{inner}{element_var} = "
-                            f"{ramp_str}.elements"
-                            f".new({element.position})\n"))
+                self._write((f"{inner}{element_var} = "
+                             f"{ramp_str}.elements"
+                             f".new({element.position})\n"))
 
-            self._file.write((f"{inner}{element_var}.alpha = "
-                        f"{element.alpha}\n"))
+            self._write((f"{inner}{element_var}.alpha = "
+                         f"{element.alpha}\n"))
             color_str = vec4_to_py_str(element.color)
-            self._file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
+            self._write((f"{inner}{element_var}.color = {color_str}\n\n"))
     
     def _curve_mapping_settings(self, node: bpy.types.Node, inner: str, 
                                 node_var: str, curve_mapping_name: str
@@ -534,51 +538,51 @@ class NTP_Operator(Operator):
                             f"in node \"{node.bl_idname}\""))
 
         #mapping settings
-        self._file.write(f"{inner}#mapping settings\n")
+        self._write(f"{inner}#mapping settings\n")
         mapping_var = f"{inner}{node_var}.{curve_mapping_name}"
 
         #extend
         extend = enum_to_py_str(mapping.extend)
-        self._file.write(f"{mapping_var}.extend = {extend}\n")
+        self._write(f"{mapping_var}.extend = {extend}\n")
         #tone
         tone = enum_to_py_str(mapping.tone)
-        self._file.write(f"{mapping_var}.tone = {tone}\n")
+        self._write(f"{mapping_var}.tone = {tone}\n")
 
         #black level
         b_lvl_str = vec3_to_py_str(mapping.black_level)
-        self._file.write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
+        self._write((f"{mapping_var}.black_level = {b_lvl_str}\n"))
         #white level
         w_lvl_str = vec3_to_py_str(mapping.white_level)
-        self._file.write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
+        self._write((f"{mapping_var}.white_level = {w_lvl_str}\n"))
 
         #minima and maxima
         min_x = mapping.clip_min_x
-        self._file.write(f"{mapping_var}.clip_min_x = {min_x}\n")
+        self._write(f"{mapping_var}.clip_min_x = {min_x}\n")
         min_y = mapping.clip_min_y
-        self._file.write(f"{mapping_var}.clip_min_y = {min_y}\n")
+        self._write(f"{mapping_var}.clip_min_y = {min_y}\n")
         max_x = mapping.clip_max_x
-        self._file.write(f"{mapping_var}.clip_max_x = {max_x}\n")
+        self._write(f"{mapping_var}.clip_max_x = {max_x}\n")
         max_y = mapping.clip_max_y
-        self._file.write(f"{mapping_var}.clip_max_y = {max_y}\n")
+        self._write(f"{mapping_var}.clip_max_y = {max_y}\n")
 
         #use_clip
         use_clip = mapping.use_clip
-        self._file.write(f"{mapping_var}.use_clip = {use_clip}\n")
+        self._write(f"{mapping_var}.use_clip = {use_clip}\n")
 
         #create curves
         for i, curve in enumerate(mapping.curves):
             #TODO: curve function
-            self._file.write(f"{inner}#curve {i}\n")
+            self._write(f"{inner}#curve {i}\n")
             curve_i = f"{node_var}_curve_{i}"
-            self._file.write((f"{inner}{curve_i} = "
-                        f"{node_var}.{curve_mapping_name}.curves[{i}]\n"))
+            self._write((f"{inner}{curve_i} = "
+                         f"{node_var}.{curve_mapping_name}.curves[{i}]\n"))
 
             # Remove default points when CurveMap is initialized with more than
             # two points (just CompositorNodeHueCorrect)
             if (node.bl_idname == 'CompositorNodeHueCorrect'):
-                self._file.write((f"{inner}for i in "
-                        f"range(len({curve_i}.points.values()) - 1, 1, -1):\n"))
-                self._file.write(f"{inner}\t{curve_i}.points.remove({curve_i}.points[i])\n")
+                self._write((f"{inner}for i in range"
+                             f"(len({curve_i}.points.values()) - 1, 1, -1):\n"))
+                self._write(f"{inner}\t{curve_i}.points.remove({curve_i}.points[i])\n")
             
             for j, point in enumerate(curve.points):
                 #TODO: point function
@@ -587,17 +591,17 @@ class NTP_Operator(Operator):
                 loc = point.location
                 loc_str = f"{loc[0]}, {loc[1]}"
                 if j < 2:
-                    self._file.write(f"{point_j} = {curve_i}.points[{j}]\n")
-                    self._file.write(f"{point_j}.location = ({loc_str})\n")
+                    self._write(f"{point_j} = {curve_i}.points[{j}]\n")
+                    self._write(f"{point_j}.location = ({loc_str})\n")
                 else:
-                    self._file.write((f"{point_j} = {curve_i}.points.new({loc_str})\n"))
+                    self._write((f"{point_j} = {curve_i}.points.new({loc_str})\n"))
 
                 handle = enum_to_py_str(point.handle_type)
-                self._file.write(f"{point_j}.handle_type = {handle}\n")
+                self._write(f"{point_j}.handle_type = {handle}\n")
         
         #update curve
-        self._file.write(f"{inner}#update curve after changes\n")
-        self._file.write(f"{mapping_var}.update()\n")
+        self._write(f"{inner}#update curve after changes\n")
+        self._write(f"{mapping_var}.update()\n")
 
     def _save_image(self, img: bpy.types.Image) -> None:
         """
@@ -640,29 +644,29 @@ class NTP_Operator(Operator):
         img_str = img_to_py_str(img)
 
         #TODO: convert to special variables
-        self._file.write(f"{inner}#load image {img_str}\n")
-        self._file.write((f"{inner}base_dir = "
-                    f"os.path.dirname(os.path.abspath(__file__))\n"))
-        self._file.write((f"{inner}image_path = "
-                    f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
-                    f"\"{img_str}\")\n"))
-        self._file.write((f"{inner}{img_var} = "
-                    f"bpy.data.images.load(image_path, check_existing = True)\n"))
+        self._write(f"{inner}#load image {img_str}\n")
+        self._write((f"{inner}base_dir = "
+                     f"os.path.dirname(os.path.abspath(__file__))\n"))
+        self._write((f"{inner}image_path = "
+                     f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
+                     f"\"{img_str}\")\n"))
+        self._write((f"{inner}{img_var} = bpy.data.images.load"
+                     f"(image_path, check_existing = True)\n"))
 
         #copy image settings
-        self._file.write(f"{inner}#set image settings\n")
+        self._write(f"{inner}#set image settings\n")
 
         #source
         source = enum_to_py_str(img.source)
-        self._file.write(f"{inner}{img_var}.source = {source}\n")
+        self._write(f"{inner}{img_var}.source = {source}\n")
 
         #color space settings
         color_space = enum_to_py_str(img.colorspace_settings.name)
-        self._file.write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
+        self._write(f"{inner}{img_var}.colorspace_settings.name = {color_space}\n")
         
         #alpha mode
         alpha_mode = enum_to_py_str(img.alpha_mode)
-        self._file.write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
+        self._write(f"{inner}{img_var}.alpha_mode = {alpha_mode}\n")
 
     def _image_user_settings(self, img_user: bpy.types.ImageUser,
                             inner: str, 
@@ -680,8 +684,8 @@ class NTP_Operator(Operator):
                         "frame_start", "tile", "use_auto_refresh", "use_cyclic"]
         
         for img_usr_attr in img_usr_attrs:
-            self._file.write((f"{inner}{img_user_var}.{img_usr_attr} = "
-                        f"{getattr(img_user, img_usr_attr)}\n"))
+            self._write((f"{inner}{img_user_var}.{img_usr_attr} = "
+                         f"{getattr(img_user, img_usr_attr)}\n"))
 
     def _set_parents(self, node_tree: bpy.types.NodeTree,
                     inner: str) -> None:
@@ -696,12 +700,12 @@ class NTP_Operator(Operator):
         for node in node_tree.nodes:
             if node is not None and node.parent is not None:
                 if not parent_comment:
-                    self._file.write(f"{inner}#Set parents\n")
+                    self._write(f"{inner}#Set parents\n")
                     parent_comment = True
                 node_var = self._node_vars[node]
                 parent_var = self._node_vars[node.parent]
-                self._file.write(f"{inner}{node_var}.parent = {parent_var}\n")
-        self._file.write("\n")
+                self._write(f"{inner}{node_var}.parent = {parent_var}\n")
+        self._write("\n")
 
     def _set_locations(self, node_tree: bpy.types.NodeTree, inner: str) -> None:
         """
@@ -712,12 +716,12 @@ class NTP_Operator(Operator):
         inner (str): indentation string
         """
 
-        self._file.write(f"{inner}#Set locations\n")
+        self._write(f"{inner}#Set locations\n")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]
-            self._file.write((f"{inner}{node_var}.location "
+            self._write((f"{inner}{node_var}.location "
                         f"= ({node.location.x}, {node.location.y})\n"))
-        self._file.write("\n")
+        self._write("\n")
 
     def _set_dimensions(self, node_tree: bpy.types.NodeTree, inner: str, 
                        ) -> None:
@@ -728,12 +732,12 @@ class NTP_Operator(Operator):
         node_tree (bpy.types.NodeTree): node tree we're obtaining nodes from
         inner (str): indentation string
         """
-        self._file.write(f"{inner}#Set dimensions\n")
+        self._write(f"{inner}#Set dimensions\n")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]
-            self._file.write((f"{inner}{node_var}.width, {node_var}.height "
-                            f"= {node.width}, {node.height}\n"))
-        self._file.write("\n")
+            self._write((f"{inner}{node_var}.width, {node_var}.height "
+                         f"= {node.width}, {node.height}\n"))
+        self._write("\n")
 
     def _init_links(self, node_tree: bpy.types.NodeTree, 
                     inner: str, 
@@ -748,7 +752,7 @@ class NTP_Operator(Operator):
         """
 
         if node_tree.links:
-            self._file.write(f"{inner}#initialize {node_tree_var} links\n")     
+            self._write(f"{inner}#initialize {node_tree_var} links\n")     
         for link in node_tree.links:
             in_node_var = self._node_vars[link.from_node]
             input_socket = link.from_socket
@@ -773,11 +777,11 @@ class NTP_Operator(Operator):
                     output_idx = i
                     break
             
-            self._file.write((f"{inner}#{in_node_var}.{input_socket.name} "
-                        f"-> {out_node_var}.{output_socket.name}\n"))
-            self._file.write((f"{inner}{node_tree_var}.links.new({in_node_var}"
-                        f".outputs[{input_idx}], "
-                        f"{out_node_var}.inputs[{output_idx}])\n"))
+            self._write((f"{inner}#{in_node_var}.{input_socket.name} "
+                         f"-> {out_node_var}.{output_socket.name}\n"))
+            self._write((f"{inner}{node_tree_var}.links.new({in_node_var}"
+                         f".outputs[{input_idx}], "
+                         f"{out_node_var}.inputs[{output_idx}])\n"))
 
     def _hide_hidden_sockets(self, node: bpy.types.Node, inner: str, 
                             node_var: str) -> None:
@@ -791,10 +795,10 @@ class NTP_Operator(Operator):
         """
         for i, socket in enumerate(node.inputs):
             if socket.hide is True:
-                self._file.write(f"{inner}{node_var}.inputs[{i}].hide = True\n")
+                self._write(f"{inner}{node_var}.inputs[{i}].hide = True\n")
         for i, socket in enumerate(node.outputs):
             if socket.hide is True:
-                self._file.write(f"{inner}{node_var}.outputs[{i}].hide = True\n")   
+                self._write(f"{inner}{node_var}.outputs[{i}].hide = True\n")   
 
     def _set_socket_defaults(self, node: Node, node_var: str, inner: str):
         self._set_input_defaults(node, inner, node_var)
@@ -805,34 +809,34 @@ class NTP_Operator(Operator):
         Creates the menu function
         """
 
-        self._file.write("def menu_func(self, context):\n")
-        self._file.write(f"\tself.layout.operator({self._class_name}.bl_idname)\n")
-        self._file.write("\n")
+        self._write("def menu_func(self, context):\n")
+        self._write(f"\tself.layout.operator({self._class_name}.bl_idname)\n")
+        self._write("\n")
 
     def _create_register_func(self) -> None:
         """
         Creates the register function
         """
-        self._file.write("def register():\n")
-        self._file.write(f"\tbpy.utils.register_class({self._class_name})\n")
-        self._file.write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
-        self._file.write("\n")
+        self._write("def register():\n")
+        self._write(f"\tbpy.utils.register_class({self._class_name})\n")
+        self._write("\tbpy.types.VIEW3D_MT_object.append(menu_func)\n")
+        self._write("\n")
 
     def _create_unregister_func(self) -> None:
         """
         Creates the unregister function
         """
-        self._file.write("def unregister():\n")
-        self._file.write(f"\tbpy.utils.unregister_class({self._class_name})\n")
-        self._file.write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
-        self._file.write("\n")
+        self._write("def unregister():\n")
+        self._write(f"\tbpy.utils.unregister_class({self._class_name})\n")
+        self._write("\tbpy.types.VIEW3D_MT_object.remove(menu_func)\n")
+        self._write("\n")
 
     def _create_main_func(self) -> None:
         """
         Creates the main function
         """
-        self._file.write("if __name__ == \"__main__\":\n")
-        self._file.write("\tregister()")
+        self._write("if __name__ == \"__main__\":\n")
+        self._write("\tregister()")
     
     def _zip_addon(self) -> None:
         """

@@ -25,26 +25,25 @@ class NTPMaterialOperator(NTP_Operator):
         self._settings = shader_node_settings
     
     def _create_material(self, indent: str):
-        self._file.write((f"{indent}{MAT_VAR} = bpy.data.materials.new("
+        self._write((f"{indent}{MAT_VAR} = bpy.data.materials.new("
                     f"name = {str_to_py_str(self.material_name)})\n"))
-        self._file.write(f"{indent}{MAT_VAR}.use_nodes = True\n")
+        self._write(f"{indent}{MAT_VAR}.use_nodes = True\n")
 
     def _initialize_shader_node_tree(self, outer, nt_var, level, inner, nt_name):
          #initialize node group
-        self._file.write(f"{outer}#initialize {nt_var} node group\n")
-        self._file.write(f"{outer}def {nt_var}_node_group():\n")
+        self._write(f"{outer}#initialize {nt_var} node group\n")
+        self._write(f"{outer}def {nt_var}_node_group():\n")
 
         if self._is_outermost_node_group(level):
-            self._file.write(f"{inner}{nt_var} = {MAT_VAR}.node_tree\n")
-            self._file.write(f"{inner}#start with a clean node tree\n")
-            self._file.write(f"{inner}for node in {nt_var}.nodes:\n")
-            self._file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
+            self._write(f"{inner}{nt_var} = {MAT_VAR}.node_tree\n")
+            self._write(f"{inner}#start with a clean node tree\n")
+            self._write(f"{inner}for node in {nt_var}.nodes:\n")
+            self._write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
         else:
-            self._file.write((f"{inner}{nt_var}"
-                              f"= bpy.data.node_groups.new("
-                              f"type = \'ShaderNodeTree\', "
-                              f"name = {str_to_py_str(nt_name)})\n"))
-            self._file.write("\n")
+            self._write((f"{inner}{nt_var} = bpy.data.node_groups.new("
+                         f"type = \'ShaderNodeTree\', "
+                         f"name = {str_to_py_str(nt_name)})\n"))
+            self._write("\n")
 
     def _process_node(self, node: Node, ntp_node_tree: NTP_ShaderNodeTree, inner: str, level: int) -> None:
         #create node
@@ -92,7 +91,7 @@ class NTPMaterialOperator(NTP_Operator):
         ntp_nt = NTP_ShaderNodeTree(node_tree, nt_var)
 
         #initialize nodes
-        self._file.write(f"{inner}#initialize {nt_var} nodes\n")
+        self._write(f"{inner}#initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
@@ -103,9 +102,9 @@ class NTPMaterialOperator(NTP_Operator):
 
         self._init_links(node_tree, inner, nt_var)
 
-        self._file.write(f"{inner}return {nt_var}\n")
+        self._write(f"{inner}return {nt_var}\n")
 
-        self._file.write(f"\n{outer}{nt_var}_node_group()\n\n")
+        self._write(f"\n{outer}{nt_var}_node_group()\n\n")
 
     def execute(self, context):
         #find node group to replicate
@@ -127,7 +126,7 @@ class NTPMaterialOperator(NTP_Operator):
             self._class_name = clean_string(self.material_name, lower=False)
             self._init_operator(mat_var, self.material_name)
 
-            self._file.write("\tdef execute(self, context):\n")
+            self._write("\tdef execute(self, context):\n")
         else:
             self._file = StringIO("")
 
@@ -144,7 +143,7 @@ class NTPMaterialOperator(NTP_Operator):
         self._process_node_tree(nt, level)
 
         if self.mode == 'ADDON':
-            self._file.write("\t\treturn {'FINISHED'}\n\n")
+            self._write("\t\treturn {'FINISHED'}\n\n")
             self._create_menu_func()
             self._create_register_func()
             self._create_unregister_func()

@@ -38,37 +38,37 @@ class NTPCompositorOperator(NTP_Operator):
 
     def _create_scene(self, indent: str):
         #TODO: wrap in more general unique name util function
-        self._file.write(f"{indent}# Generate unique scene name\n")
-        self._file.write(f"{indent}{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}\n")
-        self._file.write(f"{indent}{END_NAME_VAR} = {BASE_NAME_VAR}\n")
-        self._file.write(f"{indent}if bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
-        self._file.write(f"{indent}\ti = 1\n")
-        self._file.write(f"{indent}\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
-        self._file.write(f"{indent}\twhile bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
-        self._file.write(f"{indent}\t\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
-        self._file.write(f"{indent}\t\ti += 1\n\n")
+        self._write(f"{indent}# Generate unique scene name\n")
+        self._write(f"{indent}{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}\n")
+        self._write(f"{indent}{END_NAME_VAR} = {BASE_NAME_VAR}\n")
+        self._write(f"{indent}if bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
+        self._write(f"{indent}\ti = 1\n")
+        self._write(f"{indent}\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
+        self._write(f"{indent}\twhile bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
+        self._write(f"{indent}\t\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
+        self._write(f"{indent}\t\ti += 1\n\n")
 
-        self._file.write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") 
-        self._file.write(f"{indent}{SCENE_VAR}.name = {END_NAME_VAR}\n")
-        self._file.write(f"{indent}{SCENE_VAR}.use_fake_user = True\n")
-        self._file.write(f"{indent}bpy.context.window.scene = {SCENE_VAR}\n")
+        self._write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") 
+        self._write(f"{indent}{SCENE_VAR}.name = {END_NAME_VAR}\n")
+        self._write(f"{indent}{SCENE_VAR}.use_fake_user = True\n")
+        self._write(f"{indent}bpy.context.window.scene = {SCENE_VAR}\n")
 
     def _initialize_compositor_node_tree(self, outer, nt_var, level, inner, nt_name):
                 #initialize node group
-        self._file.write(f"{outer}#initialize {nt_var} node group\n")
-        self._file.write(f"{outer}def {nt_var}_node_group():\n")
+        self._write(f"{outer}#initialize {nt_var} node group\n")
+        self._write(f"{outer}def {nt_var}_node_group():\n")
 
         if self._is_outermost_node_group(level): #outermost node group
-            self._file.write(f"{inner}{nt_var} = {SCENE_VAR}.node_tree\n")
-            self._file.write(f"{inner}#start with a clean node tree\n")
-            self._file.write(f"{inner}for node in {nt_var}.nodes:\n")
-            self._file.write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
+            self._write(f"{inner}{nt_var} = {SCENE_VAR}.node_tree\n")
+            self._write(f"{inner}#start with a clean node tree\n")
+            self._write(f"{inner}for node in {nt_var}.nodes:\n")
+            self._write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
         else:
-            self._file.write((f"{inner}{nt_var}"
-                    f"= bpy.data.node_groups.new("
-                    f"type = \'CompositorNodeTree\', "
-                    f"name = {str_to_py_str(nt_name)})\n"))
-            self._file.write("\n")
+            self._write((f"{inner}{nt_var}"
+                         f"= bpy.data.node_groups.new("
+                         f"type = \'CompositorNodeTree\', "
+                         f"name = {str_to_py_str(nt_name)})\n"))
+            self._write("\n")
 
     def _process_node(self, node: Node, ntp_nt: NTP_CompositorNodeTree, inner: str, level: int):
         if node.bl_idname == 'CompositorNodeGroup':
@@ -100,9 +100,9 @@ class NTPCompositorOperator(NTP_Operator):
 
         if node.bl_idname == 'CompositorNodeGroup':
             if node.node_tree is not None:
-                self._file.write((f"{inner}{node_var}.node_tree = "
-                            f"bpy.data.node_groups"
-                            f"[\"{node.node_tree.name}\"]\n"))
+                self._write((f"{inner}{node_var}.node_tree = "
+                             f"bpy.data.node_groups"
+                             f"[\"{node.node_tree.name}\"]\n"))
         elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
             self._group_io_settings(node, inner, "input", ntp_nt.var, ntp_nt.node_tree)
             inputs_set = True
@@ -136,7 +136,7 @@ class NTPCompositorOperator(NTP_Operator):
         ntp_nt = NTP_CompositorNodeTree(node_tree, nt_var)
 
         #initialize nodes
-        self._file.write(f"{inner}#initialize {nt_var} nodes\n")
+        self._write(f"{inner}#initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
@@ -147,7 +147,7 @@ class NTPCompositorOperator(NTP_Operator):
         
         self._init_links(node_tree, inner, nt_var)
         
-        self._file.write(f"\n{outer}{nt_var}_node_group()\n\n")
+        self._write(f"\n{outer}{nt_var}_node_group()\n\n")
     
     def execute(self, context):
         #find node group to replicate
@@ -175,7 +175,7 @@ class NTPCompositorOperator(NTP_Operator):
             self._class_name = clean_string(self.compositor_name, lower=False)
             self._init_operator(comp_var, self.compositor_name)
 
-            self._file.write("\tdef execute(self, context):\n")
+            self._write("\tdef execute(self, context):\n")
         else:
             self._file = StringIO("")
 
@@ -192,7 +192,7 @@ class NTPCompositorOperator(NTP_Operator):
         self._process_node_tree(nt, level)
 
         if self.mode == 'ADDON':
-            self._file.write("\t\treturn {'FINISHED'}\n\n")
+            self._write("\t\treturn {'FINISHED'}\n\n")
 
             self._create_menu_func()
             self._create_register_func()
