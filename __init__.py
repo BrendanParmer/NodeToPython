@@ -12,15 +12,16 @@ if "bpy" in locals():
     import importlib
     importlib.reload(compositor)
     importlib.reload(geometry)
-    importlib.reload(node_settings)
+    importlib.reload(material)
     importlib.reload(options)
 else:
     from . import compositor
     from . import geometry
-    from .material import node_settings
+    from . import material
     from . import options
 
 import bpy
+
 
 class NodeToPythonMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_node_to_python"
@@ -33,8 +34,6 @@ class NodeToPythonMenu(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
-
-
 
 
 classes = [NodeToPythonMenu,
