@@ -1,8 +1,7 @@
 import bpy
 from bpy.types import Context, Operator
-from bpy.types import Node, NodeTree
+from bpy.types import Node, NodeTree, NodeSocketInterface
 
-from io import StringIO
 import os
 from typing import TextIO
 
@@ -156,8 +155,7 @@ class NTP_Operator(Operator):
             self._used_vars[var] = 0
             return clean_name
 
-    def _create_node(self, node: bpy.types.Node, inner: str, node_tree_var: str
-                    ) -> str:
+    def _create_node(self, node: Node, inner: str, node_tree_var: str) -> str:
         """
         Initializes a new node with location, dimension, and label info
 
@@ -191,8 +189,8 @@ class NTP_Operator(Operator):
             
         return node_var
 
-    def _set_settings_defaults(self, node: bpy.types.Node, inner: str, 
-                               node_var: str) -> None:
+    def _set_settings_defaults(self, node: Node, inner: str, node_var: str
+                              ) -> None:
         """
         Sets the defaults for any settings a node may have
 
@@ -203,7 +201,7 @@ class NTP_Operator(Operator):
         """
         if node.bl_idname not in self._settings:
             print((f"NodeToPython: couldn't find {node.bl_idname} in settings."
-                f"Your Blender version may not be supported"))
+                   f"Your Blender version may not be supported"))
             return
 
         for (attr_name, type) in self._settings[node.bl_idname]:
@@ -253,6 +251,35 @@ class NTP_Operator(Operator):
             elif type == ST.IMAGE_USER:
                 self._image_user_settings(attr, inner, f"{node_var}.{attr_name}")
 
+    def _set_group_socket_default(self, socket_interface: NodeSocketInterface, 
+                                  inner: str, socket_var: str) -> None:
+        """
+        Set a node group input/output's default properties if they exist
+
+        Parameters:
+        socket_interface (NodeSocketInterface): socket interface associated
+            with the input/output
+        inner (str): indentation string
+        socket_var (str): variable name for the socket
+        """
+        if socket_interface.type not in default_sockets:
+            return
+
+        if socket_interface.type == 'RGBA':
+            dv = vec4_to_py_str(socket_interface.default_value)
+        elif socket_interface.type == 'VECTOR':
+            dv = vec3_to_py_str(socket_interface.default_value)
+        else:
+            dv = socket_interface.default_value
+        self._file.write(f"{inner}{socket_var}.default_value = {dv}\n")
+
+        #min value
+        if hasattr(socket_interface, "min_value"):
+            self._file.write(f"{inner}{socket_var}.min_value = {socket_interface.min_value}\n")
+        #max value
+        if hasattr(socket_interface, "min_value"):
+            self._file.write((f"{inner}{socket_var}.max_value = {socket_interface.max_value}\n"))
+
     def _group_io_settings(self, node: bpy.types.Node, inner: str, 
                            io: str, #TODO: convert to enum
                            node_tree_var: str, 
@@ -269,68 +296,49 @@ class NTP_Operator(Operator):
             and output settings for
         """
         if io == "input":
-            ios = node.outputs #TODO: this doesn't seem right
-            """
-            Are sockets and node tree default ios really coupled like this??
-            """
-            ntio = node_tree.inputs
+            io_sockets = node.outputs
+            io_socket_interfaces = node_tree.inputs
         else:
-            ios = node.inputs
-            ntio = node_tree.outputs
+            io_sockets = node.inputs
+            io_socket_interfaces = node_tree.outputs
 
         self._file.write(f"{inner}#{node_tree_var} {io}s\n")
-        for i, inout in enumerate(ios):
+        for i, inout in enumerate(io_sockets):
             if inout.bl_idname == 'NodeSocketVirtual':
                 continue
             self._file.write(f"{inner}#{io} {inout.name}\n")
             idname = enum_to_py_str(inout.bl_idname)
             name = str_to_py_str(inout.name)
             self._file.write(f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
-            socket = ntio[i]
+            socket_interface = io_socket_interfaces[i]
             socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-            if inout.type in default_sockets:
-                #TODO: separate default socket function
-                #default value
-                if inout.type == 'RGBA':
-                    dv = vec4_to_py_str(socket.default_value)
-                elif inout.type == 'VECTOR':
-                    dv = vec3_to_py_str(socket.default_value)
-                else:
-                    dv = socket.default_value
-                self._file.write(f"{inner}{socket_var}.default_value = {dv}\n")
-
-                #min value
-                if hasattr(socket, "min_value"):
-                    self._file.write(f"{inner}{socket_var}.min_value = {socket.min_value}\n")
-                #max value
-                if hasattr(socket, "min_value"):
-                    self._file.write((f"{inner}{socket_var}.max_value = {socket.max_value}\n"))
+            self._set_group_socket_default(socket_interface, inner, socket_var)
             
             #default attribute name
-            if hasattr(socket, "default_attribute_name"):
-                if socket.default_attribute_name != "":
-                    dan = str_to_py_str(socket.default_attribute_name)
+            if hasattr(socket_interface, "default_attribute_name"):
+                if socket_interface.default_attribute_name != "":
+                    dan = str_to_py_str(socket_interface.default_attribute_name)
                     self._file.write((f"{inner}{socket_var}"
                                 f".default_attribute_name = {dan}\n"))
 
             #attribute domain
-            if hasattr(socket, "attribute_domain"):
-                ad = enum_to_py_str(socket.attribute_domain)
+            if hasattr(socket_interface, "attribute_domain"):
+                ad = enum_to_py_str(socket_interface.attribute_domain)
                 self._file.write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
 
             #tooltip
-            if socket.description != "":
-                description = str_to_py_str(socket.description)
+            if socket_interface.description != "":
+                description = str_to_py_str(socket_interface.description)
                 self._file.write((f"{inner}{socket_var}.description = {description}\n"))
 
             #hide_value
-            if socket.hide_value is True:
+            if socket_interface.hide_value is True:
                 self._file.write(f"{inner}{socket_var}.hide_value = True\n")
 
             #hide in modifier
-            if hasattr(socket, "hide_in_modifier"):
-                if socket.hide_in_modifier is True:
+            if hasattr(socket_interface, "hide_in_modifier"):
+                if socket_interface.hide_in_modifier is True:
                     self._file.write(f"{inner}{socket_var}.hide_in_modifier = True\n")
 
             self._file.write("\n")
@@ -505,10 +513,10 @@ class NTP_Operator(Operator):
                         f"{element.alpha}\n"))
             color_str = vec4_to_py_str(element.color)
             self._file.write((f"{inner}{element_var}.color = {color_str}\n\n"))
-
+    
     def _curve_mapping_settings(self, node: bpy.types.Node, inner: str, 
-                               node_var: str, curve_mapping_name: str
-                              ) -> None:
+                                node_var: str, curve_mapping_name: str
+                               ) -> None:
         """
         Sets defaults for Float, Vector, and Color curves
 
