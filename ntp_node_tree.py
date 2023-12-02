@@ -1,7 +1,5 @@
 from bpy.types import NodeTree
 
-from .utils import ST 
-
 class NTP_NodeTree:
     def __init__(self, node_tree: NodeTree, var: str):
         # Blender node tree object being copied

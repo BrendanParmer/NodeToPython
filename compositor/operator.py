@@ -1,10 +1,9 @@
 import bpy
-import os
 
 from bpy.types import Node
 
-from ..NTP_Operator import NTP_Operator
-from .node_tree import NTP_CompositorNodeTree
+from ..ntp_operator import NTP_Operator
+from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
 from io import StringIO
 from .node_settings import compositor_node_settings
@@ -70,7 +69,7 @@ class NTPCompositorOperator(NTP_Operator):
                          f"name = {str_to_py_str(nt_name)})\n"))
             self._write("\n")
 
-    def _process_node(self, node: Node, ntp_nt: NTP_CompositorNodeTree, inner: str, level: int):
+    def _process_node(self, node: Node, ntp_nt: NTP_NodeTree, inner: str, level: int):
         if node.bl_idname == 'CompositorNodeGroup':
             node_nt = node.node_tree
             if node_nt is not None and node_nt not in self._node_trees:
@@ -133,7 +132,7 @@ class NTPCompositorOperator(NTP_Operator):
 
         self._initialize_compositor_node_tree(outer, nt_var, level, inner, nt_name)
         
-        ntp_nt = NTP_CompositorNodeTree(node_tree, nt_var)
+        ntp_nt = NTP_NodeTree(node_tree, nt_var)
 
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")

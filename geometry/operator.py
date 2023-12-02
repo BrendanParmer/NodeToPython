@@ -4,12 +4,11 @@ from bpy.types import GeometryNodeSimulationOutput
 from bpy.types import GeometryNodeTree
 from bpy.types import Node
 
-import os
 from io import StringIO
 
-from ..NTP_Operator import NTP_Operator
+from ..ntp_operator import NTP_Operator
+from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
-from .node_tree import NTP_GeoNodeTree
 from .node_settings import geo_node_settings
 
 class NTPGeoNodesOperator(NTP_Operator):
@@ -47,7 +46,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             attr_domain = enum_to_py_str(si.attribute_domain)
             self._write((f"{inner}{si_var}.attribute_domain = {attr_domain}\n"))
 
-    def _process_node(self, node: Node, ntp_node_tree: NTP_GeoNodeTree,
+    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree,
                       inner: str, level: int) -> None:
         #create node
         node_var: str = self._create_node(node, inner, ntp_node_tree.var)

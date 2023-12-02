@@ -2,13 +2,12 @@ import bpy
 from bpy.types import Node
 from bpy.types import ShaderNodeTree
 
-import os
 from io import StringIO
 
 from ..utils import *
-from ..NTP_Operator import NTP_Operator
+from ..ntp_operator import NTP_Operator
+from ..ntp_node_tree import NTP_NodeTree
 from .node_settings import shader_node_settings
-from .node_tree import NTP_ShaderNodeTree
 
 MAT_VAR = "mat"
 
@@ -45,7 +44,7 @@ class NTPMaterialOperator(NTP_Operator):
                          f"name = {str_to_py_str(nt_name)})\n"))
             self._write("\n")
 
-    def _process_node(self, node: Node, ntp_node_tree: NTP_ShaderNodeTree, inner: str, level: int) -> None:
+    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str, level: int) -> None:
         #create node
         node_var: str = self._create_node(node, inner, ntp_node_tree.var)
         self._set_settings_defaults(node, inner, node_var)
@@ -84,7 +83,7 @@ class NTPMaterialOperator(NTP_Operator):
 
         self._initialize_shader_node_tree(outer, nt_var, level, inner, nt_name)
 
-        ntp_nt = NTP_ShaderNodeTree(node_tree, nt_var)
+        ntp_nt = NTP_NodeTree(node_tree, nt_var)
 
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")

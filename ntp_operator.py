@@ -5,7 +5,7 @@ from bpy.types import Node, NodeTree, NodeSocketInterface
 import os
 from typing import TextIO
 
-from .NTP_NodeTree import NTP_NodeTree
+from .ntp_node_tree import NTP_NodeTree
 from .utils import *
 
 class NTP_Operator(Operator):
