@@ -179,6 +179,9 @@ class NTP_Operator(Operator):
         #label
         if node.label:
             self._write(f"{inner}{node_var}.label = \"{node.label}\"\n")
+        
+        #name
+        self._write(f"{inner}{node_var}.name = \"{node.name}\"\n")
 
         #color
         if node.use_custom_color:
