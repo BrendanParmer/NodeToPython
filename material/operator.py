@@ -52,16 +52,12 @@ class NTPMaterialOperator(NTP_Operator):
                                 
         if node.bl_idname == 'ShaderNodeGroup':
             self._process_group_node_tree(node, node_var, level, inner)
-        #TODO: should probably be lumped into one function,
-        #it's always called like this and we're double checking it
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            self._group_io_settings(node, inner, "input", 
-                              ntp_node_tree.var, ntp_node_tree.node_tree)
+            self._group_io_settings(node, inner, "input", ntp_node_tree)
             ntp_node_tree.inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
-            self._group_io_settings(node, inner, "output", 
-                              ntp_node_tree.var, ntp_node_tree.node_tree)
+            self._group_io_settings(node, inner, "output", ntp_node_tree)
             ntp_node_tree.outputs_set = True
 
         self._hide_hidden_sockets(node, inner, node_var)

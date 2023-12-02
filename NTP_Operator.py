@@ -286,8 +286,7 @@ class NTP_Operator(Operator):
 
     def _group_io_settings(self, node: bpy.types.Node, inner: str, 
                            io: str, #TODO: convert to enum
-                           node_tree_var: str, 
-                           node_tree: bpy.types.NodeTree) -> None:
+                           ntp_node_tree: NTP_NodeTree) -> None:
         """
         Set the settings for group input and output sockets
 
@@ -299,6 +298,9 @@ class NTP_Operator(Operator):
         node_tree (bpy.types.NodeTree): node tree that we're generating input
             and output settings for
         """
+        node_tree_var = ntp_node_tree.var
+        node_tree = ntp_node_tree.node_tree
+
         if io == "input":
             io_sockets = node.outputs
             io_socket_interfaces = node_tree.inputs
