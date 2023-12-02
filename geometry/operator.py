@@ -121,7 +121,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")
 
-        ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
+        ntp_nt = NTP_NodeTree(node_tree, nt_var)
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
