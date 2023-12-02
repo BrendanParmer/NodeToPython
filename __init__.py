@@ -11,16 +11,17 @@ bl_info = {
 if "bpy" in locals():
     import importlib
     importlib.reload(compositor)
-    importlib.reload(geo_nodes)
-    importlib.reload(materials)
+    importlib.reload(geometry)
+    importlib.reload(material)
     importlib.reload(options)
 else:
     from . import compositor
-    from . import geo_nodes
-    from . import materials
+    from . import geometry
+    from . import material
     from . import options
 
 import bpy
+
 
 class NodeToPythonMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_node_to_python"
@@ -35,21 +36,23 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
 
 
-
-
 classes = [NodeToPythonMenu,
+            #options
             options.NTPOptions,
-            compositor.NTPCompositorOperator,
-            compositor.NTPCompositorScenesMenu,
-            compositor.NTPCompositorGroupsMenu,
-            compositor.NTPCompositorPanel,
-            geo_nodes.NTPGeoNodesOperator,
-            geo_nodes.NTPGeoNodesMenu,
-            geo_nodes.NTPGeoNodesPanel,
-            materials.NTPMaterialOperator,
-            materials.NTPMaterialMenu,
-            materials.NTPMaterialPanel,
-            options.NTPOptionsPanel
+            options.NTPOptionsPanel,
+            #compositor
+            compositor.operator.NTPCompositorOperator,
+            compositor.ui.NTPCompositorScenesMenu,
+            compositor.ui.NTPCompositorGroupsMenu,
+            compositor.ui.NTPCompositorPanel,
+            #geometry
+            geometry.operator.NTPGeoNodesOperator,
+            geometry.ui.NTPGeoNodesMenu,
+            geometry.ui.NTPGeoNodesPanel,
+            #material
+            material.operator.NTPMaterialOperator,
+            material.ui.NTPMaterialMenu,
+            material.ui.NTPMaterialPanel,
             ]
 
 def register():
