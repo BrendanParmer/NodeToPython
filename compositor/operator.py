@@ -103,11 +103,13 @@ class NTPCompositorOperator(NTP_Operator):
                              f"bpy.data.node_groups"
                              f"[\"{node.node_tree.name}\"]\n"))
         elif node.bl_idname == 'NodeGroupInput' and not inputs_set:
-            self._group_io_settings(node, inner, "input", ntp_nt)
+            if bpy.app.version < (4, 0, 0):
+                self._group_io_settings_v3(node, inner, "input", ntp_nt)
             inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not outputs_set:
-            self._group_io_settings(node, inner, "output", ntp_nt)
+            if bpy.app.version < (4, 0, 0):
+                self._group_io_settings_v3(node, inner, "output", ntp_nt)
             outputs_set = True
 
         self._set_socket_defaults(node, node_var, inner)
