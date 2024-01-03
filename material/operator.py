@@ -52,13 +52,11 @@ class NTPMaterialOperator(NTP_Operator):
         if node.bl_idname == 'ShaderNodeGroup':
             self._process_group_node_tree(node, node_var, level, inner)
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            if bpy.app.version < (4, 0, 0):
-                self._group_io_settings_v3(node, inner, "input", ntp_node_tree)
+            self._group_io_settings(node, inner, "input", ntp_node_tree)
             ntp_node_tree.inputs_set = True
 
         elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
-            if bpy.app.version < (4, 0, 0):
-                self._group_io_settings_v3(node, inner, "output", ntp_node_tree)
+            self._group_io_settings(node, inner, "output", ntp_node_tree)
             ntp_node_tree.outputs_set = True
 
         self._hide_hidden_sockets(node, inner, node_var)

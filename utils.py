@@ -55,9 +55,6 @@ class ST(Enum):
     FILE_SLOTS = auto()
     LAYER_SLOTS = auto() #unimplemented
 
-#node tree input sockets that have default properties
-default_sockets = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
-
 def clean_string(string: str, lower: bool = True) -> str:
     """
     Cleans up a string for use as a variable or file name

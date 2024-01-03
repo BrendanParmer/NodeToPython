@@ -29,6 +29,20 @@ class NTP_Operator(Operator):
         ]
     )
 
+    #node tree input sockets that have default properties
+    if bpy.app.version < (4, 0, 0):
+        default_sockets_v3 = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
+    else:
+        nondefault_sockets_v4 = {
+            bpy.types.NodeTreeInterfaceSocketCollection,
+            bpy.types.NodeTreeInterfaceSocketGeometry,
+            bpy.types.NodeTreeInterfaceSocketImage,
+            bpy.types.NodeTreeInterfaceSocketMaterial,
+            bpy.types.NodeTreeInterfaceSocketObject,
+            bpy.types.NodeTreeInterfaceSocketShader,
+            bpy.types.NodeTreeInterfaceSocketTexture
+        }
+
     def __init__(self):
         super().__init__()
 
@@ -275,7 +289,7 @@ class NTP_Operator(Operator):
             inner (str): indentation string
             socket_var (str): variable name for the socket
             """
-            if socket_interface.type not in default_sockets:
+            if socket_interface.type not in self.default_sockets_v3:
                 return
 
             if socket_interface.type == 'RGBA':
@@ -295,9 +309,221 @@ class NTP_Operator(Operator):
                 max_val = socket_interface.max_value
                 self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
-    def _group_io_settings(self, node: bpy.types.Node, inner: str,
-                           io: str,  # TODO: convert to enum
-                           ntp_node_tree: NTP_NodeTree) -> None:
+        def _group_io_settings_v3(self, node: bpy.types.Node, inner: str,
+                            io: str,  # TODO: convert to enum
+                            ntp_node_tree: NTP_NodeTree) -> None:
+            """
+            Set the settings for group input and output sockets
+
+            Parameters:
+            node (bpy.types.Node) : group input/output node
+            inner (str): indentation string
+            io (str): whether we're generating the input or output settings
+            node_tree_var (str): variable name of the generated node tree
+            node_tree (bpy.types.NodeTree): node tree that we're generating 
+                input and output settings for
+            """
+            node_tree_var = ntp_node_tree.var
+            node_tree = ntp_node_tree.node_tree
+
+            if io == "input":
+                io_sockets = node.outputs
+                io_socket_interfaces = node_tree.inputs
+            else:
+                io_sockets = node.inputs
+                io_socket_interfaces = node_tree.outputs
+
+            self._write(f"{inner}#{node_tree_var} {io}s\n")
+            for i, inout in enumerate(io_sockets):
+                if inout.bl_idname == 'NodeSocketVirtual':
+                    continue
+                self._write(f"{inner}#{io} {inout.name}\n")
+                idname = enum_to_py_str(inout.bl_idname)
+                name = str_to_py_str(inout.name)
+                self._write(
+                    f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
+                socket_interface = io_socket_interfaces[i]
+                socket_var = f"{node_tree_var}.{io}s[{i}]"
+
+                self._set_group_socket_default_v3(socket_interface, inner, 
+                                                  socket_var)
+
+                # default attribute name
+                if hasattr(socket_interface, "default_attribute_name"):
+                    if socket_interface.default_attribute_name != "":
+                        dan = str_to_py_str(
+                            socket_interface.default_attribute_name)
+                        self._write((f"{inner}{socket_var}"
+                                    f".default_attribute_name = {dan}\n"))
+
+                # attribute domain
+                if hasattr(socket_interface, "attribute_domain"):
+                    ad = enum_to_py_str(socket_interface.attribute_domain)
+                    self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+
+                # tooltip
+                if socket_interface.description != "":
+                    description = str_to_py_str(socket_interface.description)
+                    self._write(
+                        (f"{inner}{socket_var}.description = {description}\n"))
+
+                # hide_value
+                if socket_interface.hide_value is True:
+                    self._write(f"{inner}{socket_var}.hide_value = True\n")
+
+                # hide in modifier
+                if hasattr(socket_interface, "hide_in_modifier"):
+                    if socket_interface.hide_in_modifier is True:
+                        self._write(
+                            f"{inner}{socket_var}.hide_in_modifier = True\n")
+
+                self._write("\n")
+            self._write("\n")
+    
+    elif bpy.app.version >= (4, 0, 0):
+        def _set_group_socket_default_v4(self, socket_interface: bpy.types.NodeTreeInterfaceSocket,
+                                         inner: str, socket_var: str) -> None:
+            """
+            Set a node group input/output's default properties if they exist
+
+            Parameters:
+            socket_interface (NodeTreeInterfaceSocket): socket interface associated
+                with the input/output
+            inner (str): indentation string
+            socket_var (str): variable name for the socket
+            """
+            if type(socket_interface) in self.nondefault_sockets_v4:
+                return
+
+            dv = socket_interface.default_value
+
+            if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
+                dv = vec4_to_py_str(dv)
+            elif type(dv) in {mathutils.Vector, mathutils.Euler}:
+                dv = vec3_to_py_str(dv)
+            elif type(dv) == str:
+                dv = str_to_py_str(dv)
+            self._write(f"{inner}{socket_var}.default_value = {dv}\n")
+
+            # min value
+            if hasattr(socket_interface, "min_value"):
+                min_val = socket_interface.min_value
+                self._write(f"{inner}{socket_var}.min_value = {min_val}\n")
+            # max value
+            if hasattr(socket_interface, "min_value"):
+                max_val = socket_interface.max_value
+                self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
+
+        def _group_io_settings_v4(self, node: bpy.types.Node, inner: str,
+                            io: str,  # TODO: convert to enum
+                            ntp_node_tree: NTP_NodeTree) -> None:
+            """
+            Set the settings for group input and output sockets
+
+            Parameters:
+            node (bpy.types.Node) : group input/output node
+            inner (str): indentation string
+            io (str): whether we're generating the input or output settings
+            node_tree_var (str): variable name of the generated node tree
+            node_tree (bpy.types.NodeTree): node tree that we're generating 
+                input and output settings for
+            """
+            node_tree_var = ntp_node_tree.var
+            node_tree = ntp_node_tree.node_tree
+
+            if io == "input":
+                io_sockets = node.outputs # Might be removeable,
+                # think we can get all the info from the inouts
+                # from the socket interfaces, need to double check.
+                # If so, then we can just run these at the initialization
+                # of the node tree, meaning we can clean up the clunky
+                # Group Input/Group Output node reliance, two calls
+                # Should be pretty easy to add in panels afterwards,
+                # looks like those are tied fairly close to the new socket
+                # system
+                items_tree = node_tree.interface.items_tree
+                io_socket_interfaces = [item for item in items_tree 
+                                        if item.item_type == 'SOCKET' 
+                                        and item.in_out == 'INPUT']
+            else:
+                io_sockets = node.inputs
+                items_tree = node_tree.interface.items_tree
+                io_socket_interfaces = [item for item in items_tree 
+                                        if item.item_type == 'SOCKET' 
+                                        and item.in_out == 'OUTPUT']
+
+            self._write(f"{inner}#{node_tree_var} {io}s\n")
+            for i, socket_interface in enumerate(io_socket_interfaces):
+                self._write(f"{inner}#{io} {socket_interface.name}\n")
+            
+                socket_interface: bpy.types.NodeTreeInterfaceSocket = io_socket_interfaces[i]
+
+                #initialization
+                socket_var = clean_string(socket_interface.name) + "_socket"
+                name = str_to_py_str(socket_interface.name)
+                in_out_enum = enum_to_py_str(socket_interface.in_out)
+
+                socket_type = enum_to_py_str(socket_interface.bl_socket_idname)
+                """
+                I might be missing something, but the Python API's set up a bit 
+                weird here now. The new socket initialization only accepts types
+                from a list of basic ones, but there doesn't seem to be a way of
+                retrieving just this basic typewithout the subtype information.
+                """
+                if 'Float' in socket_type:
+                    socket_type = enum_to_py_str('NodeSocketFloat')
+                elif 'Int' in socket_type:
+                    socket_type = enum_to_py_str('NodeSocketInt')
+                elif 'Vector' in socket_type:
+                    socket_type = enum_to_py_str('NodeSocketVector')
+                
+
+                self._write(f"{inner}{socket_var} = "
+                            f"{node_tree_var}.interface.new_socket("
+                            f"name = {name}, in_out={in_out_enum}, "
+                            f"socket_type = {socket_type})\n")
+
+                #subtype
+                if hasattr(socket_interface, "subtype"):
+                    subtype = enum_to_py_str(socket_interface.subtype)
+                    self._write(f"{inner}{socket_var}.subtype = {subtype}\n")
+
+                    self._set_group_socket_default_v4(socket_interface, inner, 
+                                                      socket_var)
+
+                # default attribute name
+                if socket_interface.default_attribute_name != "":
+                    dan = str_to_py_str(socket_interface.default_attribute_name)
+                    self._write((f"{inner}{socket_var}.default_attribute_name = {dan}\n"))
+
+                # attribute domain
+                ad = enum_to_py_str(socket_interface.attribute_domain)
+                self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+
+                # tooltip
+                if socket_interface.description != "":
+                    description = str_to_py_str(socket_interface.description)
+                    self._write(
+                        (f"{inner}{socket_var}.description = {description}\n"))
+
+                # hide_value
+                if socket_interface.hide_value is True:
+                    self._write(f"{inner}{socket_var}.hide_value = True\n")
+
+                # hide in modifier
+                if socket_interface.hide_in_modifier is True:
+                    self._write(f"{inner}{socket_var}.hide_in_modifier = True\n")
+
+                #force non field
+                if socket_interface.force_non_field is True:
+                    self._write(f"{inner}{socket_var}.force_non_field = True\n")
+
+                self._write("\n")
+            self._write("\n")
+
+    def _group_io_settings(self, node: bpy.types.Node, inner: str, 
+                            io: str,  # TODO: convert to enum
+                            ntp_node_tree: NTP_NodeTree) -> None:
         """
         Set the settings for group input and output sockets
 
@@ -306,66 +532,13 @@ class NTP_Operator(Operator):
         inner (str): indentation string
         io (str): whether we're generating the input or output settings
         node_tree_var (str): variable name of the generated node tree
-        node_tree (bpy.types.NodeTree): node tree that we're generating input
-            and output settings for
+        node_tree (bpy.types.NodeTree): node tree that we're generating 
+            input and output settings for
         """
-        node_tree_var = ntp_node_tree.var
-        node_tree = ntp_node_tree.node_tree
-
-        if io == "input":
-            io_sockets = node.outputs
-            io_socket_interfaces = node_tree.inputs
+        if bpy.app.version < (4, 0, 0):
+            self._group_io_settings_v3(node, inner, io, ntp_node_tree)
         else:
-            io_sockets = node.inputs
-            io_socket_interfaces = node_tree.outputs
-
-        self._write(f"{inner}#{node_tree_var} {io}s\n")
-        for i, inout in enumerate(io_sockets):
-            if inout.bl_idname == 'NodeSocketVirtual':
-                continue
-            self._write(f"{inner}#{io} {inout.name}\n")
-            idname = enum_to_py_str(inout.bl_idname)
-            name = str_to_py_str(inout.name)
-            self._write(
-                f"{inner}{node_tree_var}.{io}s.new({idname}, {name})\n")
-            socket_interface = io_socket_interfaces[i]
-            socket_var = f"{node_tree_var}.{io}s[{i}]"
-
-            if bpy.app.version < (4, 0, 0):
-                self._set_group_socket_default_v3(
-                    socket_interface, inner, socket_var)
-
-            # default attribute name
-            if hasattr(socket_interface, "default_attribute_name"):
-                if socket_interface.default_attribute_name != "":
-                    dan = str_to_py_str(
-                        socket_interface.default_attribute_name)
-                    self._write((f"{inner}{socket_var}"
-                                 f".default_attribute_name = {dan}\n"))
-
-            # attribute domain
-            if hasattr(socket_interface, "attribute_domain"):
-                ad = enum_to_py_str(socket_interface.attribute_domain)
-                self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
-
-            # tooltip
-            if socket_interface.description != "":
-                description = str_to_py_str(socket_interface.description)
-                self._write(
-                    (f"{inner}{socket_var}.description = {description}\n"))
-
-            # hide_value
-            if socket_interface.hide_value is True:
-                self._write(f"{inner}{socket_var}.hide_value = True\n")
-
-            # hide in modifier
-            if hasattr(socket_interface, "hide_in_modifier"):
-                if socket_interface.hide_in_modifier is True:
-                    self._write(
-                        f"{inner}{socket_var}.hide_in_modifier = True\n")
-
-            self._write("\n")
-        self._write("\n")
+            self._group_io_settings_v4(node, inner, io, ntp_node_tree)
 
     def _set_input_defaults(self, node: bpy.types.Node, inner: str,
                             node_var: str) -> None:
