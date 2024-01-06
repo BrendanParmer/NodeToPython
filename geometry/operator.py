@@ -119,15 +119,22 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._write("\n")
 
         if bpy.app.version >= (4, 0, 0):
-            geo_node_tree_flags =  ["is_mode_edit", 
-                                    "is_mode_sculpt",
-                                    "is_modifier",
-                                    "is_tool",
-                                    "is_type_curve",
-                                    "is_type_mesh",
-                                    "is_type_point_cloud"]
-            for flag in geo_node_tree_flags:
-                self._write(f"{inner}{nt_var}.{flag} = {getattr(node_tree, flag)}\n")
+            is_mod = node_tree.is_modifier
+            is_tool = node_tree.is_tool
+            if is_mod:
+                self._write(f"{inner}{nt_var}.is_modifier = True\n")
+            if is_tool:
+                self._write(f"{inner}{nt_var}.is_tool = True\n")
+
+                tool_flags =  ["is_mode_edit", 
+                               "is_mode_sculpt",
+                               "is_type_curve",
+                               "is_type_mesh",
+                               "is_type_point_cloud"]
+            
+                for flag in tool_flags:
+                    self._write(f"{inner}{nt_var}.{flag} = "
+                                f"{getattr(node_tree, flag)}\n")
             self._write("\n")
     
         #initialize nodes

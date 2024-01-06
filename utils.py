@@ -62,7 +62,7 @@ def clean_string(string: str, lower: bool = True) -> str:
     string (str): The input string
     
     Returns:
-    string (str): The input string ready to be used as a variable
+    string (str): The input string ready to be used as a variable/file
     """
 
     if lower:
