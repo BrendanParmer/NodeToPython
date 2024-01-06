@@ -215,6 +215,8 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
 
     'ShaderNodeMapping'            : [("vector_type", ST.ENUM)],
 
+    'ShaderNodeNormal'             : [],
+
     'ShaderNodeNormalMap'          : [("space",  ST.ENUM),
                                       ("uv_map", ST.STRING)], #TODO
 
@@ -269,5 +271,11 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                           ("filepath",        ST.STRING),
                           ("mode",            ST.ENUM),
                           ("script",          ST.TEXT),
-                          ("use_auto_update", ST.BOOL)]
+                          ("use_auto_update", ST.BOOL)],
+
+    # MISC
+    'NodeFrame' : [],
+    'NodeGroupInput' : [],
+    'NodeGroupOutput' : [],
+    'NodeReroute' : []
 }

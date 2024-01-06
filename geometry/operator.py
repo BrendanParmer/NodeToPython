@@ -118,6 +118,10 @@ class NTPGeoNodesOperator(NTP_Operator):
                      f"name = {str_to_py_str(node_tree.name)})\n"))
         self._write("\n")
 
+        if bpy.app.version >= (4, 0, 0):
+            self._write(f"{inner}{nt_var}.is_modifier = {node_tree.is_modifier}\n")
+            self._write(f"{inner}{nt_var}.is_tool = {node_tree.is_tool}\n")
+
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")
 
