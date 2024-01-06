@@ -29,27 +29,24 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
 
     'CompositorNodeMovieClip'  : [("clip", ST.MOVIE_CLIP)],
 
+    'CompositorNodeTexture'    : [("node_output", ST.INT), #TODO: ??
+                                  ("texture",     ST.TEXTURE)],
+
+    # Input > Constant
+
+    'CompositorNodeRGB'        : [],
+    'CompositorNodeValue'      : [],
+
+    # Input > Scene
+
     'CompositorNodeRLayers'    : [("layer", ST.ENUM),
                                   ("scene", ST.SCENE)],
 
-    'CompositorNodeRGB'        : [],
-
     'CompositorNodeSceneTime'  : [],
-
-    'CompositorNodeTexture'    : [("node_output", ST.INT), #TODO: ??
-                                  ("texture",     ST.TEXTURE)],
 
     'CompositorNodeTime'       : [("curve",       ST.CURVE_MAPPING),
                                   ("frame_end",   ST.INT),
                                   ("frame_start", ST.INT)],
-
-    'CompositorNodeTrackPos'   : [("clip",            ST.MOVIE_CLIP),
-                                  ("frame_relative",  ST.INT),
-                                  ("position",        ST.ENUM),
-                                  ("track_name",      ST.STRING), #TODO: probably not right
-                                  ("tracking_object", ST.STRING)], 
-
-    'CompositorNodeValue'      : [],
 
 
     # OUTPUT
@@ -62,15 +59,13 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                    ("format",      ST.IMAGE_FORMAT_SETTINGS),
                                    ("layer_slots", ST.LAYER_SLOTS)],
 
-    'CompositorNodeLevels'      : [("channel", ST.ENUM)],
-
-    'CompositorNodeSplitViewer' : [("axis",   ST.ENUM),
-                                   ("factor", ST.INT)],
-
     'CompositorNodeViewer'      : [("center_x",   ST.FLOAT),
                                    ("center_y",   ST.FLOAT),
                                    ("tile_order", ST.ENUM),
                                    ("use_alpha",  ST.BOOL)],
+
+    'CompositorNodeSplitViewer' : [("axis",   ST.ENUM),
+                                   ("factor", ST.INT)],
 
 
     # COLOR
@@ -423,14 +418,28 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
     'CompositorNodeTranslate'        : [("use_relative", ST.BOOL),
                                         ("wrap_axis",    ST.ENUM)],
 
+    # TRACKING
+    'CompositorNodeTrackPos'   : [("clip",            ST.MOVIE_CLIP),
+                                  ("frame_relative",  ST.INT),
+                                  ("position",        ST.ENUM),
+                                  ("track_name",      ST.STRING), #TODO: probably not right
+                                  ("tracking_object", ST.STRING)], 
+
+    # UTILITIES
+    'CompositorNodeLevels'      : [("channel", ST.ENUM)],
 
     # LAYOUT
     'CompositorNodeSwitch' : [("check", ST.BOOL)],
 
 
     # MISC
-    'NodeFrame' : [],
-    'NodeGroupInput' : [],
-    'NodeGroupOutput' : [],
-    'NodeReroute' : []
+    'NodeFrame'       : [("label_size", ST.INT),
+                         ("shrink", ST.BOOL),
+                         ("text", ST.TEXT)],
+
+    'NodeGroupInput'  : [],
+
+    'NodeGroupOutput' : [("is_active_output", ST.BOOL)],
+
+    'NodeReroute'     : []
 }
