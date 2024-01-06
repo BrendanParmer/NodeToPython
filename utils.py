@@ -2,10 +2,9 @@ import bpy
 import mathutils
 
 from enum import Enum, auto
-import os
+import keyword
 import re
-import shutil
-from typing import TextIO, Tuple
+from typing import Tuple
 
 IMAGE_DIR_NAME = "imgs"
 
@@ -63,13 +62,19 @@ def clean_string(string: str, lower: bool = True) -> str:
     string (str): The input string
     
     Returns:
-    clean_str: The input string with nasty characters converted to underscores
+    string (str): The input string ready to be used as a variable
     """
 
     if lower:
         string = string.lower()
-    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string)
-    return clean_str
+    string = re.sub(r"[^a-zA-Z0-9_]", '_', string)
+
+    if keyword.iskeyword(string):
+        string = "_" + string
+    elif not (string[0].isalpha() or string[0] == '_'):
+        string = "_" + string
+
+    return string
 
 def enum_to_py_str(enum: str) -> str:
     """
