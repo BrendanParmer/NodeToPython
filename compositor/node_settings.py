@@ -414,7 +414,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                         ("offset_y",     ST.FLOAT),
                                         ("space",        ST.ENUM)],
 
-    'CompositorNodeStablize'         : [("clip",        ST.MOVIE_CLIP),
+    'CompositorNodeStabilize'        : [("clip",        ST.MOVIE_CLIP),
                                         ("filter_type", ST.ENUM),
                                         ("invert",      ST.BOOL)],
 
@@ -425,5 +425,12 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
 
 
     # LAYOUT
-    'CompositorNodeSwitch' : [("check", ST.BOOL)]
+    'CompositorNodeSwitch' : [("check", ST.BOOL)],
+
+
+    # MISC
+    'NodeFrame' : [],
+    'NodeGroupInput' : [],
+    'NodeGroupOutput' : [],
+    'NodeReroute' : []
 }

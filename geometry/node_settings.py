@@ -494,5 +494,12 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                         ("pivot_axis", ST.ENUM)],
                                         
     'FunctionNodeRotateEuler'        : [("space", ST.ENUM),
-                                        ("type",  ST.ENUM)]
+                                        ("type",  ST.ENUM)],
+
+    # MISC
+    'NodeFrame' : [],
+    'NodeGroupInput' : [],
+    'NodeGroupOutput' : [],
+    'NodeReroute' : []
+
 }
