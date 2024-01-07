@@ -229,7 +229,8 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     # Mesh > Write
     'GeometryNodeToolSetFaceSet' : [],
-    'GeometryNodeSetShadeSmooth' : [],
+
+    'GeometryNodeSetShadeSmooth' : [("domain", ST.ENUM)],
 
     # Mesh > Operations
     'GeometryNodeDualMesh'             : [],
