@@ -224,15 +224,22 @@ class NTP_Operator(Operator):
         node_var (str): name of the variable we're using for the node in our add-on
         """
         if node.bl_idname not in self._settings:
-            print((f"NodeToPython: couldn't find {node.bl_idname} in settings."
-                   f"Your Blender version may not be supported"))
+            self.report({'WARNING'},
+                        (f"NodeToPython: couldn't find {node.bl_idname} in "
+                         f"settings. Your Blender version may not be supported"))
             return
 
         for (attr_name, type) in self._settings[node.bl_idname]:
+            if not hasattr(node, attr_name):
+                self.report({'WARNING'}, 
+                            f"NodeToPython: Couldn't find attribute "
+                            f"\"{attr_name}\" for node {node.name} of type "
+                            f"{node.bl_idname}")
+                continue
             attr = getattr(node, attr_name, None)
             if attr is None:
-                print(f"\"{node_var}.{attr_name}\" not found")
                 continue
+
             setting_str = f"{inner}{node_var}.{attr_name}"
             if type == ST.ENUM:
                 if attr != '':

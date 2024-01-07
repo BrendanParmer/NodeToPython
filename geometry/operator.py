@@ -45,8 +45,8 @@ class NTPGeoNodesOperator(NTP_Operator):
             elif node.bl_idname == 'GeometryNodeRepeatOutput':
                 items = "repeat_items"
             else:
-                self.report({'WARNING'}, f"{node.bl_idname} is not recognized "
-                                         f" as avalid zone output")
+                self.report({'WARNING'}, f"NodeToPython: {node.bl_idname} is "
+                                         f"not recognized as a valid zone output")
 
             self._write(f"{inner}# Remove generated {items}\n")
             self._write(f"{inner}for item in {node_var}.{items}:\n")
