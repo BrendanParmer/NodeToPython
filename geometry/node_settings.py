@@ -367,7 +367,7 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'FunctionNodeRandomValue' : [("data_type", ST.ENUM)],
 
     'GeometryNodeRepeatInput'  : [],
-    'GeometryNodeRepeatOutput' : [],
+    'GeometryNodeRepeatOutput' : [("inspection_index", ST.INT)],
 
     'GeometryNodeSwitch' : [("input_type", ST.ENUM)],
     

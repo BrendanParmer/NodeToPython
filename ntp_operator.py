@@ -1069,8 +1069,7 @@ class NTP_Operator(Operator):
             location = "clipboard"
         else:
             location = self._dir
-        self.report({'INFO'},
-                    f"NodeToPython: Saved {object} to {location}")
+        self.report({'INFO'}, f"NodeToPython: Saved {object} to {location}")
 
     # ABSTRACT
     def execute(self):

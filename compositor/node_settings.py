@@ -422,7 +422,7 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
 
 
 
-    #UTILITIES
+    # UTILITIES
     'CompositorNodeMapRange'   : [("use_clamp", ST.BOOL)],
 
     'CompositorNodeMapValue'   : [("max",     ST.VEC1),

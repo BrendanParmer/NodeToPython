@@ -1,8 +1,13 @@
 import bpy
-from bpy.types import GeometryNodeSimulationInput
-from bpy.types import GeometryNodeSimulationOutput
-from bpy.types import GeometryNodeTree
+from bpy.types import GeometryNode, GeometryNodeTree
 from bpy.types import Node
+
+if bpy.app.version >= (3, 6, 0):
+    from bpy.types import GeometryNodeSimulationInput
+    from bpy.types import GeometryNodeSimulationOutput
+if bpy.app.version >= (4, 0, 0):
+    from bpy.types import GeometryNodeRepeatInput
+    from bpy.types import GeometryNodeRepeatOutput
 
 from io import StringIO
 
@@ -30,21 +35,34 @@ class NTPGeoNodesOperator(NTP_Operator):
         super().__init__()
         self._settings = geo_node_settings
 
-    def _process_sim_output_node(self, node: GeometryNodeSimulationOutput,
-                                 inner: str, node_var: str) -> None:
-        self._write(f"{inner}# Remove generated sim state items\n")
-        self._write(f"{inner}for item in {node_var}.state_items:\n")
-        self._write(f"{inner}\t{node_var}.state_items.remove(item)\n")
+    if bpy.app.version >= (3, 6, 0):
+        def _process_zone_output_node(self, node: GeometryNode, inner: str,
+                                    node_var: str) -> None:
+            is_sim = False
+            if node.bl_idname == 'GeometryNodeSimulationOutput':
+                items = "state_items"
+                is_sim = True
+            elif node.bl_idname == 'GeometryNodeRepeatOutput':
+                items = "repeat_items"
+            else:
+                self.report({'WARNING'}, f"{node.bl_idname} is not recognized "
+                                         f" as avalid zone output")
 
-        for i, si in enumerate(node.state_items):
-            socket_type = enum_to_py_str(si.socket_type)
-            name = str_to_py_str(si.name)
-            self._write(f"{inner}#create SSI {name}\n")
-            self._write((f"{inner}{node_var}.state_items.new"
-                         f"({socket_type}, {name})\n"))
-            si_var = f"{node_var}.state_items[{i}]"
-            attr_domain = enum_to_py_str(si.attribute_domain)
-            self._write((f"{inner}{si_var}.attribute_domain = {attr_domain}\n"))
+            self._write(f"{inner}# Remove generated {items}\n")
+            self._write(f"{inner}for item in {node_var}.{items}:\n")
+            self._write(f"{inner}\t{node_var}.{items}.remove(item)\n")
+
+            for i, item in enumerate(getattr(node, items)):
+                socket_type = enum_to_py_str(item.socket_type)
+                name = str_to_py_str(item.name)
+                self._write(f"{inner}# Create item {name}\n")
+                self._write(f"{inner}{node_var}.{items}.new"
+                            f"({socket_type}, {name})\n")
+                if is_sim:
+                    item_var = f"{node_var}.{items}[{i}]"
+                    attr_domain = enum_to_py_str(item.attribute_domain)
+                    self._write((f"{inner}{item_var}.attribute_domain = "
+                                f"{attr_domain}\n"))
 
     def _process_node(self, node: Node, ntp_node_tree: NTP_GeoNodeTree,
                       inner: str, level: int) -> None:
@@ -66,34 +84,42 @@ class NTPGeoNodesOperator(NTP_Operator):
             ntp_node_tree.sim_inputs.append(node)
 
         elif node.bl_idname == 'GeometryNodeSimulationOutput':
-            self._process_sim_output_node(node, inner, node_var)
+            self._process_zone_output_node(node, inner, node_var)
+
+        elif node.bl_idname == 'GeometryNodeRepeatInput':
+            ntp_node_tree.repeat_inputs.append(node)
+        
+        elif node.bl_idname == 'GeometryNodeRepeatOutput':
+            self._process_zone_output_node(node, inner, node_var)
         
         self._hide_hidden_sockets(node, inner, node_var)
 
-        if node.bl_idname != 'GeometryNodeSimulationInput':
+        if node.bl_idname not in {'GeometryNodeSimulationInput', 'GeometryNodeRepeatInput'}:
             self._set_socket_defaults(node, node_var, inner)
 
+    if bpy.app.version >= (3, 6, 0):
+        def _process_zones(self, zone_inputs: list[GeometryNode], 
+                            inner: str) -> None:
+            """
+            Recreates a zone
+            zone_inputs (list[GeometryNodeSimulationInput]): list of 
+                simulation input nodes
+            inner (str): identation string
+            """
+            for zone_input in zone_inputs:
+                zone_output = zone_input.paired_output
 
-    def _process_sim_zones(self, sim_inputs: list[GeometryNodeSimulationInput], 
-                           inner: str) -> None:
-        """
-        Recreate simulation zones
-        sim_inputs (list[GeometryNodeSimulationInput]): list of 
-            simulation input nodes
-        inner (str): identation string
-        """
-        for sim_input in sim_inputs:
-            sim_output = sim_input.paired_output
+                zone_input_var = self._node_vars[zone_input]
+                zone_output_var = self._node_vars[zone_output]
 
-            sim_input_var = self._node_vars[sim_input]
-            sim_output_var = self._node_vars[sim_output]
-            self._write((f"{inner}{sim_input_var}.pair_with_output"
-                         f"({sim_output_var})\n"))
+                self._write(f"{inner}#Process zone input {zone_input.name}\n")
+                self._write((f"{inner}{zone_input_var}.pair_with_output"
+                            f"({zone_output_var})\n"))
 
-            #must set defaults after paired with output
-            self._set_socket_defaults(sim_input, sim_input_var, inner)
-            self._set_socket_defaults(sim_output, sim_output_var, inner)
-
+                #must set defaults after paired with output
+                self._set_socket_defaults(zone_input, zone_input_var, inner)
+                self._set_socket_defaults(zone_output, zone_output_var, inner)
+            self._write("\n")
 
     def _process_node_tree(self, node_tree: GeometryNodeTree, 
                                level: int) -> None:
@@ -145,8 +171,11 @@ class NTPGeoNodesOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner, level)
 
-        self._process_sim_zones(ntp_nt.sim_inputs, inner)
-        
+        if bpy.app.version >= (3, 6, 0):
+            self._process_zones(ntp_nt.sim_inputs, inner)
+        if bpy.app.version >= (4, 0, 0):
+            self._process_zones(ntp_nt.repeat_inputs, inner)
+
         #set look of nodes
         self._set_parents(node_tree, inner)
         self._set_locations(node_tree, inner)
