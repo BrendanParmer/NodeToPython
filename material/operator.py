@@ -28,29 +28,46 @@ class NTPMaterialOperator(NTP_Operator):
                     f"name = {str_to_py_str(self.material_name)})\n"))
         self._write(f"{indent}{MAT_VAR}.use_nodes = True\n")
 
-    def _initialize_shader_node_tree(self, outer, nt_var, level, inner, nt_name):
-         #initialize node group
-        self._write(f"{outer}#initialize {nt_var} node group\n")
-        self._write(f"{outer}def {nt_var}_node_group():\n")
+    def _initialize_shader_node_tree(self, outer: str, ntp_node_tree: NTP_NodeTree, nt_name: str) -> None:
+        """
+        Initialize the shader node group
 
-        if self._is_outermost_node_group(level):
-            self._write(f"{inner}{nt_var} = {MAT_VAR}.node_tree\n")
+        Parameters:
+        outer (str): indentation level
+        ntp_node_tree (NTP_NodeTree): node tree to be generated and 
+            variable to use
+        nt_name (str): name to use for the node tree
+        """
+        self._write(f"{outer}#initialize {nt_name} node group\n")
+        self._write(f"{outer}def {ntp_node_tree.var}_node_group():\n")
+
+        inner = f"{outer}\t"
+        if ntp_node_tree.node_tree == self._base_node_tree:
+            self._write(f"{inner}{ntp_node_tree.var} = {MAT_VAR}.node_tree\n")
             self._write(f"{inner}#start with a clean node tree\n")
-            self._write(f"{inner}for node in {nt_var}.nodes:\n")
-            self._write(f"{inner}\t{nt_var}.nodes.remove(node)\n")
+            self._write(f"{inner}for node in {ntp_node_tree.var}.nodes:\n")
+            self._write(f"{inner}\t{ntp_node_tree.var}.nodes.remove(node)\n")
         else:
-            self._write((f"{inner}{nt_var} = bpy.data.node_groups.new("
+            self._write((f"{inner}{ntp_node_tree.var} = bpy.data.node_groups.new("
                          f"type = \'ShaderNodeTree\', "
                          f"name = {str_to_py_str(nt_name)})\n"))
             self._write("\n")
 
-    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str, level: int) -> None:
-        #create node
+    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str) -> None:
+        """
+        Creates a node and sets settings, inputs, outputs, and cosmetics
+
+        Parameters:
+        node (Node): node to process
+        ntp_node_tree (NTP_NodeTree): node tree the node belongs to, and
+            variable to use
+        inner
+        """
         node_var: str = self._create_node(node, inner, ntp_node_tree.var)
         self._set_settings_defaults(node, inner, node_var)
                                 
         if node.bl_idname == 'ShaderNodeGroup':
-            self._process_group_node_tree(node, node_var, level, inner)
+            self._process_group_node_tree(node, node_var, inner)
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
             self._group_io_settings(node, inner, "input", ntp_node_tree)
             ntp_node_tree.inputs_set = True
@@ -72,7 +89,7 @@ class NTPMaterialOperator(NTP_Operator):
             node groups within node groups and script/add-on differences
         """
 
-        if self._is_outermost_node_group(level):
+        if node_tree == self._base_node_tree:
             nt_var = self._create_var(self.material_name)
             nt_name = self.material_name #TODO: this is probably overcomplicating things if we move to a harder material vs shader node tree difference
         else:
@@ -81,15 +98,15 @@ class NTPMaterialOperator(NTP_Operator):
 
         outer, inner = make_indents(level)
 
-        self._initialize_shader_node_tree(outer, nt_var, level, inner, nt_name)
-
         ntp_nt = NTP_NodeTree(node_tree, nt_var)
+
+        self._initialize_shader_node_tree(outer, ntp_nt, nt_name)
 
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
-            self._process_node(node, ntp_nt, inner, level)
+            self._process_node(node, ntp_nt, inner)
 
         self._set_parents(node_tree, inner)
         self._set_locations(node_tree, inner)
@@ -99,12 +116,15 @@ class NTPMaterialOperator(NTP_Operator):
 
         self._write(f"{inner}return {nt_var}\n")
 
-        self._write(f"\n{outer}{nt_var}_node_group()\n\n")
+        self._write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
+
+        self._node_trees[node_tree] = nt_var
+        
 
     def execute(self, context):
         #find node group to replicate
-        nt = bpy.data.materials[self.material_name].node_tree
-        if nt is None:
+        self._base_node_tree = bpy.data.materials[self.material_name].node_tree
+        if self._base_node_tree is None:
             self.report({'ERROR'}, ("NodeToPython: This doesn't seem to be a "
                                     "valid material. Is Use Nodes selected?"))
             return {'CANCELLED'}
@@ -130,12 +150,15 @@ class NTPMaterialOperator(NTP_Operator):
         elif self.mode == 'SCRIPT':
             self._create_material("")
 
-
         if self.mode == 'ADDON':
             level = 2
         else:
             level = 0        
-        self._process_node_tree(nt, level)
+        
+        node_trees_to_process = self._topological_sort(self._base_node_tree)
+
+        for node_tree in node_trees_to_process:
+            self._process_node_tree(node_tree, level)
 
         if self.mode == 'ADDON':
             self._write("\t\treturn {'FINISHED'}\n\n")

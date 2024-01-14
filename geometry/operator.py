@@ -65,12 +65,12 @@ class NTPGeoNodesOperator(NTP_Operator):
                                 f"{attr_domain}\n"))
 
     def _process_node(self, node: Node, ntp_node_tree: NTP_GeoNodeTree,
-                      inner: str, level: int) -> None:
+                      inner: str) -> None:
         #create node
         node_var: str = self._create_node(node, inner, ntp_node_tree.var)
         self._set_settings_defaults(node, inner, node_var)
         if node.bl_idname == 'GeometryNodeGroup':
-            self._process_group_node_tree(node, node_var, level, inner)
+            self._process_group_node_tree(node, node_var, inner)
 
         elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
             self._group_io_settings(node, inner, "input", ntp_node_tree)
@@ -169,7 +169,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
 
         for node in node_tree.nodes:
-            self._process_node(node, ntp_nt, inner, level)
+            self._process_node(node, ntp_nt, inner)
 
         if bpy.app.version >= (3, 6, 0):
             self._process_zones(ntp_nt.sim_inputs, inner)
@@ -188,7 +188,8 @@ class NTPGeoNodesOperator(NTP_Operator):
 
         #create node group
         self._write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
-        return self._used_vars
+
+        self._node_trees[node_tree] = nt_var
 
 
     def _apply_modifier(self, nt: GeometryNodeTree, nt_var: str):
@@ -226,7 +227,11 @@ class NTPGeoNodesOperator(NTP_Operator):
             level = 2
         else:
             level = 0
-        self._process_node_tree(nt, level)
+
+        node_trees_to_process = self._topological_sort(nt)
+
+        for node_tree in node_trees_to_process:  
+            self._process_node_tree(node_tree, level)
 
         if self.mode == 'ADDON':
             self._apply_modifier(nt, nt_var)

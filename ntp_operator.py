@@ -30,7 +30,7 @@ class NTP_Operator(Operator):
         ]
     )
 
-    #node tree input sockets that have default properties
+    # node tree input sockets that have default properties
     if bpy.app.version < (4, 0, 0):
         default_sockets_v3 = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
     else:
@@ -62,8 +62,11 @@ class NTP_Operator(Operator):
         # Class named for the generated operator
         self._class_name: str = None
 
-        # Set to keep track of already created node trees
-        self._node_trees: set[NodeTree] = set()
+        # Base node tree we're converting
+        self._base_node_tree: NodeTree = None
+
+        # Dictionary to keep track of node tree->variable name pairs
+        self._node_trees: dict[NodeTree, str] = {}
 
         # Dictionary to keep track of node->variable name pairs
         self._node_vars: dict[Node, str] = {}
@@ -134,25 +137,61 @@ class NTP_Operator(Operator):
         self._write("\tbl_options = {\'REGISTER\', \'UNDO\'}\n")
         self._write("\n")
 
-    def _is_outermost_node_group(self, level: int) -> bool:
-        if self.mode == 'ADDON' and level == 2:
-            return True
-        elif self.mode == 'SCRIPT' and level == 0:
-            return True
-        return False
+    def _topological_sort(self, node_tree: NodeTree) -> list[NodeTree]:
+        """
+        Perform a topological sort on the node graph to determine dependencies 
+        and which node groups need processed first
 
-    def _process_group_node_tree(self, node: Node, node_var: str, level: int,
-                                 inner: str) -> None:
+        Parameters:
+        node_tree (NodeTree): the base node tree to convert
+
+        Returns:
+        (list[NodeTree]): the node trees in order of processing
+        """
+        if isinstance(node_tree, bpy.types.CompositorNodeTree):
+            group_node_type = 'CompositorNodeGroup'
+        elif isinstance(node_tree, bpy.types.GeometryNodeTree):
+            group_node_type = 'GeometryNodeGroup'
+        elif isinstance(node_tree, bpy.types.ShaderNodeTree):
+            group_node_type = 'ShaderNodeGroup'
+        
+        visited = set()
+        result: list[NodeTree] = []
+
+        def dfs(nt: NodeTree) -> None:
+            """
+            Helper function to perform depth-first search on a NodeTree
+
+            Parameters:
+            nt (NodeTree): current node tree in the dependency graph
+            """
+            if nt not in visited:
+                visited.add(nt)
+                for group_node in [node for node in nt.nodes
+                                   if node.bl_idname == group_node_type]:
+                    if group_node.node_tree not in visited:
+                        dfs(group_node.node_tree)
+                result.append(nt)
+        
+        dfs(node_tree)
+
+        return result
+
+
+    def _process_group_node_tree(self, node: Node, node_var: str, inner: str
+                                ) -> None:
         """
         Processes node tree of group node if one is present
         """
         node_tree = node.node_tree
-        if node_tree is not None:
-            if node_tree not in self._node_trees:
-                self._process_node_tree(node_tree, level + 1)
-                self._node_trees.add(node_tree)
-            self._write((f"{inner}{node_var}.node_tree = bpy.data.node_groups"
-                         f"[\"{node.node_tree.name}\"]\n"))
+        if node_tree is None:
+            return
+        if node_tree in self._node_trees:
+            nt_var = self._node_trees[node_tree]
+            self._write((f"{inner}{node_var}.node_tree = {nt_var}\n"))
+        else:
+            self.report({'WARNING'}, (f"NodeToPython: Node tree dependency graph " 
+                                      f"wasn't properly initialized"))
 
     def _create_var(self, name: str) -> str:
         """
@@ -160,7 +199,8 @@ class NTP_Operator(Operator):
 
         Parameters:
         name (str): basic string we'd like to create the variable name out of
-        used_vars (dict[str, int]): dictionary containing variable names and usage counts
+        used_vars (dict[str, int]): dictionary containing variable names and 
+            usage counts
 
         Returns:
         clean_name (str): variable name for the node tree
@@ -232,7 +272,7 @@ class NTP_Operator(Operator):
 
         for (attr_name, type) in self._settings[node.bl_idname]:
             if not hasattr(node, attr_name):
-                self.report({'WARNING'}, 
+                self.report({'WARNING'},
                             f"NodeToPython: Couldn't find attribute "
                             f"\"{attr_name}\" for node {node.name} of type "
                             f"{node.bl_idname}")
@@ -318,8 +358,8 @@ class NTP_Operator(Operator):
                 self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
         def _group_io_settings_v3(self, node: bpy.types.Node, inner: str,
-                            io: str,  # TODO: convert to enum
-                            ntp_node_tree: NTP_NodeTree) -> None:
+                                  io: str,  # TODO: convert to enum
+                                  ntp_node_tree: NTP_NodeTree) -> None:
             """
             Set the settings for group input and output sockets
 
@@ -353,7 +393,7 @@ class NTP_Operator(Operator):
                 socket_interface = io_socket_interfaces[i]
                 socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-                self._set_group_socket_default_v3(socket_interface, inner, 
+                self._set_group_socket_default_v3(socket_interface, inner,
                                                   socket_var)
 
                 # default attribute name
@@ -367,7 +407,8 @@ class NTP_Operator(Operator):
                 # attribute domain
                 if hasattr(socket_interface, "attribute_domain"):
                     ad = enum_to_py_str(socket_interface.attribute_domain)
-                    self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+                    self._write(
+                        f"{inner}{socket_var}.attribute_domain = {ad}\n")
 
                 # tooltip
                 if socket_interface.description != "":
@@ -387,7 +428,7 @@ class NTP_Operator(Operator):
 
                 self._write("\n")
             self._write("\n")
-    
+
     elif bpy.app.version >= (4, 0, 0):
         def _set_group_socket_default_v4(self, socket_interface: bpy.types.NodeTreeInterfaceSocket,
                                          inner: str, socket_var: str) -> None:
@@ -425,8 +466,8 @@ class NTP_Operator(Operator):
                 self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
         def _group_io_settings_v4(self, node: bpy.types.Node, inner: str,
-                            io: str,  # TODO: convert to enum
-                            ntp_node_tree: NTP_NodeTree) -> None:
+                                  io: str,  # TODO: convert to enum
+                                  ntp_node_tree: NTP_NodeTree) -> None:
             """
             Set the settings for group input and output sockets
 
@@ -442,7 +483,7 @@ class NTP_Operator(Operator):
             node_tree = ntp_node_tree.node_tree
 
             if io == "input":
-                io_sockets = node.outputs # Might be removeable,
+                io_sockets = node.outputs  # Might be removeable,
                 # think we can get all the info from the inouts
                 # from the socket interfaces, need to double check.
                 # If so, then we can just run these at the initialization
@@ -452,23 +493,23 @@ class NTP_Operator(Operator):
                 # looks like those are tied fairly close to the new socket
                 # system
                 items_tree = node_tree.interface.items_tree
-                io_socket_interfaces = [item for item in items_tree 
-                                        if item.item_type == 'SOCKET' 
+                io_socket_interfaces = [item for item in items_tree
+                                        if item.item_type == 'SOCKET'
                                         and item.in_out == 'INPUT']
             else:
                 io_sockets = node.inputs
                 items_tree = node_tree.interface.items_tree
-                io_socket_interfaces = [item for item in items_tree 
-                                        if item.item_type == 'SOCKET' 
+                io_socket_interfaces = [item for item in items_tree
+                                        if item.item_type == 'SOCKET'
                                         and item.in_out == 'OUTPUT']
 
             self._write(f"{inner}#{node_tree_var} {io}s\n")
             for i, socket_interface in enumerate(io_socket_interfaces):
                 self._write(f"{inner}#{io} {socket_interface.name}\n")
-            
+
                 socket_interface: bpy.types.NodeTreeInterfaceSocket = io_socket_interfaces[i]
 
-                #initialization
+                # initialization
                 socket_var = clean_string(socket_interface.name) + "_socket"
                 name = str_to_py_str(socket_interface.name)
                 in_out_enum = enum_to_py_str(socket_interface.in_out)
@@ -486,25 +527,26 @@ class NTP_Operator(Operator):
                     socket_type = enum_to_py_str('NodeSocketInt')
                 elif 'Vector' in socket_type:
                     socket_type = enum_to_py_str('NodeSocketVector')
-                
 
                 self._write(f"{inner}{socket_var} = "
                             f"{node_tree_var}.interface.new_socket("
                             f"name = {name}, in_out={in_out_enum}, "
                             f"socket_type = {socket_type})\n")
 
-                #subtype
+                # subtype
                 if hasattr(socket_interface, "subtype"):
                     subtype = enum_to_py_str(socket_interface.subtype)
                     self._write(f"{inner}{socket_var}.subtype = {subtype}\n")
 
-                    self._set_group_socket_default_v4(socket_interface, inner, 
+                    self._set_group_socket_default_v4(socket_interface, inner,
                                                       socket_var)
 
                 # default attribute name
                 if socket_interface.default_attribute_name != "":
-                    dan = str_to_py_str(socket_interface.default_attribute_name)
-                    self._write((f"{inner}{socket_var}.default_attribute_name = {dan}\n"))
+                    dan = str_to_py_str(
+                        socket_interface.default_attribute_name)
+                    self._write(
+                        (f"{inner}{socket_var}.default_attribute_name = {dan}\n"))
 
                 # attribute domain
                 ad = enum_to_py_str(socket_interface.attribute_domain)
@@ -522,18 +564,20 @@ class NTP_Operator(Operator):
 
                 # hide in modifier
                 if socket_interface.hide_in_modifier is True:
-                    self._write(f"{inner}{socket_var}.hide_in_modifier = True\n")
+                    self._write(
+                        f"{inner}{socket_var}.hide_in_modifier = True\n")
 
-                #force non field
+                # force non field
                 if socket_interface.force_non_field is True:
-                    self._write(f"{inner}{socket_var}.force_non_field = True\n")
+                    self._write(
+                        f"{inner}{socket_var}.force_non_field = True\n")
 
                 self._write("\n")
             self._write("\n")
 
-    def _group_io_settings(self, node: bpy.types.Node, inner: str, 
-                            io: str,  # TODO: convert to enum
-                            ntp_node_tree: NTP_NodeTree) -> None:
+    def _group_io_settings(self, node: bpy.types.Node, inner: str,
+                           io: str,  # TODO: convert to enum
+                           ntp_node_tree: NTP_NodeTree) -> None:
         """
         Set the settings for group input and output sockets
 
@@ -578,10 +622,10 @@ class NTP_Operator(Operator):
                 elif "Vector" in input.bl_idname:
                     default_val = vec3_to_py_str(input.default_value)
 
-                #rotation types
+                # rotation types
                 elif input.bl_idname == 'NodeSocketRotation':
                     default_val = vec3_to_py_str(input.default_value)
-                    
+
                 # strings
                 elif input.bl_idname == 'NodeSocketString':
                     default_val = str_to_py_str(input.default_value)
@@ -1059,8 +1103,7 @@ class NTP_Operator(Operator):
         shutil.rmtree(self._zip_dir)
 
     # ABSTRACT
-    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str,
-                      level: int) -> None:
+    def _process_node(self, node: Node, ntp_node_tree: NTP_NodeTree, inner: str) -> None:
         return
 
     # ABSTRACT
