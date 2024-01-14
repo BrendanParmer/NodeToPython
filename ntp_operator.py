@@ -1,6 +1,7 @@
 import bpy
 from bpy.types import Context, Operator
 from bpy.types import Node, NodeTree
+from bpy_types import bpy_types
 
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
@@ -408,6 +409,8 @@ class NTP_Operator(Operator):
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
+            elif type(dv) == bpy_types.bpy_prop_array:
+                dv = array_to_py_str(dv)
             elif type(dv) == str:
                 dv = str_to_py_str(dv)
             self._write(f"{inner}{socket_var}.default_value = {dv}\n")

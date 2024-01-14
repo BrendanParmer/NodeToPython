@@ -1,4 +1,5 @@
 import bpy
+from bpy_types import bpy_types
 import mathutils
 
 from enum import Enum, auto
@@ -147,6 +148,24 @@ def vec4_to_py_str(vec4) -> str:
     (str): string version
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
+
+def array_to_py_str(array: bpy_types.bpy_prop_array) -> str:
+    """
+    Converts a bpy_prop_array into a string
+
+    Parameters:
+    array (bpy_prop_array): Blender Python array
+
+    Returns:
+    (str): string version
+    """
+    string = "("
+    for i in range(0, array.__len__()):
+        if i > 0:
+            string += ", "
+        string += f"{array[i]}"
+    string += ")"
+    return string
 
 def color_to_py_str(color: mathutils.Color) -> str:
     """
