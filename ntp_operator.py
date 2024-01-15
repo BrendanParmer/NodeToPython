@@ -474,7 +474,7 @@ class NTP_Operator(Operator):
                            ntp_nt: NTP_NodeTree) -> None:
             self._write(f"{inner}#Socket {socket.name}\n")
             # initialization
-            socket_var = clean_string(socket.name) + "_socket"
+            socket_var = self._create_var(socket.name + "_socket") 
             name = str_to_py_str(socket.name)
             in_out_enum = enum_to_py_str(socket.in_out)
 
@@ -549,7 +549,7 @@ class NTP_Operator(Operator):
                           parent: NodeTreeInterfacePanel, ntp_nt: NTP_NodeTree):
             self._write(f"{inner}#Panel {panel.name}\n")
 
-            panel_var = clean_string(panel.name) + "_panel"
+            panel_var = self._create_var(panel.name + "_panel")
             panel_dict[panel] = panel_var
 
             description_str = ""
