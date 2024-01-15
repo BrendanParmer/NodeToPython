@@ -93,13 +93,15 @@ class NTPCompositorOperator(NTP_Operator):
 
         if node.bl_idname == 'CompositorNodeGroup':
             self._process_group_node_tree(node, node_var, inner)
-        elif node.bl_idname == 'NodeGroupInput' and not ntp_nt.inputs_set:
-            self._group_io_settings(node, inner, "input", ntp_nt)
-            ntp_nt.inputs_set = True
 
-        elif node.bl_idname == 'NodeGroupOutput' and not ntp_nt.outputs_set:
-            self._group_io_settings(node, inner, "output", ntp_nt)
-            ntp_nt.outputs_set = True
+        if bpy.app.version < (4, 0, 0):
+            if node.bl_idname == 'NodeGroupInput' and not ntp_nt.inputs_set:
+                self._group_io_settings(node, inner, "input", ntp_nt)
+                ntp_nt.inputs_set = True
+
+            elif node.bl_idname == 'NodeGroupOutput' and not ntp_nt.outputs_set:
+                self._group_io_settings(node, inner, "output", ntp_nt)
+                ntp_nt.outputs_set = True
 
         self._set_socket_defaults(node, node_var, inner)
     
@@ -123,6 +125,9 @@ class NTPCompositorOperator(NTP_Operator):
 
         ntp_nt = NTP_NodeTree(node_tree, nt_var)
         self._initialize_compositor_node_tree(outer, ntp_nt, nt_name)
+
+        if bpy.app.version >= (4, 0, 0):
+            self._tree_interface_settings(inner, ntp_nt)
 
         #initialize nodes
         self._write(f"{inner}#initialize {nt_var} nodes\n")

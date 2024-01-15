@@ -6,7 +6,7 @@ from bpy_types import bpy_types
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
 else:
-    from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceItem
+    from bpy.types import NodeTreeInterfaceItem, NodeTreeInterfacePanel, NodeTreeInterfaceSocket
 
 import os
 from typing import TextIO
@@ -328,10 +328,11 @@ class NTP_Operator(Operator):
                     attr, inner, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
-        def _set_group_socket_default_v3(self, socket_interface: NodeSocketInterface,
+        def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
                                          inner: str, socket_var: str) -> None:
             """
             Set a node group input/output's default properties if they exist
+            Helper function to _group_io_settings()
 
             Parameters:
             socket_interface (NodeSocketInterface): socket interface associated
@@ -359,9 +360,9 @@ class NTP_Operator(Operator):
                 max_val = socket_interface.max_value
                 self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
-        def _group_io_settings_v3(self, node: bpy.types.Node, inner: str,
-                                  io: str,  # TODO: convert to enum
-                                  ntp_node_tree: NTP_NodeTree) -> None:
+        def _group_io_settings(self, node: bpy.types.Node, inner: str,
+                               io: str,  # TODO: convert to enum
+                               ntp_node_tree: NTP_NodeTree) -> None:
             """
             Set the settings for group input and output sockets
 
@@ -395,7 +396,7 @@ class NTP_Operator(Operator):
                 socket_interface = io_socket_interfaces[i]
                 socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-                self._set_group_socket_default_v3(socket_interface, inner,
+                self._set_group_socket_defaults(socket_interface, inner,
                                                   socket_var)
 
                 # default attribute name
@@ -432,10 +433,10 @@ class NTP_Operator(Operator):
             self._write("\n")
 
     elif bpy.app.version >= (4, 0, 0):
-        def _set_group_socket_default_v4(self, socket_interface: bpy.types.NodeTreeInterfaceSocket,
-                                         inner: str, socket_var: str) -> None:
+        def _set_tree_socket_defaults(self, socket_interface: NodeTreeInterfaceSocket,
+                                      inner: str, socket_var: str) -> None:
             """
-            Set a node group input/output's default properties if they exist
+            Set a node tree input/output's default properties if they exist
 
             Parameters:
             socket_interface (NodeTreeInterfaceSocket): socket interface associated
@@ -467,8 +468,149 @@ class NTP_Operator(Operator):
                 max_val = socket_interface.max_value
                 self._write((f"{inner}{socket_var}.max_value = {max_val}\n"))
 
-        def _tree_interface_settings_v4(self, inner: str,
-                                        ntp_nt: NTP_NodeTree) -> None:
+        def _create_socket(self, inner: str, socket: NodeTreeInterfaceSocket, 
+                           parent: NodeTreeInterfacePanel, 
+                           panel_dict: dict[NodeTreeInterfacePanel, str], 
+                           ntp_nt: NTP_NodeTree) -> None:
+            self._write(f"{inner}#Socket {socket.name}\n")
+            # initialization
+            socket_var = clean_string(socket.name) + "_socket"
+            name = str_to_py_str(socket.name)
+            in_out_enum = enum_to_py_str(socket.in_out)
+
+            socket_type = enum_to_py_str(socket.bl_socket_idname)
+            """
+            I might be missing something, but the Python API's set up a bit 
+            weird here now. The new socket initialization only accepts types
+            from a list of basic ones, but there doesn't seem to be a way of
+            retrieving just this basic type without the subtype information.
+            """
+            if 'Float' in socket_type:
+                socket_type = enum_to_py_str('NodeSocketFloat')
+            elif 'Int' in socket_type:
+                socket_type = enum_to_py_str('NodeSocketInt')
+            elif 'Vector' in socket_type:
+                socket_type = enum_to_py_str('NodeSocketVector')
+
+            if parent is None:
+                optional_parent_str = ""
+            else:
+                optional_parent_str = f", parent = {panel_dict[parent]}"
+
+            self._write(f"{inner}{socket_var} = "
+                        f"{ntp_nt.var}.interface.new_socket("
+                        f"name = {name}, in_out={in_out_enum}, "
+                        f"socket_type = {socket_type}"
+                        f"{optional_parent_str})\n")
+
+            # subtype
+            if hasattr(socket, "subtype"):
+                subtype = enum_to_py_str(socket.subtype)
+                self._write(f"{inner}{socket_var}.subtype = {subtype}\n")
+
+                self._set_tree_socket_defaults(socket, inner, socket_var)
+
+            # default attribute name
+            if socket.default_attribute_name != "":
+                dan = str_to_py_str(
+                    socket.default_attribute_name)
+                self._write(
+                    (f"{inner}{socket_var}.default_attribute_name = {dan}\n"))
+
+            # attribute domain
+            ad = enum_to_py_str(socket.attribute_domain)
+            self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
+
+            # hide_value
+            if socket.hide_value is True:
+                self._write(f"{inner}{socket_var}.hide_value = True\n")
+
+            # hide in modifier
+            if socket.hide_in_modifier is True:
+                self._write(
+                    f"{inner}{socket_var}.hide_in_modifier = True\n")
+
+            # force non field
+            if socket.force_non_field is True:
+                self._write(
+                    f"{inner}{socket_var}.force_non_field = True\n")
+            
+            # tooltip
+            if socket.description != "":
+                description = str_to_py_str(socket.description)
+                self._write(
+                    (f"{inner}{socket_var}.description = {description}\n"))
+
+            self._write("\n")
+
+        def _create_panel(self, inner: str, panel: NodeTreeInterfacePanel, 
+                          panel_dict: dict[NodeTreeInterfacePanel], 
+                          items_processed: set[NodeTreeInterfacePanel], 
+                          parent: NodeTreeInterfacePanel, ntp_nt: NTP_NodeTree):
+            self._write(f"{inner}#Panel {panel.name}\n")
+
+            panel_var = clean_string(panel.name) + "_panel"
+            panel_dict[panel] = panel_var
+
+            description_str = ""
+            if panel.description != "":
+                description_str = f", description = {str_to_py_str(panel.description)}"
+
+            closed_str = ""
+            if panel.default_closed is True:
+                closed_str = f", default_closed=True"
+                
+            parent_str = ""
+            if parent is not None:
+                parent_str = f", parent = {panel_dict[parent]}"
+                
+
+            self._write(f"{inner}{panel_var} = "
+                        f"{ntp_nt.var}.interface.new_panel("
+                        f"{str_to_py_str(panel.name)}{description_str}"
+                        f"{closed_str}{parent_str})\n")
+
+                # tooltip
+            if panel.description != "":
+                description = str_to_py_str(panel.description)
+                self._write(
+                    (f"{inner}{panel_var}.description = {description}\n"))
+
+            panel_dict[panel] = panel_var
+
+            if len(panel.interface_items) > 0:
+                self._process_items(inner, panel, panel_dict, items_processed, ntp_nt)
+            
+            self._write("\n")
+
+        def _process_items(self, inner: str, parent: NodeTreeInterfacePanel, 
+                           panel_dict: dict[NodeTreeInterfacePanel], 
+                           items_processed: set[NodeTreeInterfacePanel], 
+                           ntp_nt: NTP_NodeTree) -> None:
+            if parent is None:
+                items = ntp_nt.node_tree.interface.items_tree
+            else:
+                items = parent.interface_items
+
+            for item in items:
+                if item.parent.index != -1 and item.parent not in panel_dict:
+                    continue # child of panel not processed yet
+                if item in items_processed:
+                    continue
+                
+                items_processed.add(item)
+
+                print(item.name, items_processed)
+
+                if item.item_type == 'SOCKET':
+                    self._create_socket(inner, item, parent, panel_dict, ntp_nt)
+
+                elif item.item_type == 'PANEL':
+                    self._create_panel(inner, item, panel_dict, items_processed,
+                                       parent, ntp_nt)
+
+        def _tree_interface_settings(self, inner: str, ntp_nt: NTP_NodeTree
+                                    ) -> None:
             """
             Set the settings for group input and output sockets
 
@@ -481,153 +623,9 @@ class NTP_Operator(Operator):
             panel_dict: dict[NodeTreeInterfacePanel, str] = {}
             items_processed: set[NodeTreeInterfaceItem] = set()
 
-            def _process_items(parent: NodeTreeInterfacePanel):
-                if parent is None:
-                    items = ntp_nt.node_tree.interface.items_tree
-                else:
-                    items = parent.interface_items
-
-                for item in items:
-                    if item.parent.index != -1 and item.parent not in panel_dict:
-                        continue # child of panel not processed yet
-                    if item in items_processed:
-                        continue
-                    
-                    items_processed.add(item)
-
-                    print(item.name, items_processed)
-
-                    if item.item_type == 'SOCKET':
-                        self._write(f"{inner}#Socket {item.name}\n")
-                        # initialization
-                        socket_var = clean_string(item.name) + "_socket"
-                        name = str_to_py_str(item.name)
-                        in_out_enum = enum_to_py_str(item.in_out)
-
-                        socket_type = enum_to_py_str(item.bl_socket_idname)
-                        """
-                        I might be missing something, but the Python API's set up a bit 
-                        weird here now. The new socket initialization only accepts types
-                        from a list of basic ones, but there doesn't seem to be a way of
-                        retrieving just this basic type without the subtype information.
-                        """
-                        if 'Float' in socket_type:
-                            socket_type = enum_to_py_str('NodeSocketFloat')
-                        elif 'Int' in socket_type:
-                            socket_type = enum_to_py_str('NodeSocketInt')
-                        elif 'Vector' in socket_type:
-                            socket_type = enum_to_py_str('NodeSocketVector')
-
-                        if parent is None:
-                            optional_parent_str = ""
-                        else:
-                            optional_parent_str = f", parent = {panel_dict[parent]}"
-
-                        self._write(f"{inner}{socket_var} = "
-                                    f"{ntp_nt.var}.interface.new_socket("
-                                    f"name = {name}, in_out={in_out_enum}, "
-                                    f"socket_type = {socket_type}"
-                                    f"{optional_parent_str})\n")
-
-                        # subtype
-                        if hasattr(item, "subtype"):
-                            subtype = enum_to_py_str(item.subtype)
-                            self._write(f"{inner}{socket_var}.subtype = {subtype}\n")
-
-                            self._set_group_socket_default_v4(item, inner,
-                                                            socket_var)
-
-                        # default attribute name
-                        if item.default_attribute_name != "":
-                            dan = str_to_py_str(
-                                item.default_attribute_name)
-                            self._write(
-                                (f"{inner}{socket_var}.default_attribute_name = {dan}\n"))
-
-                        # attribute domain
-                        ad = enum_to_py_str(item.attribute_domain)
-                        self._write(f"{inner}{socket_var}.attribute_domain = {ad}\n")
-
-                        # hide_value
-                        if item.hide_value is True:
-                            self._write(f"{inner}{socket_var}.hide_value = True\n")
-
-                        # hide in modifier
-                        if item.hide_in_modifier is True:
-                            self._write(
-                                f"{inner}{socket_var}.hide_in_modifier = True\n")
-
-                        # force non field
-                        if item.force_non_field is True:
-                            self._write(
-                                f"{inner}{socket_var}.force_non_field = True\n")
-                        
-                        # tooltip
-                        if item.description != "":
-                            description = str_to_py_str(item.description)
-                            self._write(
-                                (f"{inner}{socket_var}.description = {description}\n"))
-
-                        self._write("\n")
-
-                    elif item.item_type == 'PANEL':
-
-                        self._write(f"{inner}#Panel {item.name}\n")
-
-                        panel_var = clean_string(item.name) + "_panel"
-                        panel_dict[item] = panel_var
-
-                        description_str = ""
-                        if item.description != "":
-                            description_str = f", description = {str_to_py_str(item.description)}"
-
-                        closed_str = ""
-                        if item.default_closed is True:
-                            closed_str = f", default_closed=True"
-                            
-                        parent_str = ""
-                        if parent is not None:
-                            parent_str = f", parent = {panel_dict[parent]}"
-                            
-
-                        self._write(f"{inner}{panel_var} = "
-                                    f"{ntp_nt.var}.interface.new_panel("
-                                    f"{str_to_py_str(item.name)}{description_str}"
-                                    f"{closed_str}{parent_str})\n")
-
-                         # tooltip
-                        if item.description != "":
-                            description = str_to_py_str(item.description)
-                            self._write(
-                                (f"{inner}{panel_var}.description = {description}\n"))
-
-                        panel_dict[item] = panel_var
-
-                        if len(item.interface_items) > 0:
-                            _process_items(item)
-                        
-                        self._write("\n")   
-
-            _process_items(None)
+            self._process_items(inner, None, panel_dict, items_processed, ntp_nt)
 
             self._write("\n")
-
-    def _group_io_settings(self, node: bpy.types.Node, inner: str,
-                           io: str,  # TODO: convert to enum
-                           ntp_node_tree: NTP_NodeTree) -> None:
-        """
-        Set the settings for group input and output sockets
-
-        Parameters:
-        node (bpy.types.Node) : group input/output node
-        inner (str): indentation string
-        io (str): whether we're generating the input or output settings
-        node_tree_var (str): variable name of the generated node tree
-        node_tree (bpy.types.NodeTree): node tree that we're generating 
-            input and output settings for
-        """
-        if bpy.app.version < (4, 0, 0):
-            self._group_io_settings_v3(node, inner, io, ntp_node_tree)
 
     def _set_input_defaults(self, node: bpy.types.Node, inner: str,
                             node_var: str) -> None:

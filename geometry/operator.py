@@ -69,16 +69,18 @@ class NTPGeoNodesOperator(NTP_Operator):
         #create node
         node_var: str = self._create_node(node, inner, ntp_node_tree.var)
         self._set_settings_defaults(node, inner, node_var)
+
+        if bpy.app.version < (4, 0, 0):
+            if node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
+                self._group_io_settings(node, inner, "input", ntp_node_tree)
+                ntp_node_tree.inputs_set = True
+
+            elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
+                self._group_io_settings(node, inner, "output", ntp_node_tree)
+                ntp_node_tree.outputs_set = True
+
         if node.bl_idname == 'GeometryNodeGroup':
             self._process_group_node_tree(node, node_var, inner)
-
-        elif node.bl_idname == 'NodeGroupInput' and not ntp_node_tree.inputs_set:
-            self._group_io_settings(node, inner, "input", ntp_node_tree)
-            ntp_node_tree.inputs_set = True
-
-        elif node.bl_idname == 'NodeGroupOutput' and not ntp_node_tree.outputs_set:
-            self._group_io_settings(node, inner, "output", ntp_node_tree)
-            ntp_node_tree.outputs_set = True
 
         elif node.bl_idname == 'GeometryNodeSimulationInput':
             ntp_node_tree.sim_inputs.append(node)
@@ -169,7 +171,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
 
         if bpy.app.version >= (4, 0, 0):
-            self._tree_interface_settings_v4(inner, ntp_nt)
+            self._tree_interface_settings(inner, ntp_nt)
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner)
