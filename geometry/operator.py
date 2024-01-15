@@ -168,6 +168,9 @@ class NTPGeoNodesOperator(NTP_Operator):
 
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
 
+        if bpy.app.version >= (4, 0, 0):
+            self._tree_interface_settings_v4(inner, ntp_nt)
+
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt, inner)
 
