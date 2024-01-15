@@ -6,10 +6,12 @@ from bpy_types import bpy_types
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
 else:
-    from bpy.types import NodeTreeInterfaceItem, NodeTreeInterfacePanel, NodeTreeInterfaceSocket
+    from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceSocket
+    from bpy.types import NodeTreeInterfaceItem
 
 import os
 from typing import TextIO
+import shutil
 
 from .ntp_node_tree import NTP_NodeTree
 from .utils import *
@@ -179,11 +181,15 @@ class NTP_Operator(Operator):
 
         return result
 
-
     def _process_group_node_tree(self, node: Node, node_var: str, inner: str
                                 ) -> None:
         """
         Processes node tree of group node if one is present
+
+        Parameters:
+        node (Node): the group node
+        node_var (str): variable for the group node
+        inner (str): indentation
         """
         node_tree = node.node_tree
         if node_tree is None:
@@ -438,6 +444,8 @@ class NTP_Operator(Operator):
             """
             Set a node tree input/output's default properties if they exist
 
+            Helper function to _create_socket()
+
             Parameters:
             socket_interface (NodeTreeInterfaceSocket): socket interface associated
                 with the input/output
@@ -472,6 +480,20 @@ class NTP_Operator(Operator):
                            parent: NodeTreeInterfacePanel, 
                            panel_dict: dict[NodeTreeInterfacePanel, str], 
                            ntp_nt: NTP_NodeTree) -> None:
+            """
+            Initialize a new tree socket
+
+            Helper function to _process_items()
+
+            Parameters:
+            inner (str): indentation string
+            socket (NodeTreeInterfaceSocket): the socket to recreate
+            parent (NodeTreeInterfacePanel): parent panel of the socket
+                (possibly None)
+            panel_dict (dict[NodeTreeInterfacePanel, str]: panel -> variable
+            ntp_nt (NTP_NodeTree): owner of the socket
+            """
+
             self._write(f"{inner}#Socket {socket.name}\n")
             # initialization
             socket_var = self._create_var(socket.name + "_socket") 
@@ -547,6 +569,22 @@ class NTP_Operator(Operator):
                           panel_dict: dict[NodeTreeInterfacePanel], 
                           items_processed: set[NodeTreeInterfacePanel], 
                           parent: NodeTreeInterfacePanel, ntp_nt: NTP_NodeTree):
+            """
+            Initialize a new tree panel and its subitems
+
+            Helper function to _process_items()
+
+            Parameters:
+            inner (str): indentation string
+            panel (NodeTreeInterfacePanel): the panel to recreate
+            panel_dict (dict[NodeTreeInterfacePanel, str]: panel -> variable
+            items_processed (set[NodeTreeInterfacePanel]): set of already
+                processed items, so none are done twice
+            parent (NodeTreeInterfacePanel): parent panel of the socket
+                (possibly None)
+            ntp_nt (NTP_NodeTree): owner of the socket
+            """
+
             self._write(f"{inner}#Panel {panel.name}\n")
 
             panel_var = self._create_var(panel.name + "_panel")
@@ -587,6 +625,21 @@ class NTP_Operator(Operator):
                            panel_dict: dict[NodeTreeInterfacePanel], 
                            items_processed: set[NodeTreeInterfacePanel], 
                            ntp_nt: NTP_NodeTree) -> None:
+            """
+            Recursive function to process all node tree interface items in a 
+            given layer
+
+            Helper function to _tree_interface_settings()
+
+            Parameters:
+            inner (str): indentation string
+            parent (NodeTreeInterfacePanel): parent panel of the layer
+                (possibly None to signify the base)
+            panel_dict (dict[NodeTreeInterfacePanel, str]: panel -> variable
+            items_processed (set[NodeTreeInterfacePanel]): set of already
+                processed items, so none are done twice
+            ntp_nt (NTP_NodeTree): owner of the socket
+            """
             if parent is None:
                 items = ntp_nt.node_tree.interface.items_tree
             else:
