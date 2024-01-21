@@ -1,6 +1,6 @@
 import bpy
 
-from bpy.types import Node
+from bpy.types import Node, CompositorNodeColorBalance, CompositorNodeTree
 
 from ..ntp_operator import NTP_Operator
 from ..ntp_node_tree import NTP_NodeTree
@@ -37,82 +37,102 @@ class NTPCompositorOperator(NTP_Operator):
 
     def _create_scene(self, indent: str):
         #TODO: wrap in more general unique name util function
-        self._write(f"{indent}# Generate unique scene name\n")
-        self._write(f"{indent}{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}\n")
-        self._write(f"{indent}{END_NAME_VAR} = {BASE_NAME_VAR}\n")
-        self._write(f"{indent}if bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
-        self._write(f"{indent}\ti = 1\n")
-        self._write(f"{indent}\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
-        self._write(f"{indent}\twhile bpy.data.scenes.get({END_NAME_VAR}) != None:\n")
-        self._write(f"{indent}\t\t{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"\n")
-        self._write(f"{indent}\t\ti += 1\n\n")
+        self._write(f"# Generate unique scene name", indent)
+        self._write(f"{BASE_NAME_VAR} = {str_to_py_str(self.compositor_name)}",
+                    indent)
+        self._write(f"{END_NAME_VAR} = {BASE_NAME_VAR}", indent)
+        self._write(f"if bpy.data.scenes.get({END_NAME_VAR}) != None:", indent)
 
-        self._write(f"{indent}{SCENE_VAR} = bpy.context.window.scene.copy()\n\n") 
-        self._write(f"{indent}{SCENE_VAR}.name = {END_NAME_VAR}\n")
-        self._write(f"{indent}{SCENE_VAR}.use_fake_user = True\n")
-        self._write(f"{indent}bpy.context.window.scene = {SCENE_VAR}\n")
+        indent2 = f"{indent}\t"
+        self._write(f"i = 1", indent2)
+        self._write(f"{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"", 
+                    indent2)
+        self._write(f"while bpy.data.scenes.get({END_NAME_VAR}) != None:",
+                    indent2)
+        
+        indent3 = f"{indent}\t\t"
+        self._write(f"{END_NAME_VAR} = {BASE_NAME_VAR} + f\".{{i:03d}}\"", indent3)
+        self._write(f"i += 1\n", indent3)
 
-    def _initialize_compositor_node_tree(self, outer, ntp_nt, nt_name):
+        self._write(f"{SCENE_VAR} = bpy.context.window.scene.copy()\n", indent) 
+        self._write(f"{SCENE_VAR}.name = {END_NAME_VAR}", indent)
+        self._write(f"{SCENE_VAR}.use_fake_user = True", indent)
+        self._write(f"bpy.context.window.scene = {SCENE_VAR}", indent)
+
+    def _initialize_compositor_node_tree(self, ntp_nt, nt_name):
         #initialize node group
-        self._write(f"{outer}#initialize {nt_name} node group\n")
-        self._write(f"{outer}def {ntp_nt.var}_node_group():\n")
+        self._write(f"#initialize {nt_name} node group", self._outer)
+        self._write(f"def {ntp_nt.var}_node_group():", self._outer)
 
-        inner = f"{outer}\t"
         if ntp_nt.node_tree == self._base_node_tree:
-            self._write(f"{inner}{ntp_nt.var} = {SCENE_VAR}.node_tree\n")
-            self._write(f"{inner}#start with a clean node tree\n")
-            self._write(f"{inner}for node in {ntp_nt.var}.nodes:\n")
-            self._write(f"{inner}\t{ntp_nt.var}.nodes.remove(node)\n")
+            self._write(f"{ntp_nt.var} = {SCENE_VAR}.node_tree")
+            self._write(f"#start with a clean node tree")
+            self._write(f"for node in {ntp_nt.var}.nodes:")
+            self._write(f"\t{ntp_nt.var}.nodes.remove(node)")
         else:
-            self._write((f"{inner}{ntp_nt.var}"
-                         f"= bpy.data.node_groups.new("
+            self._write((f"{ntp_nt.var} = bpy.data.node_groups.new("
                          f"type = \'CompositorNodeTree\', "
-                         f"name = {str_to_py_str(nt_name)})\n"))
-            self._write("\n")
+                         f"name = {str_to_py_str(nt_name)})"))
+            self._write("")
 
-    def _process_node(self, node: Node, ntp_nt: NTP_NodeTree, inner: str):
-        node_var: str = self._create_node(node, inner, ntp_nt.var)
+    def _set_color_balance_settings(self, node: CompositorNodeColorBalance
+                                   ) -> None:
+        """
+        Sets the color balance settings so we only set the active variables,
+        preventing conflict
+
+        node (CompositorNodeColorBalance): the color balance node
+        """
+        if node.correction_method == 'LIFT_GAMMA_GAIN':
+            lst = [("correction_method", ST.ENUM),                 
+                   ("gain",              ST.COLOR),
+                   ("gamma",             ST.COLOR),
+                   ("lift",              ST.COLOR)]
+        else:
+            lst = [("correction_method", ST.ENUM),
+                   ("offset",            ST.COLOR),
+                   ("offset_basis",      ST.FLOAT),
+                   ("power",             ST.COLOR),
+                   ("slope",             ST.COLOR)]
+
+        self._settings['CompositorNodeColorBalance'] = lst
+
+    def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
+        """
+        Create node and set settings, defaults, and cosmetics
+
+        Parameters:
+        node (Node): node to process
+        ntp_nt (NTP_NodeTree): the node tree that node belongs to
+        """
+        node_var: str = self._create_node(node, ntp_nt.var)
         
         if node.bl_idname == 'CompositorNodeColorBalance':
-            if node.correction_method == 'LIFT_GAMMA_GAIN':
-                lst = [("correction_method", ST.ENUM),                 
-                        ("gain",              ST.COLOR),
-                        ("gamma",             ST.COLOR),
-                        ("lift",              ST.COLOR)]
-            else:
-                lst = [("correction_method", ST.ENUM),
-                        ("offset",            ST.COLOR),
-                        ("offset_basis",      ST.FLOAT),
-                        ("power",             ST.COLOR),
-                        ("slope",             ST.COLOR)]
+            self._set_color_balance_settings(node)
 
-            self._settings['CompositorNodeColorBalance'] = lst
-
-        self._set_settings_defaults(node, inner, node_var)
-        self._hide_hidden_sockets(node, inner, node_var)
+        self._set_settings_defaults(node)
+        self._hide_hidden_sockets(node)
 
         if node.bl_idname == 'CompositorNodeGroup':
-            self._process_group_node_tree(node, node_var, inner)
+            self._process_group_node_tree(node)
 
         if bpy.app.version < (4, 0, 0):
             if node.bl_idname == 'NodeGroupInput' and not ntp_nt.inputs_set:
-                self._group_io_settings(node, inner, "input", ntp_nt)
+                self._group_io_settings(node, "input", ntp_nt)
                 ntp_nt.inputs_set = True
 
             elif node.bl_idname == 'NodeGroupOutput' and not ntp_nt.outputs_set:
-                self._group_io_settings(node, inner, "output", ntp_nt)
+                self._group_io_settings(node, "output", ntp_nt)
                 ntp_nt.outputs_set = True
 
-        self._set_socket_defaults(node, node_var, inner)
+        self._set_socket_defaults(node)
     
-    def _process_node_tree(self, node_tree, level):
+    def _process_node_tree(self, node_tree: CompositorNodeTree):
         """
         Generates a Python function to recreate a compositor node tree
 
         Parameters:
-        node_tree (NodeTree): node tree to be recreated
-        level (int): number of tabs to use for each line
-
+        node_tree (CompositorNodeTree): node tree to be recreated
         """  
         if node_tree == self._base_node_tree:
             nt_var = self._create_var(self.compositor_name)
@@ -121,30 +141,29 @@ class NTPCompositorOperator(NTP_Operator):
             nt_var = self._create_var(node_tree.name)
             nt_name = node_tree.name
 
-        outer, inner = make_indents(level)
+        self._node_tree_vars[node_tree] = nt_var
 
         ntp_nt = NTP_NodeTree(node_tree, nt_var)
-        self._initialize_compositor_node_tree(outer, ntp_nt, nt_name)
+        self._initialize_compositor_node_tree(ntp_nt, nt_name)
 
         if bpy.app.version >= (4, 0, 0):
-            self._tree_interface_settings(inner, ntp_nt)
+            self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"{inner}#initialize {nt_var} nodes\n")
+        self._write(f"#initialize {nt_var} nodes")
 
         for node in node_tree.nodes:
-            self._process_node(node, ntp_nt, inner)
+            self._process_node(node, ntp_nt)
 
-        self._set_parents(node_tree, inner)
-        self._set_locations(node_tree, inner)
-        self._set_dimensions(node_tree, inner)
+        self._set_parents(node_tree)
+        self._set_locations(node_tree)
+        self._set_dimensions(node_tree)
         
-        self._init_links(node_tree, inner, nt_var)
+        self._init_links(node_tree)
         
-        self._write(f"{inner}return {nt_var}\n")
+        self._write(f"return {nt_var}\n")
 
-        self._write(f"\n{outer}{nt_var} = {nt_var}_node_group()\n\n")
-        self._node_trees[node_tree] = nt_var
+        self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
     
     def execute(self, context):
         #find node group to replicate
@@ -164,6 +183,9 @@ class NTPCompositorOperator(NTP_Operator):
         comp_var = clean_string(self.compositor_name)
         
         if self.mode == 'ADDON':
+            self._outer = "\t\t"
+            self._inner = "\t\t\t"
+            
             self._setup_addon_directories(context, comp_var)
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
@@ -172,7 +194,7 @@ class NTPCompositorOperator(NTP_Operator):
             self._class_name = clean_string(self.compositor_name, lower=False)
             self._init_operator(comp_var, self.compositor_name)
 
-            self._write("\tdef execute(self, context):\n")
+            self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
 
@@ -181,19 +203,14 @@ class NTPCompositorOperator(NTP_Operator):
                 self._create_scene("\t\t")
             elif self.mode == 'SCRIPT':
                 self._create_scene("")
-    
-        if self.mode == 'ADDON':
-            level = 2
-        else:
-            level = 0
 
         node_trees_to_process = self._topological_sort(self._base_node_tree)
 
         for node_tree in node_trees_to_process:  
-            self._process_node_tree(node_tree, level)
+            self._process_node_tree(node_tree)
 
         if self.mode == 'ADDON':
-            self._write("\t\treturn {'FINISHED'}\n\n")
+            self._write("return {'FINISHED'}\n", self._outer)
 
             self._create_menu_func()
             self._create_register_func()

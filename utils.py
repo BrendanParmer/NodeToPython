@@ -192,23 +192,3 @@ def img_to_py_str(img : bpy.types.Image) -> str:
     name = img.name.split('.', 1)[0]
     format = img.file_format.lower()
     return f"{name}.{format}"
-
-#TODO: reconsider node tree definitions within node tree definitions
-def make_indents(level: int) -> Tuple[str, str]:
-    """
-    Returns strings with the correct number of indentations 
-    given the level in the function.
-
-    Node groups need processed recursively, 
-    so there can sometimes be functions in functions.
-
-    Parameters:
-    level (int): base number of indentations need
-
-    Returns:
-    outer (str): a basic level of indentation for a node group.
-    inner (str): a level of indentation beyond outer
-    """
-    outer = "\t"*level
-    inner = "\t"*(level + 1)
-    return outer, inner
