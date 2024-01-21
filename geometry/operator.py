@@ -84,10 +84,7 @@ class NTPGeoNodesOperator(NTP_Operator):
                 self._group_io_settings(node, "output", ntp_nt)
                 ntp_nt.outputs_set = True
 
-        if node.bl_idname == 'GeometryNodeGroup':
-            self._process_group_node_tree(node)
-
-        elif node.bl_idname == 'GeometryNodeSimulationInput':
+        if node.bl_idname == 'GeometryNodeSimulationInput':
             ntp_nt.sim_inputs.append(node)
 
         elif node.bl_idname == 'GeometryNodeSimulationOutput':
@@ -101,7 +98,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         
         self._hide_hidden_sockets(node)
 
-        if node.bl_idname not in {'GeometryNodeSimulationInput', 'GeometryNodeRepeatInput'}:
+        if node.bl_idname not in {'GeometryNodeSimulationInput', 
+                                  'GeometryNodeRepeatInput'}:
             self._set_socket_defaults(node)
 
     if bpy.app.version >= (3, 6, 0):

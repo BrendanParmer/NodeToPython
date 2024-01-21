@@ -72,9 +72,6 @@ class NTPMaterialOperator(NTP_Operator):
                 self._group_io_settings(node, "output", ntp_nt)
                 ntp_nt.outputs_set = True
 
-        if node.bl_idname == 'ShaderNodeGroup':
-            self._process_group_node_tree(node)
-
         self._hide_hidden_sockets(node)
         self._set_socket_defaults(node)
 
@@ -135,7 +132,7 @@ class NTPMaterialOperator(NTP_Operator):
         if self.mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
-            
+
             self._setup_addon_directories(context, mat_var)
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")

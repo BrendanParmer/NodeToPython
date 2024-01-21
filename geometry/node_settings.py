@@ -459,6 +459,8 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'FunctionNodeQuaternionToRotation'  : [],
 
     # MISC
+    'GeometryNodeGroup' : [("node_tree", ST.NODE_TREE)],
+
     'NodeFrame'       : [("label_size", ST.INT),
                          ("shrink", ST.BOOL),
                          ("text", ST.TEXT)],

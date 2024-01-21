@@ -186,24 +186,6 @@ class NTP_Operator(Operator):
 
         return result
 
-    def _process_group_node_tree(self, node: Node) -> None:
-        """
-        Processes node tree of group node if one is present
-
-        Parameters:
-        node (Node): the group node
-        """
-        node_tree = node.node_tree
-        if node_tree is None:
-            return
-        if node_tree in self._node_tree_vars:
-            nt_var = self._node_tree_vars[node_tree]
-            node_var = self._node_vars[node]
-            self._write(f"{node_var}.node_tree = {nt_var}")
-        else:
-            self.report({'WARNING'}, (f"NodeToPython: Node tree dependency graph " 
-                                      f"wasn't properly initialized"))
-
     def _create_var(self, name: str) -> str:
         """
         Creates a unique variable name for a node tree
@@ -325,6 +307,8 @@ class NTP_Operator(Operator):
                 self._color_ramp_settings(node, attr_name)
             elif type == ST.CURVE_MAPPING:
                 self._curve_mapping_settings(node, attr_name)
+            elif type == ST.NODE_TREE:
+                self._node_tree_settings(node, attr_name)
             elif type == ST.IMAGE:
                 if self._addon_dir is not None and attr is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
@@ -909,6 +893,25 @@ class NTP_Operator(Operator):
         # update curve
         self._write(f"#update curve after changes")
         self._write(f"{mapping_var}.update()")
+
+    def _node_tree_settings(self, node: Node, attr_name: str) -> None:
+        """
+        Processes node tree of group node if one is present
+
+        Parameters:
+        node (Node): the group node
+        attr_name (str): name of the node tree attribute
+        """
+        node_tree = getattr(node, attr_name)
+        if node_tree is None:
+            return
+        if node_tree in self._node_tree_vars:
+            nt_var = self._node_tree_vars[node_tree]
+            node_var = self._node_vars[node]
+            self._write(f"{node_var}.{attr_name} = {nt_var}")
+        else:
+            self.report({'WARNING'}, (f"NodeToPython: Node tree dependency graph " 
+                                    f"wasn't properly initialized"))
 
     def _save_image(self, img: bpy.types.Image) -> None:
         """

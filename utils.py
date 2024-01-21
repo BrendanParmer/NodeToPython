@@ -34,6 +34,7 @@ class ST(Enum):
     # Special settings
     COLOR_RAMP = auto()
     CURVE_MAPPING = auto()
+    NODE_TREE = auto()
 
     # Asset Library
     MATERIAL = auto() # Handle with asset library

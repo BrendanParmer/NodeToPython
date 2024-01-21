@@ -113,9 +113,6 @@ class NTPCompositorOperator(NTP_Operator):
         self._set_settings_defaults(node)
         self._hide_hidden_sockets(node)
 
-        if node.bl_idname == 'CompositorNodeGroup':
-            self._process_group_node_tree(node)
-
         if bpy.app.version < (4, 0, 0):
             if node.bl_idname == 'NodeGroupInput' and not ntp_nt.inputs_set:
                 self._group_io_settings(node, "input", ntp_nt)
@@ -185,7 +182,7 @@ class NTPCompositorOperator(NTP_Operator):
         if self.mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
-            
+
             self._setup_addon_directories(context, comp_var)
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")

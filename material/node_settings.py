@@ -263,6 +263,8 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                           ("use_auto_update", ST.BOOL)],
 
     # MISC
+    'ShaderNodeGroup' : [('node_tree', ST.NODE_TREE)],
+
     'NodeFrame'       : [("label_size", ST.INT),
                          ("shrink", ST.BOOL),
                          ("text", ST.TEXT)],
