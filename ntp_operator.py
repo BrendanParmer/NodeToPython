@@ -16,6 +16,17 @@ import shutil
 from .ntp_node_tree import NTP_NodeTree
 from .utils import *
 
+INDEX = "i"
+IMAGE_DIR_NAME = "imgs"
+IMAGE_PATH = "image_path"
+BASE_DIR = "base_dir"
+
+reserved_names = {
+                  INDEX,
+                  IMAGE_DIR_NAME,
+                  IMAGE_PATH,
+                  BASE_DIR
+                 }
 
 class NTP_Operator(Operator):
     """
@@ -70,7 +81,6 @@ class NTP_Operator(Operator):
         self._outer: str = ""
         self._inner: str = "\t"
 
-
         # Base node tree we're converting
         self._base_node_tree: NodeTree = None
 
@@ -85,6 +95,9 @@ class NTP_Operator(Operator):
 
         # Dictionary used for setting node properties
         self._settings: dict[str, list[(str, ST)]] = {}
+
+        for name in reserved_names:
+            self._used_vars[name] = 0
 
     def _write(self, string: str, indent: str = None):
         if indent is None:
@@ -192,8 +205,6 @@ class NTP_Operator(Operator):
 
         Parameters:
         name (str): basic string we'd like to create the variable name out of
-        used_vars (dict[str, int]): dictionary containing variable names and 
-            usage counts
 
         Returns:
         clean_name (str): variable name for the node tree
@@ -214,7 +225,7 @@ class NTP_Operator(Operator):
         Initializes a new node with location, dimension, and label info
 
         Parameters:
-        node (bpy.types.Node): node to be copied
+        node (Node): node to be copied
         node_tree_var (str): variable name for the node tree
         Returns:
         node_var (str): variable name for the node
@@ -251,7 +262,7 @@ class NTP_Operator(Operator):
         Sets the defaults for any settings a node may have
 
         Parameters:
-        node (bpy.types.Node): the node object we're copying settings from
+        node (Node): the node object we're copying settings from
         node_var (str): name of the variable we're using for the node in our add-on
         """
         if node.bl_idname not in self._settings:
@@ -296,13 +307,11 @@ class NTP_Operator(Operator):
             elif type == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
                 self._write((f"if {name} in bpy.data.materials:"))
-                self._write((f"\t{node_var}.{attr_name} = "
-                             f"bpy.data.materials[{name}]"))
+                self._write((f"\t{setting_str} = bpy.data.materials[{name}]"))
             elif type == ST.OBJECT:
                 name = str_to_py_str(attr.name)
                 self._write((f"if {name} in bpy.data.objects:"))
-                self._write((f"\t{node_var}.{attr_name} = "
-                             f"bpy.data.objects[{name}]"))
+                self._write((f"\t{setting_str} = bpy.data.objects[{name}]"))
             elif type == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, attr_name)
             elif type == ST.CURVE_MAPPING:
@@ -356,10 +365,9 @@ class NTP_Operator(Operator):
             Set the settings for group input and output sockets
 
             Parameters:
-            node (bpy.types.Node) : group input/output node
+            node (Node) : group input/output node
             io (str): whether we're generating the input or output settings
-            node_tree_var (str): variable name of the generated node tree
-            node_tree (bpy.types.NodeTree): node tree that we're generating 
+            ntp_node_tree (NTP_NodeTree): node tree that we're generating 
                 input and output settings for
             """
             node_tree_var = ntp_node_tree.var
@@ -715,7 +723,7 @@ class NTP_Operator(Operator):
         Some output sockets need default values set. It's rather annoying
 
         Parameters:
-        node (bpy.types.Node): node for the output we're setting
+        node (Node): node for the output we're setting
         """
         # TODO: probably should define elsewhere
         output_default_nodes = {'ShaderNodeValue',
@@ -772,8 +780,7 @@ class NTP_Operator(Operator):
 
         color_ramp: bpy.types.ColorRamp = getattr(node, color_ramp_name)
         if not color_ramp:
-            raise ValueError(
-                f"No color ramp named \"{color_ramp_name}\" found")
+            raise ValueError(f"No color ramp named \"{color_ramp_name}\" found")
 
         node_var = self._node_vars[node]
 
@@ -798,7 +805,7 @@ class NTP_Operator(Operator):
         self._write((f"{ramp_str}.elements.remove"
                     f"({ramp_str}.elements[0])"))
         for i, element in enumerate(color_ramp.elements):
-            element_var = f"{node_var}_cre_{i}"
+            element_var = self._create_var(f"{node_var}_cre_{i}")
             if i == 0:
                 self._write(f"{element_var} = {ramp_str}.elements[{i}]")
                 self._write(f"{element_var}.position = {element.position}")
@@ -861,39 +868,64 @@ class NTP_Operator(Operator):
 
         # create curves
         for i, curve in enumerate(mapping.curves):
-            # TODO: curve function
-            self._write(f"#curve {i}")
-            curve_i = f"{node_var}_curve_{i}"
-            self._write(f"{curve_i} = "
-                        f"{node_var}.{curve_mapping_name}.curves[{i}]")
-
-            # Remove default points when CurveMap is initialized with more than
-            # two points (just CompositorNodeHueCorrect)
-            if (node.bl_idname == 'CompositorNodeHueCorrect'):
-                self._write((f"for i in range"
-                             f"(len({curve_i}.points.values()) - 1, 1, -1):"))
-                self._write(
-                    f"\t{curve_i}.points.remove({curve_i}.points[i])")
-
-            for j, point in enumerate(curve.points):
-                # TODO: point function
-                point_j = f"{curve_i}_point_{j}"
-
-                loc = point.location
-                loc_str = f"{loc[0]}, {loc[1]}"
-                if j < 2:
-                    self._write(f"{point_j} = {curve_i}.points[{j}]")
-                    self._write(f"{point_j}.location = ({loc_str})")
-                else:
-                    self._write(f"{point_j} = {curve_i}.points.new({loc_str})")
-
-                handle = enum_to_py_str(point.handle_type)
-                self._write(f"{point_j}.handle_type = {handle}")
+            self._create_curve_map(node, i, curve, curve_mapping_name)
 
         # update curve
         self._write(f"#update curve after changes")
         self._write(f"{mapping_var}.update()")
 
+    def _create_curve_map(self, node: Node, i: int, curve: bpy.types.CurveMap,
+                          curve_mapping_name: str) -> None:
+        """
+        Helper function to create the ith curve of a node's curve mapping
+
+        Parameters:
+        node (Node): the node with a curve mapping
+        i (int): index of the CurveMap within the mapping
+        curve (bpy.types.CurveMap): the curve map to recreate
+        curve_mapping_name (str): attribute name of the recreated curve mapping
+        """
+        node_var = self._node_vars[node]
+        
+        self._write(f"#curve {i}")
+        curve_i_var = self._create_var(f"{node_var}_curve_{i}")
+        self._write(f"{curve_i_var} = "
+                    f"{node_var}.{curve_mapping_name}.curves[{i}]")
+
+        # Remove default points when CurveMap is initialized with more than
+        # two points (just CompositorNodeHueCorrect)
+        if (node.bl_idname == 'CompositorNodeHueCorrect'):
+            self._write(f"for {INDEX} in range"
+                        f"(len({curve_i_var}.points.values()) - 1, 1, -1):")
+            self._write(f"\t{curve_i_var}.points.remove("
+                        f"{curve_i_var}.points[{INDEX}])")
+
+        for j, point in enumerate(curve.points):
+            self._create_curve_map_point(j, point, curve_i_var)
+
+    def _create_curve_map_point(self, j: int, point: bpy.types.CurveMapPoint,
+                                curve_i_var: str) -> None:
+        """
+        Helper function to recreate a curve map point
+
+        Parameters:
+        j (int): index of the point within the curve map
+        point (CurveMapPoint): point to recreate
+        curve_i_var (str): variable name of the point's curve map
+        """
+        point_j_var = self._create_var(f"{curve_i_var}_point_{j}")
+
+        loc = point.location
+        loc_str = f"{loc[0]}, {loc[1]}"
+        if j < 2:
+            self._write(f"{point_j_var} = {curve_i_var}.points[{j}]")
+            self._write(f"{point_j_var}.location = ({loc_str})")
+        else:
+            self._write(f"{point_j_var} = {curve_i_var}.points.new({loc_str})")
+
+        handle = enum_to_py_str(point.handle_type)
+        self._write(f"{point_j_var}.handle_type = {handle}")
+    
     def _node_tree_settings(self, node: Node, attr_name: str) -> None:
         """
         Processes node tree of group node if one is present
@@ -951,13 +983,13 @@ class NTP_Operator(Operator):
 
         # TODO: convert to special variables
         self._write(f"#load image {img_str}")
-        self._write(f"base_dir = "
+        self._write(f"{BASE_DIR} = "
                     f"os.path.dirname(os.path.abspath(__file__))")
-        self._write(f"image_path = "
-                    f"os.path.join(base_dir, \"{IMAGE_DIR_NAME}\", "
+        self._write(f"{IMAGE_PATH} = "
+                    f"os.path.join({BASE_DIR}, \"{IMAGE_DIR_NAME}\", "
                     f"\"{img_str}\")")
         self._write(f"{img_var} = bpy.data.images.load"
-                    f"(image_path, check_existing = True)")
+                    f"({IMAGE_PATH}, check_existing = True)")
 
         # copy image settings
         self._write(f"#set image settings")
