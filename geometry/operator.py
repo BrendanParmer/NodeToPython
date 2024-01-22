@@ -16,6 +16,15 @@ from ..utils import *
 from .node_tree import NTP_GeoNodeTree
 from .node_settings import geo_node_settings
 
+ITEM = "item"
+OBJECT_NAME = "name"
+OBJECT = "obj"
+MODIFIER = "mod"
+geo_op_reserved_names = {ITEM, 
+                         OBJECT_NAME, 
+                         OBJECT,
+                         MODIFIER}
+
 class NTPGeoNodesOperator(NTP_Operator):
     bl_idname = "node.ntp_geo_nodes"
     bl_label = "Geo Nodes to Python"
@@ -34,6 +43,8 @@ class NTPGeoNodesOperator(NTP_Operator):
     def __init__(self):
         super().__init__()
         self._settings = geo_node_settings
+        for name in geo_op_reserved_names:
+            self._used_vars[name] = 1
 
     if bpy.app.version >= (3, 6, 0):
         def _process_zone_output_node(self, node: GeometryNode) -> None:
@@ -50,15 +61,14 @@ class NTPGeoNodesOperator(NTP_Operator):
             node_var = self._node_vars[node]
 
             self._write(f"# Remove generated {items}")
-            self._write(f"for item in {node_var}.{items}:")
+            self._write(f"for {ITEM} in {node_var}.{items}:")
             self._write(f"\t{node_var}.{items}.remove(item)")
 
             for i, item in enumerate(getattr(node, items)):
                 socket_type = enum_to_py_str(item.socket_type)
                 name = str_to_py_str(item.name)
                 self._write(f"# Create item {name}")
-                self._write(f"{node_var}.{items}.new"
-                            f"({socket_type}, {name})")
+                self._write(f"{node_var}.{items}.new({socket_type}, {name})")
                 if is_sim:
                     item_var = f"{node_var}.{items}[{i}]"
                     ad = enum_to_py_str(item.attribute_domain)
@@ -199,14 +209,14 @@ class NTPGeoNodesOperator(NTP_Operator):
 
     def _apply_modifier(self, nt: GeometryNodeTree, nt_var: str):
         #get object
-        self._write(f"name = bpy.context.object.name", self._outer)
-        self._write(f"obj = bpy.data.objects[name]", self._outer)
+        self._write(f"{OBJECT_NAME} = bpy.context.object.name", self._outer)
+        self._write(f"{OBJECT} = bpy.data.objects[{OBJECT_NAME}]", self._outer)
 
         #set modifier to the one we just created
         mod_name = str_to_py_str(nt.name)
-        self._write(f"mod = obj.modifiers.new(name = {mod_name}, "
+        self._write(f"{MODIFIER} = obj.modifiers.new(name = {mod_name}, "
                     f"type = 'NODES')", self._outer)
-        self._write(f"mod.node_group = {nt_var}", self._outer)
+        self._write(f"{MODIFIER}.node_group = {nt_var}", self._outer)
 
 
     def execute(self, context):

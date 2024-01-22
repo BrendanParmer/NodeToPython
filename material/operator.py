@@ -10,6 +10,8 @@ from ..ntp_node_tree import NTP_NodeTree
 from .node_settings import shader_node_settings
 
 MAT_VAR = "mat"
+NODE = "node"
+shader_op_reserved_names = {MAT_VAR, NODE}
 
 class NTPMaterialOperator(NTP_Operator):
     bl_idname = "node.ntp_material"
@@ -22,6 +24,8 @@ class NTPMaterialOperator(NTP_Operator):
     def __init__(self):
         super().__init__()
         self._settings = shader_node_settings
+        for name in shader_op_reserved_names:
+            self._used_vars[name] = 1
     
     def _create_material(self, indent: str):
         self._write(f"{MAT_VAR} = bpy.data.materials.new("
@@ -44,8 +48,8 @@ class NTPMaterialOperator(NTP_Operator):
         if ntp_node_tree.node_tree == self._base_node_tree:
             self._write(f"{ntp_node_tree.var} = {MAT_VAR}.node_tree")
             self._write(f"#start with a clean node tree")
-            self._write(f"for node in {ntp_node_tree.var}.nodes:")
-            self._write(f"\t{ntp_node_tree.var}.nodes.remove(node)")
+            self._write(f"for {NODE} in {ntp_node_tree.var}.nodes:")
+            self._write(f"\t{ntp_node_tree.var}.nodes.remove({NODE})")
         else:
             self._write((f"{ntp_node_tree.var} = bpy.data.node_groups.new("
                          f"type = \'ShaderNodeTree\', "

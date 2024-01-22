@@ -7,8 +7,6 @@ import keyword
 import re
 from typing import Tuple
 
-IMAGE_DIR_NAME = "imgs"
-
 #node input sockets that are messy to set default values for
 dont_set_defaults = {'NodeSocketGeometry',
                      'NodeSocketShader',
