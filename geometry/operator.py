@@ -2,13 +2,6 @@ import bpy
 from bpy.types import GeometryNode, GeometryNodeTree
 from bpy.types import Node
 
-if bpy.app.version >= (3, 6, 0):
-    from bpy.types import GeometryNodeSimulationInput
-    from bpy.types import GeometryNodeSimulationOutput
-if bpy.app.version >= (4, 0, 0):
-    from bpy.types import GeometryNodeRepeatInput
-    from bpy.types import GeometryNodeRepeatOutput
-
 from io import StringIO
 
 from ..ntp_operator import NTP_Operator

@@ -225,7 +225,7 @@ class NTP_Operator(Operator):
         Initializes a new node with location, dimension, and label info
 
         Parameters:
-        node (bpy.types.Node): node to be copied
+        node (Node): node to be copied
         node_tree_var (str): variable name for the node tree
         Returns:
         node_var (str): variable name for the node
@@ -262,7 +262,7 @@ class NTP_Operator(Operator):
         Sets the defaults for any settings a node may have
 
         Parameters:
-        node (bpy.types.Node): the node object we're copying settings from
+        node (Node): the node object we're copying settings from
         node_var (str): name of the variable we're using for the node in our add-on
         """
         if node.bl_idname not in self._settings:
@@ -365,10 +365,9 @@ class NTP_Operator(Operator):
             Set the settings for group input and output sockets
 
             Parameters:
-            node (bpy.types.Node) : group input/output node
+            node (Node) : group input/output node
             io (str): whether we're generating the input or output settings
-            node_tree_var (str): variable name of the generated node tree
-            node_tree (bpy.types.NodeTree): node tree that we're generating 
+            ntp_node_tree (NTP_NodeTree): node tree that we're generating 
                 input and output settings for
             """
             node_tree_var = ntp_node_tree.var
@@ -724,7 +723,7 @@ class NTP_Operator(Operator):
         Some output sockets need default values set. It's rather annoying
 
         Parameters:
-        node (bpy.types.Node): node for the output we're setting
+        node (Node): node for the output we're setting
         """
         # TODO: probably should define elsewhere
         output_default_nodes = {'ShaderNodeValue',
