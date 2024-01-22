@@ -97,7 +97,7 @@ class NTP_Operator(Operator):
         self._settings: dict[str, list[(str, ST)]] = {}
 
         for name in reserved_names:
-            self._used_vars[name] = 1
+            self._used_vars[name] = 0
 
     def _write(self, string: str, indent: str = None):
         if indent is None:

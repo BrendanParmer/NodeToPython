@@ -44,7 +44,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         super().__init__()
         self._settings = geo_node_settings
         for name in geo_op_reserved_names:
-            self._used_vars[name] = 1
+            self._used_vars[name] = 0
 
     if bpy.app.version >= (3, 6, 0):
         def _process_zone_output_node(self, node: GeometryNode) -> None:

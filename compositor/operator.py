@@ -2,7 +2,7 @@ import bpy
 
 from bpy.types import Node, CompositorNodeColorBalance, CompositorNodeTree
 
-from ..ntp_operator import NTP_Operator
+from ..ntp_operator import NTP_Operator, INDEX
 from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
 from io import StringIO
@@ -35,7 +35,7 @@ class NTPCompositorOperator(NTP_Operator):
         super().__init__()
         self._settings = compositor_node_settings
         for name in comp_op_reserved_names:
-            self._used_vars[name] = 1
+            self._used_vars[name] = 0
 
 
     def _create_scene(self, indent: str):

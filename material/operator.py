@@ -25,7 +25,7 @@ class NTPMaterialOperator(NTP_Operator):
         super().__init__()
         self._settings = shader_node_settings
         for name in shader_op_reserved_names:
-            self._used_vars[name] = 1
+            self._used_vars[name] = 0
     
     def _create_material(self, indent: str):
         self._write(f"{MAT_VAR} = bpy.data.materials.new("
