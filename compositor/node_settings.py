@@ -29,27 +29,24 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
 
     'CompositorNodeMovieClip'  : [("clip", ST.MOVIE_CLIP)],
 
+    'CompositorNodeTexture'    : [("node_output", ST.INT), #TODO: ??
+                                  ("texture",     ST.TEXTURE)],
+
+    # Input > Constant
+
+    'CompositorNodeRGB'        : [],
+    'CompositorNodeValue'      : [],
+
+    # Input > Scene
+
     'CompositorNodeRLayers'    : [("layer", ST.ENUM),
                                   ("scene", ST.SCENE)],
 
-    'CompositorNodeRGB'        : [],
-
     'CompositorNodeSceneTime'  : [],
-
-    'CompositorNodeTexture'    : [("node_output", ST.INT), #TODO: ??
-                                  ("texture",     ST.TEXTURE)],
 
     'CompositorNodeTime'       : [("curve",       ST.CURVE_MAPPING),
                                   ("frame_end",   ST.INT),
                                   ("frame_start", ST.INT)],
-
-    'CompositorNodeTrackPos'   : [("clip",            ST.MOVIE_CLIP),
-                                  ("frame_relative",  ST.INT),
-                                  ("position",        ST.ENUM),
-                                  ("track_name",      ST.STRING), #TODO: probably not right
-                                  ("tracking_object", ST.STRING)], 
-
-    'CompositorNodeValue'      : [],
 
 
     # OUTPUT
@@ -62,21 +59,33 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                    ("format",      ST.IMAGE_FORMAT_SETTINGS),
                                    ("layer_slots", ST.LAYER_SLOTS)],
 
-    'CompositorNodeLevels'      : [("channel", ST.ENUM)],
-
-    'CompositorNodeSplitViewer' : [("axis",   ST.ENUM),
-                                   ("factor", ST.INT)],
-
     'CompositorNodeViewer'      : [("center_x",   ST.FLOAT),
                                    ("center_y",   ST.FLOAT),
                                    ("tile_order", ST.ENUM),
                                    ("use_alpha",  ST.BOOL)],
 
+    'CompositorNodeSplitViewer' : [("axis",   ST.ENUM),
+                                   ("factor", ST.INT)],
+
 
     # COLOR
-    'CompositorNodeAlphaOver'       : [("premul",          ST.FLOAT),
-                                       ("use_premultiply", ST.BOOL)],
+    'CompositorNodePremulKey'         : [("mapping", ST.ENUM)],
 
+    'CompositorNodeValToRGB'          : [("color_ramp", ST.COLOR_RAMP)],
+
+    'CompositorNodeConvertColorSpace' : [("from_color_space", ST.ENUM),
+                                         ("to_color_space",   ST.ENUM)],
+
+
+    'CompositorNodeSetAlpha'          : [("mode", ST.ENUM)],
+
+    'CompositorNodeInvert'            : [("invert_alpha", ST.BOOL),
+                                         ("invert_rgb",   ST.BOOL)],
+
+    'CompositorNodeRGBToBW'           : [],
+
+
+    # Color > Adjust
     'CompositorNodeBrightContrast'  : [("use_premultiply", ST.BOOL)],
 
     'CompositorNodeColorBalance'    : [("correction_method", ST.ENUM),
@@ -120,21 +129,11 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                        ("midtones_end",   ST.FLOAT)],
 
     'CompositorNodeExposure'        : [],
-
     'CompositorNodeGamma'           : [],
 
     'CompositorNodeHueCorrect'      : [("mapping", ST.CURVE_MAPPING)],
 
     'CompositorNodeHueSat'          : [],
-
-    'CompositorNodeInvert'          : [("invert_alpha", ST.BOOL),
-                                       ("invert_rgb",   ST.BOOL)],
-
-    'CompositorNodeMixRGB'          : [("blend_type", ST.ENUM),
-                                       ("use_alpha", ST.BOOL),
-                                       ("use_clamp", ST.BOOL)], #TODO: what is update() method for?
-
-    'CompositorNodePosterize'       : [],
 
     'CompositorNodeCurveRGB'        : [("mapping", ST.CURVE_MAPPING)],
 
@@ -147,46 +146,73 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                        ("offset",       ST.FLOAT),
                                        ("tonemap_type", ST.ENUM)],
 
+    
+    # Color > Mix
+    'CompositorNodeAlphaOver'       : [("premul",          ST.FLOAT),
+                                       ("use_premultiply", ST.BOOL)],
+
+    'CompositorNodeCombineColor'    : [("mode",     ST.ENUM),
+                                       ("ycc_mode", ST.ENUM)],
+
+    'CompositorNodeSeparateColor'   : [("mode",     ST.ENUM),
+                                       ("ycc_mode", ST.ENUM)],
+
+    'CompositorNodeMixRGB'          : [("blend_type", ST.ENUM),
+                                       ("use_alpha", ST.BOOL),
+                                       ("use_clamp", ST.BOOL)], #TODO: what is update() method for?
+
     'CompositorNodeZcombine'        : [("use_alpha",       ST.BOOL),
                                        ("use_antialias_z", ST.BOOL)],
 
-
-    # CONVERTER
-    'CompositorNodePremulKey'         : [("mapping", ST.ENUM)],
-
-    'CompositorNodeValToRGB'          : [("color_ramp", ST.COLOR_RAMP)], 
-
-    'CompositorNodeConvertColorSpace' : [("from_color_space", ST.ENUM),
-                                         ("to_color_space",   ST.ENUM)],
-
-    'CompositorNodeCombineColor'      : [("mode",     ST.ENUM),
-                                         ("ycc_mode", ST.ENUM)],
-
-    'CompositorNodeCombineXYZ'        : [],
-
-    'CompositorNodeIDMask'            : [("index",            ST.INT),
-                                         ("use_antialiasing", ST.BOOL)],
-
-    'CompositorNodeMath'              : [("operation", ST.ENUM),
-                                         ("use_clamp", ST.BOOL)],
-
-    'CompositorNodeRGBToBW'           : [],
-
-    'CompositorNodeSeparateColor'     : [("mode",     ST.ENUM),
-                                         ("ycc_mode", ST.ENUM)],
-
-    'CompositorNodeSeparateXYZ'       : [],
-
-    'CompositorNodeSetAlpha'          : [("mode", ST.ENUM)],
-
-    'CompositorNodeSwitchView'        : [],
 
 
     # FILTER
     'CompositorNodeAntiAliasing'  : [("contrast_limit",  ST.FLOAT),
                                      ("corner_rounding", ST.FLOAT),
                                      ("threshold",       ST.FLOAT)],
+    
+    'CompositorNodeDenoise'       : [("prefilter", ST.ENUM),
+                                     ("use_hdr",   ST.BOOL)],
 
+    'CompositorNodeDespeckle'     : [("threshold",          ST.FLOAT),
+                                     ("threshold_neighbor", ST.FLOAT)],
+
+
+    'CompositorNodeDilateErode'   : [("distance", ST.INT),
+                                     ("edge",     ST.FLOAT),
+                                     ("falloff",  ST.ENUM),
+                                     ("mode",     ST.ENUM)],
+
+    'CompositorNodeInpaint'       : [("distance", ST.INT)],
+
+
+    'CompositorNodeFilter'        : [("filter_type", ST.ENUM)],
+
+    'CompositorNodeGlare'         : [("angle_offset",     ST.FLOAT),
+                                     ("color_modulation", ST.FLOAT),
+                                     ("fade",             ST.FLOAT),
+                                     ("glare_type",       ST.ENUM),
+                                     ("iterations",       ST.INT),
+                                     ("mix",              ST.FLOAT),
+                                     ("quality",          ST.ENUM),
+                                     ("size",             ST.INT),
+                                     ("streaks",          ST.INT),
+                                     ("threshold",        ST.FLOAT),
+                                     ("use_rotate_45",    ST.BOOL)],
+    
+    'CompositorNodeKuwahara'      : [("eccentricity",   ST.FLOAT),
+                                     ("sharpness",      ST.FLOAT),
+                                     ("size",           ST.INT),
+                                     ("uniformity",     ST.INT),
+                                     ("variation",      ST.ENUM)],
+
+    'CompositorNodePixelate'      : [],
+    'CompositorNodePosterize'     : [],
+
+    'CompositorNodeSunBeams'      : [("ray_length", ST.FLOAT),
+                                     ("source",     ST.VEC2)],
+
+    # Filter > Blur
     'CompositorNodeBilateralblur' : [("iterations",  ST.INT),
                                      ("sigma_color", ST.FLOAT),
                                      ("sigma_space", ST.FLOAT)],
@@ -219,14 +245,6 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                      ("use_zbuffer",          ST.BOOL),
                                      ("z_scale",              ST.FLOAT)],
 
-    'CompositorNodeDespeckle'     : [("threshold",          ST.FLOAT),
-                                     ("threshold_neighbor", ST.FLOAT)],
-
-    'CompositorNodeDilateErode'   : [("distance", ST.INT),
-                                     ("edge",     ST.FLOAT),
-                                     ("falloff",  ST.ENUM),
-                                     ("mode",     ST.ENUM)],
-
     'CompositorNodeDBlur'         : [("angle",      ST.FLOAT),
                                      ("center_x",   ST.FLOAT),
                                      ("center_y",   ST.FLOAT),
@@ -234,93 +252,73 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                      ("iterations", ST.INT),
                                      ("spin",       ST.FLOAT),
                                      ("zoom",       ST.FLOAT)],
-
-    'CompositorNodeFilter'        : [("filter_type", ST.ENUM)],
-
-    'CompositorNodeGlare'         : [("angle_offset",     ST.FLOAT),
-                                     ("color_modulation", ST.FLOAT),
-                                     ("fade",             ST.FLOAT),
-                                     ("glare_type",       ST.ENUM),
-                                     ("iterations",       ST.INT),
-                                     ("mix",              ST.FLOAT),
-                                     ("quality",          ST.ENUM),
-                                     ("size",             ST.INT),
-                                     ("streaks",          ST.INT),
-                                     ("threshold",        ST.FLOAT),
-                                     ("use_rotate_45",    ST.BOOL)],
-
-    'CompositorNodeInpaint'       : [("distance", ST.INT)],
-
-    'CompositorNodePixelate'      : [],
-
-    'CompositorNodeSunBeams'      : [("ray_length", ST.FLOAT),
-                                     ("source",     ST.VEC2)],
-
+    
     'CompositorNodeVecBlur'       : [("factor",     ST.FLOAT),
                                      ("samples",    ST.INT),
                                      ("speed_max",  ST.INT),
                                      ("speed_min",  ST.INT),
                                      ("use_curved", ST.BOOL)],
 
+    
+    # KEYING
+    'CompositorNodeChannelMatte'  : [("color_space",   ST.ENUM),
+                                     ("limit_channel", ST.ENUM),
+                                     ("limit_max",     ST.FLOAT),
+                                     ("limit_method",  ST.ENUM),
+                                     ("limit_min",     ST.FLOAT),
+                                     ("matte_channel", ST.ENUM)],
 
-    # VECTOR
-    'CompositorNodeMapRange'  : [("use_clamp", ST.BOOL)],
-
-    'CompositorNodeMapValue'  : [("max",     ST.VEC1),
-                                 ("min",     ST.VEC1),
-                                 ("offset",  ST.VEC1),
-                                 ("size",    ST.VEC1),
-                                 ("use_max", ST.BOOL),
-                                 ("use_min", ST.BOOL)],
-
-    'CompositorNodeNormal'    : [],
-
-    'CompositorNodeNormalize' : [],
-
-    'CompositorNodeCurveVec'  : [("mapping", ST.CURVE_MAPPING)],
-
-
-    # MATTE
-    'CompositorNodeBoxMask'        : [("height",    ST.FLOAT),
-                                      ("mask_type", ST.ENUM),
-                                      ("rotation",  ST.FLOAT),
-                                      ("width",     ST.FLOAT),
-                                      ("x",         ST.FLOAT),
-                                      ("y",         ST.FLOAT)],
-
-    'CompositorNodeChannelMatte'   : [("color_space",   ST.ENUM),
-                                      ("limit_channel", ST.ENUM),
-                                      ("limit_max",     ST.FLOAT),
-                                      ("limit_method",  ST.ENUM),
-                                      ("limit_min",     ST.FLOAT),
-                                      ("matte_channel", ST.ENUM)],
-
-    'CompositorNodeChromaMatte'    : [("gain",          ST.FLOAT),
-                                      ("lift",          ST.FLOAT),
+    'CompositorNodeChromaMatte'   : [("gain",          ST.FLOAT),
+                                     ("lift",          ST.FLOAT),
                                       ("shadow_adjust", ST.FLOAT),
-                                      ("threshold",     ST.FLOAT),
-                                      ("tolerance",     ST.FLOAT)],
+                                     ("threshold",     ST.FLOAT),
+                                     ("tolerance",     ST.FLOAT)],
 
-    'CompositorNodeColorMatte'     : [("color_hue",        ST.FLOAT),
-                                      ("color_saturation", ST.FLOAT),
-                                      ("color_value",      ST.FLOAT)],
+    'CompositorNodeColorMatte'    : [("color_hue",        ST.FLOAT),
+                                     ("color_saturation", ST.FLOAT),
+                                     ("color_value",      ST.FLOAT)],
 
-    'CompositorNodeColorSpill'     : [("channel",       ST.ENUM),
-                                      ("limit_channel", ST.ENUM),
-                                      ("limit_method",  ST.ENUM),
-                                      ("ratio",         ST.FLOAT),
-                                      ("unspill_blue",  ST.FLOAT),
-                                      ("unspill_green", ST.FLOAT),
-                                      ("unspill_red",   ST.FLOAT),
-                                      ("use_unspill",   ST.BOOL)],
+    'CompositorNodeColorSpill'    : [("channel",       ST.ENUM),
+                                     ("limit_channel", ST.ENUM),
+                                     ("limit_method",  ST.ENUM),
+                                     ("ratio",         ST.FLOAT),
+                                     ("unspill_blue",  ST.FLOAT),
+                                     ("unspill_green", ST.FLOAT),
+                                     ("unspill_red",   ST.FLOAT),
+                                     ("use_unspill",   ST.BOOL)],
 
+    'CompositorNodeDiffMatte'     : [("falloff",   ST.FLOAT),
+                                     ("tolerance", ST.FLOAT)],
+
+    'CompositorNodeDistanceMatte' : [("channel",   ST.ENUM),
+                                     ("falloff",   ST.FLOAT),
+                                     ("tolerance", ST.FLOAT)],
+
+    'CompositorNodeKeying'        : [("blur_post",             ST.INT),
+                                     ("blur_pre",              ST.INT),
+                                     ("clip_black",            ST.FLOAT),
+                                     ("clip_white",            ST.FLOAT),
+                                     ("despill_balance",       ST.FLOAT),
+                                     ("despill_factor",        ST.FLOAT),
+                                     ("dilate_distance",       ST.INT),
+                                     ("edge_kernel_radius",    ST.INT),
+                                     ("edge_kernel_tolerance", ST.FLOAT),
+                                     ("feather_distance",      ST.INT),
+                                     ("feather_falloff",       ST.ENUM),
+                                     ("screen_balance",        ST.FLOAT)],
+
+    'CompositorNodeKeyingScreen'  : [("clip",           ST.MOVIE_CLIP),
+                                     ("tracing_object", ST.STRING)],
+
+    'CompositorNodeLumaMatte'     : [("limit_max", ST.FLOAT),
+                                     ("limit_min", ST.FLOAT)],
+
+    # MASK
     'CompositorNodeCryptomatteV2'  : [("add",              ST.COLOR),
                                       ("entries",          ST.CRYPTOMATTE_ENTRIES),
                                       ("frame_duration",   ST.INT),
                                       ("frame_offset",     ST.INT),
                                       ("frame_start",      ST.INT),
-                                      #("has_layers",       ST.BOOL), #TODO: readonly?
-                                      #("has_views",        ST.BOOL), #TODO: readonly?
                                       ("image",            ST.IMAGE),
                                       ("layer",            ST.ENUM),
                                       ("layer_name",       ST.ENUM),
@@ -336,15 +334,13 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                       ("matte_id", ST.STRING),
                                       ("remove",   ST.COLOR)],
 
-    'CompositorNodeDiffMatte'      : [("falloff",   ST.FLOAT),
-                                      ("tolerance", ST.FLOAT)],
 
-    'CompositorNodeDistanceMatte'  : [("channel",   ST.ENUM),
-                                      ("falloff",   ST.FLOAT),
-                                      ("tolerance", ST.FLOAT)],
-
-    'CompositorNodeDoubleEdgeMask' : [("edge_mode",  ST.ENUM),
-                                      ("inner_mode", ST.ENUM)],
+    'CompositorNodeBoxMask'        : [("height",    ST.FLOAT),
+                                      ("mask_type", ST.ENUM),
+                                      ("rotation",  ST.FLOAT),
+                                      ("width",     ST.FLOAT),
+                                      ("x",         ST.FLOAT),
+                                      ("y",         ST.FLOAT)],
 
     'CompositorNodeEllipseMask'    : [("height",    ST.FLOAT),
                                       ("mask_type", ST.ENUM),
@@ -353,27 +349,49 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                       ("x",         ST.FLOAT),
                                       ("y",         ST.FLOAT)],
 
-    'CompositorNodeKeying'         : [("blur_post",             ST.INT),
-                                      ("blur_pre",              ST.INT),
-                                      ("clip_black",            ST.FLOAT),
-                                      ("clip_white",            ST.FLOAT),
-                                      ("despill_balance",       ST.FLOAT),
-                                      ("despill_factor",        ST.FLOAT),
-                                      ("dilate_distance",       ST.INT),
-                                      ("edge_kernel_radius",    ST.INT),
-                                      ("edge_kernel_tolerance", ST.FLOAT),
-                                      ("feather_distance",      ST.INT),
-                                      ("feather_falloff",       ST.ENUM),
-                                      ("screen_balance",        ST.FLOAT)],
 
-    'CompositorNodeKeyingScreen'   : [("clip",           ST.MOVIE_CLIP),
-                                      ("tracing_object", ST.STRING)],
+    'CompositorNodeDoubleEdgeMask' : [("edge_mode",  ST.ENUM),
+                                      ("inner_mode", ST.ENUM)],
 
-    'CompositorNodeLumaMatte'      : [("limit_max", ST.FLOAT),
-                                      ("limit_min", ST.FLOAT)],
+    'CompositorNodeIDMask'         : [("index",            ST.INT),
+                                      ("use_antialiasing", ST.BOOL)],
 
 
-    # DISTORT
+    # TRACKING
+    'CompositorNodePlaneTrackDeform' : [("clip",                ST.MOVIE_CLIP),
+                                        ("motion_blur_samples", ST.INT),
+                                        ("motion_blur_shutter", ST.FLOAT),
+                                        ("plane_track_name",    ST.STRING),
+                                        ("tracking_object",     ST.STRING),
+                                        ("use_motion_blur",     ST.BOOL)],
+
+    'CompositorNodeStabilize'        : [("clip",        ST.MOVIE_CLIP),
+                                        ("filter_type", ST.ENUM),
+                                        ("invert",      ST.BOOL)],
+
+    'CompositorNodeTrackPos'         : [("clip",            ST.MOVIE_CLIP),
+                                        ("frame_relative",  ST.INT),
+                                        ("position",        ST.ENUM),
+                                        ("track_name",      ST.STRING), #TODO: probably not right
+                                        ("tracking_object", ST.STRING)],
+
+
+
+    # TRANSFORM
+    'CompositorNodeRotate'           : [("filter_type",  ST.ENUM)],
+
+    'CompositorNodeScale'            : [("frame_method", ST.ENUM),
+                                        ("offset_x",     ST.FLOAT),
+                                        ("offset_y",     ST.FLOAT),
+                                        ("space",        ST.ENUM)],
+
+
+    'CompositorNodeTransform'        : [("filter_type", ST.ENUM)],
+
+    'CompositorNodeTranslate'        : [("use_relative", ST.BOOL),
+                                        ("wrap_axis",    ST.ENUM)],
+
+
     'CompositorNodeCornerPin'        : [],
 
     'CompositorNodeCrop'             : [("max_x",         ST.INT),
@@ -387,50 +405,65 @@ compositor_node_settings : dict[str, list[(str, ST)]] = {
                                         ("relative",      ST.BOOL),
                                         ("use_crop_size", ST.BOOL)],
 
+
     'CompositorNodeDisplace'         : [],
 
     'CompositorNodeFlip'             : [("axis", ST.ENUM)],
+
+    'CompositorNodeMapUV'            : [("alpha", ST.INT)],
+
 
     'CompositorNodeLensdist'         : [("use_fit",       ST.BOOL),
                                         ("use_jitter",    ST.BOOL),
                                         ("use_projector", ST.BOOL)],
 
-    'CompositorNodeMapUV'            : [("alpha", ST.INT)],
-
     'CompositorNodeMovieDistortion'  : [("clip",            ST.MOVIE_CLIP),
                                         ("distortion_type", ST.ENUM)],
 
-    'CompositorNodePlaneTrackDeform' : [("clip",                ST.MOVIE_CLIP),
-                                        ("motion_blur_samples", ST.INT),
-                                        ("motion_blur_shutter", ST.FLOAT),
-                                        ("plane_track_name",    ST.STRING),
-                                        ("tracking_object",     ST.STRING),
-                                        ("use_motion_blur",     ST.BOOL)],
-
-    'CompositorNodeRotate'           : [("filter_type",  ST.ENUM)],
-
-    'CompositorNodeScale'            : [("frame_method", ST.ENUM),
-                                        ("offset_x",     ST.FLOAT),
-                                        ("offset_y",     ST.FLOAT),
-                                        ("space",        ST.ENUM)],
-
-    'CompositorNodeStabilize'        : [("clip",        ST.MOVIE_CLIP),
-                                        ("filter_type", ST.ENUM),
-                                        ("invert",      ST.BOOL)],
-
-    'CompositorNodeTransform'        : [("filter_type", ST.ENUM)],
-
-    'CompositorNodeTranslate'        : [("use_relative", ST.BOOL),
-                                        ("wrap_axis",    ST.ENUM)],
 
 
-    # LAYOUT
-    'CompositorNodeSwitch' : [("check", ST.BOOL)],
+    # UTILITIES
+    'CompositorNodeMapRange'   : [("use_clamp", ST.BOOL)],
+
+    'CompositorNodeMapValue'   : [("max",     ST.VEC1),
+                                  ("min",     ST.VEC1),
+                                  ("offset",  ST.VEC1),
+                                  ("size",    ST.VEC1),
+                                  ("use_max", ST.BOOL),
+                                  ("use_min", ST.BOOL)],
+
+    'CompositorNodeMath'       : [("operation", ST.ENUM),
+                                  ("use_clamp", ST.BOOL)],
+ 
+ 
+    'CompositorNodeLevels'     : [("channel", ST.ENUM)],
+    
+    'CompositorNodeNormalize'  : [],
+
+
+    'CompositorNodeSwitch'     : [("check", ST.BOOL)],
+
+    'CompositorNodeSwitchView' : [],
+
+
+    # VECTOR
+    'CompositorNodeCombineXYZ'  : [],
+    'CompositorNodeSeparateXYZ' : [],
+    'CompositorNodeNormal'      : [],
+
+    'CompositorNodeCurveVec'    : [("mapping", ST.CURVE_MAPPING)],
 
 
     # MISC
-    'NodeFrame' : [],
-    'NodeGroupInput' : [],
-    'NodeGroupOutput' : [],
-    'NodeReroute' : []
+    'CompositorNodeGroup' : [("node_tree", ST.NODE_TREE)],
+
+    'NodeFrame'       : [("label_size", ST.INT),
+                         ("shrink", ST.BOOL),
+                         ("text", ST.TEXT)],
+
+    'NodeGroupInput'  : [],
+
+    'NodeGroupOutput' : [("is_active_output", ST.BOOL)],
+
+    'NodeReroute'     : []
 }

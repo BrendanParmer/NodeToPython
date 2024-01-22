@@ -1,11 +1,11 @@
 import bpy
+from bpy_types import bpy_types
 import mathutils
 
 from enum import Enum, auto
-import os
+import keyword
 import re
-import shutil
-from typing import TextIO, Tuple
+from typing import Tuple
 
 IMAGE_DIR_NAME = "imgs"
 
@@ -34,6 +34,7 @@ class ST(Enum):
     # Special settings
     COLOR_RAMP = auto()
     CURVE_MAPPING = auto()
+    NODE_TREE = auto()
 
     # Asset Library
     MATERIAL = auto() # Handle with asset library
@@ -63,13 +64,19 @@ def clean_string(string: str, lower: bool = True) -> str:
     string (str): The input string
     
     Returns:
-    clean_str: The input string with nasty characters converted to underscores
+    string (str): The input string ready to be used as a variable/file
     """
 
     if lower:
         string = string.lower()
-    clean_str = re.sub(r"[^a-zA-Z0-9_]", '_', string)
-    return clean_str
+    string = re.sub(r"[^a-zA-Z0-9_]", '_', string)
+
+    if keyword.iskeyword(string):
+        string = "_" + string
+    elif not (string[0].isalpha() or string[0] == '_'):
+        string = "_" + string
+
+    return string
 
 def enum_to_py_str(enum: str) -> str:
     """
@@ -143,6 +150,24 @@ def vec4_to_py_str(vec4) -> str:
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
 
+def array_to_py_str(array: bpy_types.bpy_prop_array) -> str:
+    """
+    Converts a bpy_prop_array into a string
+
+    Parameters:
+    array (bpy_prop_array): Blender Python array
+
+    Returns:
+    (str): string version
+    """
+    string = "("
+    for i in range(0, array.__len__()):
+        if i > 0:
+            string += ", "
+        string += f"{array[i]}"
+    string += ")"
+    return string
+
 def color_to_py_str(color: mathutils.Color) -> str:
     """
     Converts a mathutils.Color into a string
@@ -168,23 +193,3 @@ def img_to_py_str(img : bpy.types.Image) -> str:
     name = img.name.split('.', 1)[0]
     format = img.file_format.lower()
     return f"{name}.{format}"
-
-#TODO: reconsider node tree definitions within node tree definitions
-def make_indents(level: int) -> Tuple[str, str]:
-    """
-    Returns strings with the correct number of indentations 
-    given the level in the function.
-
-    Node groups need processed recursively, 
-    so there can sometimes be functions in functions.
-
-    Parameters:
-    level (int): base number of indentations need
-
-    Returns:
-    outer (str): a basic level of indentation for a node group.
-    inner (str): a level of indentation beyond outer
-    """
-    outer = "\t"*level
-    inner = "\t"*(level + 1)
-    return outer, inner

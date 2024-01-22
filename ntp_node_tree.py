@@ -1,4 +1,5 @@
 from bpy.types import NodeTree
+import bpy
 
 class NTP_NodeTree:
     def __init__(self, node_tree: NodeTree, var: str):
@@ -8,7 +9,8 @@ class NTP_NodeTree:
         # The variable named for the regenerated node tree
         self.var: str = var
 
-        # Keep track of if we need to set the default values for the node
-        # tree inputs and outputs
-        self.inputs_set: bool = False
-        self.outputs_set: bool = False
+        if bpy.app.version < (4, 0, 0):
+            # Keep track of if we need to set the default values for the node
+            # tree inputs and outputs
+            self.inputs_set: bool = False
+            self.outputs_set: bool = False

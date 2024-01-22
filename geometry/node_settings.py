@@ -43,16 +43,16 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'NodeGroupInput' : [],
     
     # Input > Scene
+    'GeometryNodeTool3DCursor'   : [],
+
     'GeometryNodeCollectionInfo' : [("transform_space", ST.ENUM)],
 
     'GeometryNodeImageInfo'      : [],
-
     'GeometryNodeIsViewport'     : [],
 
     'GeometryNodeObjectInfo'     : [("transform_space", ST.ENUM)],
 
     'GeometryNodeSelfObject'     : [],
-
     'GeometryNodeInputSceneTime' : [],
 
 
@@ -64,21 +64,18 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     # GEOMETRY
     'GeometryNodeJoinGeometry'       : [],
-
     'GeometryNodeGeometryToInstance' : [],
 
     # Geometry > Read
     'GeometryNodeInputID'             : [],
-
     'GeometryNodeInputIndex'          : [],
 
     'GeometryNodeInputNamedAttribute' : [("data_type", ST.ENUM)],
 
     'GeometryNodeInputNormal'         : [],
-
     'GeometryNodeInputPosition'       : [],
-
     'GeometryNodeInputRadius'         : [],
+    'GeometryNodeToolSelection'       : [],
 
     # Geometry > Sample
     'GeometryNodeProximity'      : [("target_element", ST.ENUM)],
@@ -95,13 +92,12 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeSampleNearest'  : [("domain", ST.ENUM)],
 
     # Geometry > Write
-    'GeometryNodeSetID'       : [],
-
-    'GeometryNodeSetPosition' : [],
+    'GeometryNodeSetID'            : [],
+    'GeometryNodeSetPosition'      : [],
+    'GeometryNodeToolSetSelection' : [],
 
     # Geometry > Operations
     'GeometryNodeBoundBox'           : [],
-
     'GeometryNodeConvexHull'         : [],
 
     'GeometryNodeDeleteGeometry'     : [("domain", ST.ENUM),
@@ -112,7 +108,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeMergeByDistance'    : [("mode",   ST.ENUM)],
 
     'GeometryNodeTransform'          : [],
-
     'GeometryNodeSeparateComponents' : [],
 
     'GeometryNodeSeparateGeometry'   : [("domain", ST.ENUM)],
@@ -121,24 +116,17 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     # CURVE
     # Curve > Read
     'GeometryNodeInputCurveHandlePositions' : [],
-
     'GeometryNodeCurveLength'               : [],
-
     'GeometryNodeInputTangent'              : [],
-
     'GeometryNodeInputCurveTilt'            : [],
-
     'GeometryNodeCurveEndpointSelection'    : [],
 
     'GeometryNodeCurveHandleTypeSelection'  : [("handle_type", ST.ENUM),
                                                ("mode",        ST.ENUM_SET)],
 
     'GeometryNodeInputSplineCyclic'         : [],
-
     'GeometryNodeSplineLength'              : [],
-
     'GeometryNodeSplineParameter'           : [],
-
     'GeometryNodeInputSplineResolution'     : [],
 
     # Curve > Sample
@@ -150,7 +138,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeSetCurveNormal'          : [("mode", ST.ENUM)],
 
     'GeometryNodeSetCurveRadius'          : [],
-
     'GeometryNodeSetCurveTilt'            : [],
 
     'GeometryNodeSetCurveHandlePositions' : [("mode", ST.ENUM)],
@@ -159,7 +146,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                              ("mode",        ST.ENUM_SET)],
 
     'GeometryNodeSetSplineCyclic'         : [],
-
     'GeometryNodeSetSplineResolution'     : [],
 
     'GeometryNodeCurveSplineType'         : [("spline_type", ST.ENUM)],
@@ -180,7 +166,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeResampleCurve'         : [("mode", ST.ENUM)],
 
     'GeometryNodeReverseCurve'          : [],
-
     'GeometryNodeSubdivideCurve'        : [],
 
     'GeometryNodeTrimCurve'             : [("mode", ST.ENUM)],
@@ -195,7 +180,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeCurvePrimitiveLine'          : [("mode", ST.ENUM)],
 
     'GeometryNodeCurveSpiral'                 : [],
-
     'GeometryNodeCurveQuadraticBezier'        : [],
 
     'GeometryNodeCurvePrimitiveQuadrilateral' : [("mode", ST.ENUM)],
@@ -204,54 +188,38 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     # Curve > Topology
     'GeometryNodeOffsetPointInCurve' : [],
-
     'GeometryNodeCurveOfPoint'       : [],
-
     'GeometryNodePointsOfCurve'      : [],
 
 
     # INSTANCES
     'GeometryNodeInstanceOnPoints'      : [],
-
     'GeometryNodeInstancesToPoints'     : [],
 
     'GeometryNodeRealizeInstances'      : [("legacy_behavior", ST.BOOL)],
 
     'GeometryNodeRotateInstances'       : [],
-
     'GeometryNodeScaleInstances'        : [],
-
     'GeometryNodeTranslateInstances'    : [],
-
     'GeometryNodeInputInstanceRotation' : [],
-
     'GeometryNodeInputInstanceScale'    : [],
 
 
     # MESH
     # Mesh > Read
     'GeometryNodeInputMeshEdgeAngle'       : [],
-
     'GeometryNodeInputMeshEdgeNeighbors'   : [],
-    
     'GeometryNodeInputMeshEdgeVertices'    : [],
-
     'GeometryNodeEdgesToFaceGroups'        : [],
-
     'GeometryNodeInputMeshFaceArea'        : [],
-
     'GeometryNodeInputMeshFaceNeighbors'   : [],
-
+    'GeometryNodeToolFaceSet'              : [],
     'GeometryNodeMeshFaceSetBoundaries'    : [],
-
     'GeometryNodeInputMeshFaceIsPlanar'    : [],
-
     'GeometryNodeInputShadeSmooth'         : [],
-
+    'GeometryNodeInputEdgeSmooth'          : [],
     'GeometryNodeInputMeshIsland'          : [],
-
     'GeometryNodeInputShortestEdgePaths'   : [],
-
     'GeometryNodeInputMeshVertexNeighbors' : [],
 
     # Mesh > Sample
@@ -260,13 +228,13 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeSampleUVSurface'      : [("data_type", ST.ENUM)],
 
     # Mesh > Write
-    'GeometryNodeSetShadeSmooth' : [],
+    'GeometryNodeToolSetFaceSet' : [],
+
+    'GeometryNodeSetShadeSmooth' : [("domain", ST.ENUM)],
 
     # Mesh > Operations
     'GeometryNodeDualMesh'             : [],
-
     'GeometryNodeEdgePathsToCurves'    : [],
-
     'GeometryNodeEdgePathsToSelection' : [],
 
     'GeometryNodeExtrudeMesh'          : [("mode", ST.ENUM)],
@@ -285,7 +253,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                           ("scale_mode", ST.ENUM)],
 
     'GeometryNodeSplitEdges'           : [],
-
     'GeometryNodeSubdivideMesh'        : [],
 
     'GeometryNodeSubdivisionSurface'   : [("boundary_smooth", ST.ENUM),
@@ -302,7 +269,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeMeshCylinder'  : [("fill_type", ST.ENUM)],
 
     'GeometryNodeMeshGrid'      : [],
-
     'GeometryNodeMeshIcoSphere' : [],
 
     'GeometryNodeMeshCircle'    : [("fill_type", ST.ENUM)],
@@ -314,17 +280,11 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     # Mesh > Topology
     'GeometryNodeCornersOfFace'      : [],
-
     'GeometryNodeCornersOfVertex'    : [],
-
     'GeometryNodeEdgesOfCorner'      : [],
-
     'GeometryNodeEdgesOfVertex'      : [],
-
     'GeometryNodeFaceOfCorner'       : [],
-
     'GeometryNodeOffsetCornerInFace' : [],
-
     'GeometryNodeVertexOfCorner'     : [],
 
     # Mesh > UV
@@ -340,7 +300,7 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                               ("use_legacy_normal", ST.BOOL)],
 
     'GeometryNodePoints'                   : [],
-
+    'GeometryNodePointsToCurves'           : [],
     'GeometryNodePointsToVertices'         : [],
 
     'GeometryNodePointsToVolume'           : [("resolution_mode", ST.ENUM)],
@@ -350,25 +310,19 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     # VOLUME
     'GeometryNodeVolumeCube'   : [],
-
     'GeometryNodeVolumeToMesh' : [("resolution_mode", ST.ENUM)],
 
     
     # SIMULATION
     'GeometryNodeSimulationInput'  : [],
-
     'GeometryNodeSimulationOutput' : [],
 
 
     # MATERIAL
     'GeometryNodeReplaceMaterial'    : [],
-
     'GeometryNodeInputMaterialIndex' : [],
-
     'GeometryNodeMaterialSelection'  : [],
-
     'GeometryNodeSetMaterial'        : [],
-
     'GeometryNodeSetMaterialIndex'   : [],
 
 
@@ -413,7 +367,10 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
     'FunctionNodeRandomValue' : [("data_type", ST.ENUM)],
 
-    'GeometryNodeSwitch'      : [("input_type", ST.ENUM)],
+    'GeometryNodeRepeatInput'  : [],
+    'GeometryNodeRepeatOutput' : [("inspection_index", ST.INT)],
+
+    'GeometryNodeSwitch' : [("input_type", ST.ENUM)],
     
     # Utilities > Color
     'ShaderNodeValToRGB'        : [("color_ramp", ST.COLOR_RAMP)],
@@ -430,11 +387,8 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     
     # Utilities > Text
     'GeometryNodeStringJoin'             : [],
-
     'FunctionNodeReplaceString'          : [],
-
     'FunctionNodeSliceString'            : [],
-
     'FunctionNodeStringLength'           : [],
 
     'GeometryNodeStringToCurves'         : [("align_x",    ST.ENUM),
@@ -444,7 +398,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                             ("pivot_mode", ST.ENUM)],
 
     'FunctionNodeValueToString'          : [],
-
     'FunctionNodeInputSpecialCharacters' : [],
 
     # Utilities > Vector
@@ -456,7 +409,6 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                 ("rotation_type", ST.ENUM)],
 
     'ShaderNodeCombineXYZ'   : [],
-
     'ShaderNodeSeparateXYZ'  : [],
 
     # Utilities > Field
@@ -490,16 +442,33 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
                                  ("use_clamp", ST.BOOL)],
 
     # Utilities > Rotation
-    'FunctionNodeAlignEulerToVector' : [("axis",       ST.ENUM),
-                                        ("pivot_axis", ST.ENUM)],
+    'FunctionNodeAlignEulerToVector'    : [("axis",       ST.ENUM),
+                                           ("pivot_axis", ST.ENUM)],
+
+    'FunctionNodeAxisAngleToRotation'   : [],
+    'FunctionNodeEulerToRotation'       : [],
+    'FunctionNodeInvertRotation'        : [],
                                         
-    'FunctionNodeRotateEuler'        : [("space", ST.ENUM),
-                                        ("type",  ST.ENUM)],
+    'FunctionNodeRotateEuler'           : [("space", ST.ENUM),
+                                           ("type",  ST.ENUM)],
+
+    'FunctionNodeRotateVector'          : [],
+    'FunctionNodeRotationToAxisAngle'   : [],
+    'FunctionNodeRotationToEuler'       : [],
+    'FunctionNodeRotationToQuaternion'  : [],
+    'FunctionNodeQuaternionToRotation'  : [],
 
     # MISC
-    'NodeFrame' : [],
-    'NodeGroupInput' : [],
-    'NodeGroupOutput' : [],
-    'NodeReroute' : []
+    'GeometryNodeGroup' : [("node_tree", ST.NODE_TREE)],
+
+    'NodeFrame'       : [("label_size", ST.INT),
+                         ("shrink", ST.BOOL),
+                         ("text", ST.TEXT)],
+
+    'NodeGroupInput'  : [],
+
+    'NodeGroupOutput' : [("is_active_output", ST.BOOL)],
+
+    'NodeReroute'     : []
 
 }

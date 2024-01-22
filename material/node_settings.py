@@ -16,21 +16,13 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
     'ShaderNodeVertexColor'      : [("layer_name", ST.STRING)], #TODO: separate color attribute type?
 
     'ShaderNodeHairInfo'         : [],
-
     'ShaderNodeFresnel'          : [],
-
     'ShaderNodeNewGeometry'      : [],
-
     'ShaderNodeLayerWeight'      : [],
-
     'ShaderNodeLightPath'        : [],
-
     'ShaderNodeObjectInfo'       : [],
-
     'ShaderNodeParticleInfo'     : [],
-
     'ShaderNodePointInfo'        : [],
-
     'ShaderNodeRGB'              : [],
 
     'ShaderNodeTangent'          : [("axis",           ST.ENUM),
@@ -46,7 +38,6 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                                     ("uv_map",         ST.STRING)], #TODO: see ShaderNodeTangent
 
     'ShaderNodeValue'            : [],
-
     'ShaderNodeVolumeInfo'       : [],
 
     'ShaderNodeWireframe'        : [("use_pixel_size", ST.BOOL)],
@@ -77,9 +68,7 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
     'ShaderNodeBsdfAnisotropic'      : [("distribution", ST.ENUM)],
 
     'ShaderNodeBackground'           : [],
-
     'ShaderNodeBsdfDiffuse'          : [],
-
     'ShaderNodeEmission'             : [],
 
     'ShaderNodeBsdfGlass'            : [("distribution", ST.ENUM)],
@@ -89,17 +78,19 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
     'ShaderNodeBsdfHair'             : [("component", ST.ENUM)],
 
     'ShaderNodeHoldout'              : [],
-
     'ShaderNodeMixShader'            : [],
 
     'ShaderNodeBsdfPrincipled'       : [("distribution",      ST.ENUM),
                                         ("subsurface_method", ST.ENUM)],
 
-    'ShaderNodeBsdfHairPrincipled'   : [("parametrization", ST.ENUM)],
+    'ShaderNodeBsdfHairPrincipled'   : [("model", ST.ENUM),
+                                        ("parametrization", ST.ENUM)],
 
     'ShaderNodeVolumePrincipled'     : [],
 
     'ShaderNodeBsdfRefraction'       : [("distribution", ST.ENUM)],
+
+    'ShaderNodeBsdfSheen'            : [("distribution", ST.ENUM)],
 
     'ShaderNodeEeveeSpecular'        : [],
 
@@ -108,13 +99,9 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
     'ShaderNodeBsdfToon'             : [("component", ST.ENUM)],
 
     'ShaderNodeBsdfTranslucent'      : [],
-
     'ShaderNodeBsdfTransparent'      : [],
-
     'ShaderNodeBsdfVelvet'           : [],
-
     'ShaderNodeVolumeAbsorption'     : [],
-
     'ShaderNodeVolumeScatter'        : [],
 
 
@@ -149,7 +136,8 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
     'ShaderNodeTexMusgrave'     : [("musgrave_dimensions", ST.ENUM),
                                    ("musgrave_type",       ST.ENUM)],
 
-    'ShaderNodeTexNoise'        : [("noise_dimensions", ST.ENUM)],
+    'ShaderNodeTexNoise'        : [("noise_dimensions", ST.ENUM),
+                                   ("normalize", ST.BOOL)],
 
     'ShaderNodeTexPointDensity' : [("interpolation",         ST.ENUM),
                                    ("object",                ST.OBJECT),
@@ -178,6 +166,7 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
 
     'ShaderNodeTexVoronoi'      : [("distance",           ST.ENUM),
                                    ("feature",            ST.ENUM),
+                                   ("normalize",          ST.BOOL),
                                    ("voronoi_dimensions", ST.ENUM)],
 
     'ShaderNodeTexWave'         : [("bands_direction", ST.ENUM),
@@ -274,8 +263,15 @@ shader_node_settings : dict[str, list[(str, ST)]] = {
                           ("use_auto_update", ST.BOOL)],
 
     # MISC
-    'NodeFrame' : [],
-    'NodeGroupInput' : [],
-    'NodeGroupOutput' : [],
-    'NodeReroute' : []
+    'ShaderNodeGroup' : [('node_tree', ST.NODE_TREE)],
+
+    'NodeFrame'       : [("label_size", ST.INT),
+                         ("shrink", ST.BOOL),
+                         ("text", ST.TEXT)],
+
+    'NodeGroupInput'  : [],
+
+    'NodeGroupOutput' : [("is_active_output", ST.BOOL)],
+
+    'NodeReroute'     : []
 }
