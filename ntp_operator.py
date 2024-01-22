@@ -383,7 +383,7 @@ class NTP_Operator(Operator):
                 socket_interface = io_socket_interfaces[i]
                 socket_var = f"{node_tree_var}.{io}s[{i}]"
 
-                self._set_group_socket_default(socket_interface, socket_var)
+                self._set_group_socket_defaults(socket_interface, socket_var)
 
                 # default attribute name
                 if hasattr(socket_interface, "default_attribute_name"):
