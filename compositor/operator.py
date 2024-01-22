@@ -11,10 +11,9 @@ from .node_settings import compositor_node_settings
 SCENE = "scene"
 BASE_NAME = "base_name"
 END_NAME = "end_name"
-INDEX = "i"
 NODE = "node"
 
-comp_op_reserved_names = {SCENE, BASE_NAME, END_NAME, INDEX, NODE} 
+comp_op_reserved_names = {SCENE, BASE_NAME, END_NAME, NODE} 
 
 class NTPCompositorOperator(NTP_Operator):
     bl_idname = "node.ntp_compositor"

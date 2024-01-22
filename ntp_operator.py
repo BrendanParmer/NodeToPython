@@ -16,11 +16,14 @@ import shutil
 from .ntp_node_tree import NTP_NodeTree
 from .utils import *
 
+INDEX = "i"
 IMAGE_DIR_NAME = "imgs"
 IMAGE_PATH = "image_path"
 BASE_DIR = "base_dir"
 
-reserved_names = {IMAGE_DIR_NAME,
+reserved_names = {
+                  INDEX,
+                  IMAGE_DIR_NAME,
                   IMAGE_PATH,
                   BASE_DIR
                  }
@@ -778,8 +781,7 @@ class NTP_Operator(Operator):
 
         color_ramp: bpy.types.ColorRamp = getattr(node, color_ramp_name)
         if not color_ramp:
-            raise ValueError(
-                f"No color ramp named \"{color_ramp_name}\" found")
+            raise ValueError(f"No color ramp named \"{color_ramp_name}\" found")
 
         node_var = self._node_vars[node]
 
@@ -894,10 +896,10 @@ class NTP_Operator(Operator):
         # Remove default points when CurveMap is initialized with more than
         # two points (just CompositorNodeHueCorrect)
         if (node.bl_idname == 'CompositorNodeHueCorrect'):
-            self._write(f"for i in range"
+            self._write(f"for {INDEX} in range"
                         f"(len({curve_i_var}.points.values()) - 1, 1, -1):")
             self._write(f"\t{curve_i_var}.points.remove("
-                        f"{curve_i_var}.points[i])")
+                        f"{curve_i_var}.points[{INDEX}])")
 
         for j, point in enumerate(curve.points):
             self._create_curve_map_point(j, point, curve_i_var)
