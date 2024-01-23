@@ -5,12 +5,7 @@ import mathutils
 from enum import Enum, auto
 import keyword
 import re
-from typing import Tuple
-
-#node input sockets that are messy to set default values for
-dont_set_defaults = {'NodeSocketGeometry',
-                     'NodeSocketShader',
-                     'NodeSocketVirtual'}
+from typing import NamedTuple
 
 class ST(Enum):
     """
@@ -28,7 +23,7 @@ class ST(Enum):
     VEC3 = auto()
     VEC4 = auto()
     COLOR = auto()
-
+    
     # Special settings
     COLOR_RAMP = auto()
     CURVE_MAPPING = auto()
@@ -53,6 +48,13 @@ class ST(Enum):
     IMAGE_FORMAT_SETTINGS = auto()
     FILE_SLOTS = auto()
     LAYER_SLOTS = auto() #unimplemented
+
+class NTPNodeSetting(NamedTuple):
+    name: str
+    st: ST
+    min_version: tuple = (3, 0, 0)
+    max_version: tuple = (4, 1, 0)
+
 
 def clean_string(string: str, lower: bool = True) -> str:
     """

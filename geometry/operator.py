@@ -13,7 +13,7 @@ ITEM = "item"
 OBJECT_NAME = "name"
 OBJECT = "obj"
 MODIFIER = "mod"
-geo_op_reserved_names = {ITEM, 
+GEO_OP_RESERVED_NAMES = {ITEM, 
                          OBJECT_NAME, 
                          OBJECT,
                          MODIFIER}
@@ -36,7 +36,7 @@ class NTPGeoNodesOperator(NTP_Operator):
     def __init__(self):
         super().__init__()
         self._settings = geo_node_settings
-        for name in geo_op_reserved_names:
+        for name in GEO_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
     if bpy.app.version >= (3, 6, 0):

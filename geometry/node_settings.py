@@ -1,190 +1,271 @@
-from ..utils import ST
+from ..utils import ST, NTPNodeSetting
 
-geo_node_settings : dict[str, list[(str, ST)]] = {
+geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     # ATTRIBUTE
-    'GeometryNodeAttributeStatistic'  : [("data_type", ST.ENUM), 
-                                         ("domain",    ST.ENUM)],
+    'GeometryNodeAttributeStatistic' : [
+        NTPNodeSetting("data_type", ST.ENUM), 
+        NTPNodeSetting("domain",    ST.ENUM)
+    ],
 
-    'GeometryNodeAttributeDomainSize' : [("component", ST.ENUM)],
+    'GeometryNodeAttributeDomainSize' : [
+        NTPNodeSetting("component", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeBlurAttribute'       : [("data_type", ST.ENUM)],
+    'GeometryNodeBlurAttribute' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 5, 0))
+    ],
 
-    'GeometryNodeCaptureAttribute'    : [("data_type", ST.ENUM),
-                                         ("domain",    ST.ENUM)],
+    'GeometryNodeCaptureAttribute' : [
+        NTPNodeSetting("data_type", ST.ENUM),
+        NTPNodeSetting("domain",    ST.ENUM)
+    ],
 
-    'GeometryNodeRemoveAttribute'     : [],
+    'GeometryNodeRemoveAttribute' : [],
 
-    'GeometryNodeStoreNamedAttribute' : [("data_type", ST.ENUM),
-                                         ("domain",    ST.ENUM)],
+    'GeometryNodeStoreNamedAttribute' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 2, 0)),
+        NTPNodeSetting("domain",    ST.ENUM, min_version = (3, 2, 0))
+    ],
 
-    'GeometryNodeAttributeTransfer'   : [("data_type", ST.ENUM),
-                                         ("domain",    ST.ENUM),
-                                         ("mapping",   ST.ENUM)],
+    'GeometryNodeAttributeTransfer' : [
+        NTPNodeSetting("data_type", ST.ENUM),
+        NTPNodeSetting("domain",    ST.ENUM),
+        NTPNodeSetting("mapping",   ST.ENUM)
+    ],
 
     # INPUT
     # Input > Constant
-    'FunctionNodeInputBool'     : [("boolean",  ST.BOOL)],
+    'FunctionNodeInputBool' : [
+        NTPNodeSetting("boolean",  ST.BOOL)
+    ],
 
-    'FunctionNodeInputColor'    : [("color", ST.VEC4)],
+    'FunctionNodeInputColor' : [
+        NTPNodeSetting("color", ST.VEC4)
+    ],
 
-    'GeometryNodeInputImage'    : [("image", ST.IMAGE)],
+    'GeometryNodeInputImage' : [
+        NTPNodeSetting("image", ST.IMAGE, min_version = (3, 5, 0))
+    ],
 
-    'FunctionNodeInputInt'      : [("integer", ST.INT)],
+    'FunctionNodeInputInt' : [
+        NTPNodeSetting("integer", ST.INT)
+    ],
 
-    'GeometryNodeInputMaterial' : [("material", ST.MATERIAL)],
+    'GeometryNodeInputMaterial' : [
+        NTPNodeSetting("material", ST.MATERIAL)
+    ],
 
-    'FunctionNodeInputString'   : [("string", ST.STRING)],
+    'FunctionNodeInputString' : [
+        NTPNodeSetting("string", ST.STRING)
+    ],
 
-    'ShaderNodeValue'           : [],
+    'ShaderNodeValue' : [],
 
-    'FunctionNodeInputVector'   : [("vector", ST.VEC3)],
+    'FunctionNodeInputVector' : [
+        NTPNodeSetting("vector", ST.VEC3)
+    ],
 
     #Input > Group
     'NodeGroupInput' : [],
     
     # Input > Scene
-    'GeometryNodeTool3DCursor'   : [],
+    'GeometryNodeTool3DCursor' : [],
 
-    'GeometryNodeCollectionInfo' : [("transform_space", ST.ENUM)],
+    'GeometryNodeCollectionInfo' : [
+        NTPNodeSetting("transform_space", ST.ENUM)
+    ],
 
-    'GeometryNodeImageInfo'      : [],
-    'GeometryNodeIsViewport'     : [],
+    'GeometryNodeImageInfo' : [],
+    'GeometryNodeIsViewport' : [],
 
-    'GeometryNodeObjectInfo'     : [("transform_space", ST.ENUM)],
+    'GeometryNodeObjectInfo' : [
+        NTPNodeSetting("transform_space", ST.ENUM)
+    ],
 
-    'GeometryNodeSelfObject'     : [],
+    'GeometryNodeSelfObject' : [],
     'GeometryNodeInputSceneTime' : [],
 
 
     # OUTPUT
-    'GeometryNodeViewer'         : [("data_type", ST.ENUM),
-
-                                    ("domain",    ST.ENUM)],
+    'GeometryNodeViewer'  : [
+        NTPNodeSetting("data_type", ST.ENUM),
+        NTPNodeSetting("domain",    ST.ENUM, min_version = (3, 4, 0))
+    ],
 
 
     # GEOMETRY
-    'GeometryNodeJoinGeometry'       : [],
+    'GeometryNodeJoinGeometry' : [],
     'GeometryNodeGeometryToInstance' : [],
 
     # Geometry > Read
-    'GeometryNodeInputID'             : [],
-    'GeometryNodeInputIndex'          : [],
+    'GeometryNodeInputID' : [],
+    'GeometryNodeInputIndex' : [],
 
-    'GeometryNodeInputNamedAttribute' : [("data_type", ST.ENUM)],
+    'GeometryNodeInputNamedAttribute' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 2, 0))
+    ],
 
-    'GeometryNodeInputNormal'         : [],
-    'GeometryNodeInputPosition'       : [],
-    'GeometryNodeInputRadius'         : [],
-    'GeometryNodeToolSelection'       : [],
+    'GeometryNodeInputNormal' : [],
+    'GeometryNodeInputPosition' : [],
+    'GeometryNodeInputRadius' : [],
+    'GeometryNodeToolSelection' : [],
 
     # Geometry > Sample
-    'GeometryNodeProximity'      : [("target_element", ST.ENUM)],
+    'GeometryNodeProximity' : [
+        NTPNodeSetting("target_element", ST.ENUM)
+    ],
 
     'GeometryNodeIndexOfNearest' : [],
 
-    'GeometryNodeRaycast'        : [("data_type", ST.ENUM),
-                                    ("mapping",   ST.ENUM)],
+    'GeometryNodeRaycast' : [
+        NTPNodeSetting("data_type", ST.ENUM),
+        NTPNodeSetting("mapping",   ST.ENUM)
+    ],
 
-    'GeometryNodeSampleIndex'    : [("clamp",     ST.BOOL),
-                                    ("data_type", ST.ENUM),
-                                    ("domain",    ST.ENUM)],
+    'GeometryNodeSampleIndex' : [
+        NTPNodeSetting("clamp",     ST.BOOL, min_version = (3, 4, 0)),
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 4, 0)),
+        NTPNodeSetting("domain",    ST.ENUM, min_version = (3, 4, 0))
+    ],
 
-    'GeometryNodeSampleNearest'  : [("domain", ST.ENUM)],
+    'GeometryNodeSampleNearest' : [
+        NTPNodeSetting("domain", ST.ENUM, min_version = (3, 4, 0))
+    ],
 
     # Geometry > Write
-    'GeometryNodeSetID'            : [],
-    'GeometryNodeSetPosition'      : [],
+    'GeometryNodeSetID' : [],
+    'GeometryNodeSetPosition' : [],
     'GeometryNodeToolSetSelection' : [],
 
     # Geometry > Operations
-    'GeometryNodeBoundBox'           : [],
-    'GeometryNodeConvexHull'         : [],
+    'GeometryNodeBoundBox' : [],
+    'GeometryNodeConvexHull' : [],
 
-    'GeometryNodeDeleteGeometry'     : [("domain", ST.ENUM),
-                                        ("mode",   ST.ENUM)],
+    'GeometryNodeDeleteGeometry' : [
+        NTPNodeSetting("domain", ST.ENUM),
+        NTPNodeSetting("mode",   ST.ENUM)
+    ],
 
-    'GeometryNodeDuplicateElements'  : [("domain", ST.ENUM)],
+    'GeometryNodeDuplicateElements' : [
+        NTPNodeSetting("domain", ST.ENUM, min_version = (3, 2, 0))
+    ],
 
-    'GeometryNodeMergeByDistance'    : [("mode",   ST.ENUM)],
+    'GeometryNodeMergeByDistance' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeTransform'          : [],
+    'GeometryNodeTransform' : [],
     'GeometryNodeSeparateComponents' : [],
 
-    'GeometryNodeSeparateGeometry'   : [("domain", ST.ENUM)],
+    'GeometryNodeSeparateGeometry' : [
+        NTPNodeSetting("domain", ST.ENUM)
+    ],
 
 
     # CURVE
     # Curve > Read
     'GeometryNodeInputCurveHandlePositions' : [],
-    'GeometryNodeCurveLength'               : [],
-    'GeometryNodeInputTangent'              : [],
-    'GeometryNodeInputCurveTilt'            : [],
-    'GeometryNodeCurveEndpointSelection'    : [],
+    'GeometryNodeCurveLength' : [],
+    'GeometryNodeInputTangent' : [],
+    'GeometryNodeInputCurveTilt' : [],
+    'GeometryNodeCurveEndpointSelection' : [],
 
-    'GeometryNodeCurveHandleTypeSelection'  : [("handle_type", ST.ENUM),
-                                               ("mode",        ST.ENUM_SET)],
+    'GeometryNodeCurveHandleTypeSelection' : [
+        NTPNodeSetting("handle_type", ST.ENUM),
+        NTPNodeSetting("mode",        ST.ENUM_SET)
+    ],
 
-    'GeometryNodeInputSplineCyclic'         : [],
-    'GeometryNodeSplineLength'              : [],
-    'GeometryNodeSplineParameter'           : [],
-    'GeometryNodeInputSplineResolution'     : [],
+    'GeometryNodeInputSplineCyclic' : [],
+    'GeometryNodeSplineLength' : [],
+    'GeometryNodeSplineParameter' : [],
+    'GeometryNodeInputSplineResolution' : [],
 
     # Curve > Sample
-    'GeometryNodeSampleCurve' : [("data_type",      ST.ENUM),
-                                 ("mode",           ST.ENUM),
-                                 ("use_all_curves", ST.BOOL)],
+    'GeometryNodeSampleCurve' : [
+        NTPNodeSetting("data_type",      ST.ENUM, min_version = (3, 4, 0)),
+        NTPNodeSetting("mode",           ST.ENUM),
+        NTPNodeSetting("use_all_curves", ST.BOOL, min_version = (3, 4, 0))
+    ],
 
     # Curve > Write
-    'GeometryNodeSetCurveNormal'          : [("mode", ST.ENUM)],
+    'GeometryNodeSetCurveNormal' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 4, 0))
+    ],
 
-    'GeometryNodeSetCurveRadius'          : [],
-    'GeometryNodeSetCurveTilt'            : [],
+    'GeometryNodeSetCurveRadius' : [],
+    'GeometryNodeSetCurveTilt' : [],
 
-    'GeometryNodeSetCurveHandlePositions' : [("mode", ST.ENUM)],
+    'GeometryNodeSetCurveHandlePositions' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeCurveSetHandles'         : [("handle_type", ST.ENUM),
-                                             ("mode",        ST.ENUM_SET)],
+    'GeometryNodeCurveSetHandles' : [
+        NTPNodeSetting("handle_type", ST.ENUM),
+        NTPNodeSetting("mode",        ST.ENUM_SET)
+    ],
 
-    'GeometryNodeSetSplineCyclic'         : [],
-    'GeometryNodeSetSplineResolution'     : [],
+    'GeometryNodeSetSplineCyclic' : [],
+    'GeometryNodeSetSplineResolution' : [],
 
-    'GeometryNodeCurveSplineType'         : [("spline_type", ST.ENUM)],
+    'GeometryNodeCurveSplineType' : [
+        NTPNodeSetting("spline_type", ST.ENUM)
+    ],
 
     # Curve > Operations
-    'GeometryNodeCurveToMesh'           : [],
+    'GeometryNodeCurveToMesh' : [],
 
-    'GeometryNodeCurveToPoints'         : [("mode", ST.ENUM)],
+    'GeometryNodeCurveToPoints' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
     'GeometryNodeDeformCurvesOnSurface' : [],
 
-    'GeometryNodeFillCurve'             : [("mode", ST.ENUM)],
+    'GeometryNodeFillCurve' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeFilletCurve'           : [("mode", ST.ENUM)],
+    'GeometryNodeFilletCurve' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeInterpolateCurves'     : [],
+    'GeometryNodeInterpolateCurves' : [],
 
-    'GeometryNodeResampleCurve'         : [("mode", ST.ENUM)],
+    'GeometryNodeResampleCurve' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeReverseCurve'          : [],
-    'GeometryNodeSubdivideCurve'        : [],
+    'GeometryNodeReverseCurve' : [],
+    'GeometryNodeSubdivideCurve' : [],
 
-    'GeometryNodeTrimCurve'             : [("mode", ST.ENUM)],
+    'GeometryNodeTrimCurve' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
     # Curve > Primitives
-    'GeometryNodeCurveArc'                    : [("mode", ST.ENUM)],
+    'GeometryNodeCurveArc' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeCurvePrimitiveBezierSegment' : [("mode", ST.ENUM)],
+    'GeometryNodeCurvePrimitiveBezierSegment' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeCurvePrimitiveCircle'        : [("mode", ST.ENUM)],
+    'GeometryNodeCurvePrimitiveCircle' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeCurvePrimitiveLine'          : [("mode", ST.ENUM)],
+    'GeometryNodeCurvePrimitiveLine' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeCurveSpiral'                 : [],
-    'GeometryNodeCurveQuadraticBezier'        : [],
+    'GeometryNodeCurveSpiral' : [],
+    'GeometryNodeCurveQuadraticBezier' : [],
 
-    'GeometryNodeCurvePrimitiveQuadrilateral' : [("mode", ST.ENUM)],
+    'GeometryNodeCurvePrimitiveQuadrilateral' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeCurveStar'                   : [],
+    'GeometryNodeCurveStar' : [],
 
     # Curve > Topology
     'GeometryNodeOffsetPointInCurve' : [],
@@ -193,10 +274,13 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
 
     # INSTANCES
-    'GeometryNodeInstanceOnPoints'      : [],
-    'GeometryNodeInstancesToPoints'     : [],
+    'GeometryNodeInstanceOnPoints' : [],
+    'GeometryNodeInstancesToPoints' : [],
 
-    'GeometryNodeRealizeInstances'      : [("legacy_behavior", ST.BOOL)],
+    'GeometryNodeRealizeInstances' : [
+        NTPNodeSetting("legacy_behavior", ST.BOOL, min_version = (3, 1, 0), 
+                                                   max_version = (3, 6, 0))
+    ],
 
     'GeometryNodeRotateInstances'       : [],
     'GeometryNodeScaleInstances'        : [],
@@ -223,58 +307,86 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'GeometryNodeInputMeshVertexNeighbors' : [],
 
     # Mesh > Sample
-    'GeometryNodeSampleNearestSurface' : [("data_type", ST.ENUM)],
+    'GeometryNodeSampleNearestSurface' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 4, 0))
+    ],
 
-    'GeometryNodeSampleUVSurface'      : [("data_type", ST.ENUM)],
+    'GeometryNodeSampleUVSurface' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 4, 0))
+    ],
 
     # Mesh > Write
     'GeometryNodeToolSetFaceSet' : [],
 
-    'GeometryNodeSetShadeSmooth' : [("domain", ST.ENUM)],
+    'GeometryNodeSetShadeSmooth' : [
+        NTPNodeSetting("domain", ST.ENUM, min_version = (4, 0, 0))
+    ],
 
     # Mesh > Operations
     'GeometryNodeDualMesh'             : [],
     'GeometryNodeEdgePathsToCurves'    : [],
     'GeometryNodeEdgePathsToSelection' : [],
 
-    'GeometryNodeExtrudeMesh'          : [("mode", ST.ENUM)],
+    'GeometryNodeExtrudeMesh' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeFlipFaces'            : [],
+    'GeometryNodeFlipFaces' : [],
 
-    'GeometryNodeMeshBoolean'          : [("operation", ST.ENUM)],
+    'GeometryNodeMeshBoolean' : [
+        NTPNodeSetting("operation", ST.ENUM)
+    ],
 
-    'GeometryNodeMeshToCurve'          : [],
+    'GeometryNodeMeshToCurve' : [],
 
-    'GeometryNodeMeshToPoints'         : [("mode", ST.ENUM)],
+    'GeometryNodeMeshToPoints' : [
+        NTPNodeSetting("mode", ST.ENUM)
+    ],
 
-    'GeometryNodeMeshToVolume'         : [("resolution_mode", ST.ENUM)],
+    'GeometryNodeMeshToVolume' : [
+        NTPNodeSetting("resolution_mode", ST.ENUM, min_version = (3, 3, 0))
+    ],
 
-    'GeometryNodeScaleElements'        : [("domain",     ST.ENUM),
-                                          ("scale_mode", ST.ENUM)],
+    'GeometryNodeScaleElements' : [
+        NTPNodeSetting("domain",     ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("scale_mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeSplitEdges'           : [],
-    'GeometryNodeSubdivideMesh'        : [],
+    'GeometryNodeSplitEdges'    : [],
+    'GeometryNodeSubdivideMesh' : [],
 
-    'GeometryNodeSubdivisionSurface'   : [("boundary_smooth", ST.ENUM),
-                                          ("uv_smooth",       ST.ENUM)],
+    'GeometryNodeSubdivisionSurface' : [
+        NTPNodeSetting("boundary_smooth", ST.ENUM),
+        NTPNodeSetting("uv_smooth",       ST.ENUM)
+    ],
 
-    'GeometryNodeTriangulate'          : [("ngon_method", ST.ENUM),
-                                          ("quad_method", ST.ENUM)],
+    'GeometryNodeTriangulate' : [
+        NTPNodeSetting("ngon_method", ST.ENUM),
+        NTPNodeSetting("quad_method", ST.ENUM)
+    ],
 
     # Mesh > Primitives
-    'GeometryNodeMeshCone'      : [("fill_type", ST.ENUM)],
+    'GeometryNodeMeshCone' : [
+        NTPNodeSetting("fill_type", ST.ENUM)
+    ],
 
-    'GeometryNodeMeshCube'      : [],
+    'GeometryNodeMeshCube' : [],
 
-    'GeometryNodeMeshCylinder'  : [("fill_type", ST.ENUM)],
+    'GeometryNodeMeshCylinder' : [
+        NTPNodeSetting("fill_type", ST.ENUM)
+    ],
 
     'GeometryNodeMeshGrid'      : [],
     'GeometryNodeMeshIcoSphere' : [],
 
-    'GeometryNodeMeshCircle'    : [("fill_type", ST.ENUM)],
+    'GeometryNodeMeshCircle' : [
+        NTPNodeSetting("fill_type", ST.ENUM)
+    ],
 
-    'GeometryNodeMeshLine'      : [("count_mode", ST.ENUM),
-                                   ("mode",       ST.ENUM)],
+    'GeometryNodeMeshLine' : [
+        NTPNodeSetting("count_mode", ST.ENUM),
+        NTPNodeSetting("mode",       ST.ENUM)
+    ],
 
     'GeometryNodeMeshUVSphere'  : [],
 
@@ -290,27 +402,37 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     # Mesh > UV
     'GeometryNodeUVPackIslands' : [],
 
-    'GeometryNodeUVUnwrap'      : [("method", ST.ENUM)],
+    'GeometryNodeUVUnwrap': [
+        NTPNodeSetting("method", ST.ENUM, min_version = (3, 3, 0))
+    ],
 
 
     # POINT
-    'GeometryNodeDistributePointsInVolume' : [("mode", ST.ENUM)],
+    'GeometryNodeDistributePointsInVolume' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 4, 0))
+    ],
 
-    'GeometryNodeDistributePointsOnFaces'  : [("distribute_method", ST.ENUM),
-                                              ("use_legacy_normal", ST.BOOL)],
+    'GeometryNodeDistributePointsOnFaces' : [
+        NTPNodeSetting("distribute_method", ST.ENUM),
+        NTPNodeSetting("use_legacy_normal", ST.BOOL, min_version = (3, 5, 0))
+    ],
 
-    'GeometryNodePoints'                   : [],
-    'GeometryNodePointsToCurves'           : [],
-    'GeometryNodePointsToVertices'         : [],
+    'GeometryNodePoints'           : [],
+    'GeometryNodePointsToCurves'   : [],
+    'GeometryNodePointsToVertices' : [],
 
-    'GeometryNodePointsToVolume'           : [("resolution_mode", ST.ENUM)],
+    'GeometryNodePointsToVolume' : [
+        NTPNodeSetting("resolution_mode", ST.ENUM)
+    ],
 
-    'GeometryNodeSetPointRadius'           : [],
+    'GeometryNodeSetPointRadius' : [],
 
 
     # VOLUME
     'GeometryNodeVolumeCube'   : [],
-    'GeometryNodeVolumeToMesh' : [("resolution_mode", ST.ENUM)],
+    'GeometryNodeVolumeToMesh' : [
+        NTPNodeSetting("resolution_mode", ST.ENUM)
+    ],
 
     
     # SIMULATION
@@ -327,130 +449,203 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
 
 
     # TEXTURE
-    'ShaderNodeTexBrick'       : [("offset",           ST.FLOAT),
-                                  ("offset_frequency", ST.INT),
-                                  ("squash",           ST.FLOAT), 
-                                  ("squash_frequency", ST.INT)],
+    'ShaderNodeTexBrick' : [
+        NTPNodeSetting("offset",           ST.FLOAT),
+        NTPNodeSetting("offset_frequency", ST.INT),
+        NTPNodeSetting("squash",           ST.FLOAT), 
+        NTPNodeSetting("squash_frequency", ST.INT)
+    ],
 
-    'ShaderNodeTexChecker'     : [],
+    'ShaderNodeTexChecker' : [],
 
-    'ShaderNodeTexGradient'    : [("gradient_type", ST.ENUM)],
+    'ShaderNodeTexGradient' : [
+        NTPNodeSetting("gradient_type", ST.ENUM)
+    ],
 
-    'GeometryNodeImageTexture' : [("extension",     ST.ENUM),
-                                  ("interpolation", ST.ENUM)],
+    'GeometryNodeImageTexture' : [
+        NTPNodeSetting("extension",     ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("interpolation", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'ShaderNodeTexMagic'       : [("turbulence_depth", ST.INT)],
+    'ShaderNodeTexMagic' : [
+        NTPNodeSetting("turbulence_depth", ST.INT)
+    ],
 
-    'ShaderNodeTexMusgrave'    : [("musgrave_dimensions", ST.ENUM),
-                                  ("musgrave_type",       ST.ENUM)],
+    'ShaderNodeTexMusgrave' : [
+        NTPNodeSetting("musgrave_dimensions", ST.ENUM),
+        NTPNodeSetting("musgrave_type",       ST.ENUM)
+    ],
 
-    'ShaderNodeTexNoise'       : [("noise_dimensions", ST.ENUM)],
+    'ShaderNodeTexNoise' : [
+        NTPNodeSetting("noise_dimensions", ST.ENUM)
+    ],
 
-    'ShaderNodeTexVoronoi'     : [("distance",           ST.ENUM),
-                                  ("feature",            ST.ENUM),
-                                  ("voronoi_dimensions", ST.ENUM)],
+    'ShaderNodeTexVoronoi' : [
+        NTPNodeSetting("distance",           ST.ENUM),
+        NTPNodeSetting("feature",            ST.ENUM),
+        NTPNodeSetting("voronoi_dimensions", ST.ENUM)
+    ],
 
-    'ShaderNodeTexWave'        : [("bands_direction", ST.ENUM),
-                                  ("rings_direction", ST.ENUM),
-                                  ("wave_profile",    ST.ENUM),
-                                  ("wave_type",       ST.ENUM)],
+    'ShaderNodeTexWave' : [
+        NTPNodeSetting("bands_direction", ST.ENUM),
+        NTPNodeSetting("rings_direction", ST.ENUM),
+        NTPNodeSetting("wave_profile",    ST.ENUM),
+        NTPNodeSetting("wave_type",       ST.ENUM)
+    ],
 
-    'ShaderNodeTexWhiteNoise'  : [("noise_dimensions", ST.ENUM)],
+    'ShaderNodeTexWhiteNoise' : [
+        NTPNodeSetting("noise_dimensions", ST.ENUM)
+    ],
 
 
     # UTILITIES
-    'ShaderNodeMix'           : [("blend_type",   ST.ENUM),
-                                 ("clamp_factor", ST.BOOL),
-                                 ("clamp_result", ST.BOOL),
-                                 ("data_type",    ST.ENUM),
-                                 ("factor_mode",  ST.ENUM)],
+    'ShaderNodeMix' : [
+        NTPNodeSetting("blend_type",   ST.ENUM, min_version = (3, 4, 0)),
+        NTPNodeSetting("clamp_factor", ST.BOOL, min_version = (3, 4, 0)),
+        NTPNodeSetting("clamp_result", ST.BOOL, min_version = (3, 4, 0)),
+        NTPNodeSetting("data_type",    ST.ENUM, min_version = (3, 4, 0)),
+        NTPNodeSetting("factor_mode",  ST.ENUM, min_version = (3, 4, 0))
+    ],
 
-    'FunctionNodeRandomValue' : [("data_type", ST.ENUM)],
+    'FunctionNodeRandomValue' : [
+        NTPNodeSetting("data_type", ST.ENUM)
+    ],
 
-    'GeometryNodeRepeatInput'  : [],
-    'GeometryNodeRepeatOutput' : [("inspection_index", ST.INT)],
+    'GeometryNodeRepeatInput' : [],
 
-    'GeometryNodeSwitch' : [("input_type", ST.ENUM)],
+    'GeometryNodeRepeatOutput' : [
+        NTPNodeSetting("inspection_index", ST.INT, min_version = (4, 0, 0))
+    ],
+
+    'GeometryNodeSwitch' : [
+        NTPNodeSetting("input_type", ST.ENUM)
+    ],
     
     # Utilities > Color
-    'ShaderNodeValToRGB'        : [("color_ramp", ST.COLOR_RAMP)],
+    'ShaderNodeValToRGB' : [
+        NTPNodeSetting("color_ramp", ST.COLOR_RAMP)
+    ],
 
-    'ShaderNodeRGBCurve'        : [("mapping", ST.CURVE_MAPPING)],
+    'ShaderNodeRGBCurve' : [
+        NTPNodeSetting("mapping", ST.CURVE_MAPPING)
+    ],
 
-    'FunctionNodeCombineColor'  : [("mode", ST.ENUM)],
+    'FunctionNodeCombineColor' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 3, 0))
+    ],
 
-    'ShaderNodeMixRGB'          : [("blend_type", ST.ENUM),
-                                   ("use_alpha",  ST.BOOL),
-                                   ("use_clamp",  ST.BOOL)], #legacy
+    'ShaderNodeMixRGB' : [
+        NTPNodeSetting("blend_type", ST.ENUM),
+        NTPNodeSetting("use_alpha",  ST.BOOL),
+        NTPNodeSetting("use_clamp",  ST.BOOL)
+    ], #legacy
 
-    'FunctionNodeSeparateColor' : [("mode", ST.ENUM)],
+    'FunctionNodeSeparateColor' : [
+        NTPNodeSetting("mode", ST.ENUM, min_version = (3, 3, 0))
+    ],
     
     # Utilities > Text
-    'GeometryNodeStringJoin'             : [],
-    'FunctionNodeReplaceString'          : [],
-    'FunctionNodeSliceString'            : [],
-    'FunctionNodeStringLength'           : [],
+    'GeometryNodeStringJoin'    : [],
+    'FunctionNodeReplaceString' : [],
+    'FunctionNodeSliceString'   : [],
+    'FunctionNodeStringLength'  : [],
 
-    'GeometryNodeStringToCurves'         : [("align_x",    ST.ENUM),
-                                            ("align_y",    ST.ENUM),
-                                            ("font",       ST.FONT),
-                                            ("overflow",   ST.ENUM),
-                                            ("pivot_mode", ST.ENUM)],
+    'GeometryNodeStringToCurves' : [
+        NTPNodeSetting("align_x",    ST.ENUM),
+        NTPNodeSetting("align_y",    ST.ENUM),
+        NTPNodeSetting("font",       ST.FONT),
+        NTPNodeSetting("overflow",   ST.ENUM),
+        NTPNodeSetting("pivot_mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
     'FunctionNodeValueToString'          : [],
     'FunctionNodeInputSpecialCharacters' : [],
 
     # Utilities > Vector
-    'ShaderNodeVectorCurve'  : [("mapping", ST.CURVE_MAPPING)],
+    'ShaderNodeVectorCurve' : [
+        NTPNodeSetting("mapping", ST.CURVE_MAPPING)
+    ],
 
-    'ShaderNodeVectorMath'   : [("operation", ST.ENUM)],
+    'ShaderNodeVectorMath' : [
+        NTPNodeSetting("operation", ST.ENUM)
+    ],
 
-    'ShaderNodeVectorRotate' : [("invert",        ST.BOOL),
-                                ("rotation_type", ST.ENUM)],
+    'ShaderNodeVectorRotate' : [
+        NTPNodeSetting("invert",        ST.BOOL),
+        NTPNodeSetting("rotation_type", ST.ENUM)
+    ],
 
-    'ShaderNodeCombineXYZ'   : [],
-    'ShaderNodeSeparateXYZ'  : [],
+    'ShaderNodeCombineXYZ'  : [],
+    'ShaderNodeSeparateXYZ' : [],
 
     # Utilities > Field
-    'GeometryNodeAccumulateField' : [("data_type", ST.ENUM),
-                                     ("domain",    ST.ENUM)],
+    'GeometryNodeAccumulateField' : [
+        NTPNodeSetting("data_type", ST.ENUM),
+        NTPNodeSetting("domain",    ST.ENUM)
+    ],
 
-    'GeometryNodeFieldAtIndex'    : [("data_type", ST.ENUM),
-                                     ("domain",    ST.ENUM)],
+    'GeometryNodeFieldAtIndex' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("domain",    ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'GeometryNodeFieldOnDomain'   : [("data_type", ST.ENUM),
-                                     ("domain",    ST.ENUM)],
+    'GeometryNodeFieldOnDomain' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 3, 0)),
+        NTPNodeSetting("domain",    ST.ENUM, min_version = (3, 3, 0))
+    ],
 
     # Utilities > Math
-    'FunctionNodeBooleanMath' : [("operation", ST.ENUM)],
+    'FunctionNodeBooleanMath' : [
+        NTPNodeSetting("operation", ST.ENUM)
+    ],
 
-    'ShaderNodeClamp'         : [("clamp_type", ST.ENUM)],
+    'ShaderNodeClamp' : [
+        NTPNodeSetting("clamp_type", ST.ENUM)
+    ],
 
-    'FunctionNodeCompare'     : [("data_type", ST.ENUM),
-                                 ("mode",      ST.ENUM),
-                                 ("operation", ST.ENUM)],
+    'FunctionNodeCompare' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("mode",      ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("operation", ST.ENUM, min_version = (3, 1, 0))
+    ],
 
-    'ShaderNodeFloatCurve'    : [("mapping", ST.CURVE_MAPPING)],
+    'FunctionNodeCompareFloats' : [
+        NTPNodeSetting("operation", ST.ENUM, max_version = (3, 0, 0))
+    ],
 
-    'FunctionNodeFloatToInt'  : [("rounding_mode", ST.ENUM)],
+    'ShaderNodeFloatCurve' : [
+        NTPNodeSetting("mapping", ST.CURVE_MAPPING)
+    ],
 
-    'ShaderNodeMapRange'      : [("clamp",              ST.BOOL),
-                                 ("data_type",          ST.ENUM),
-                                 ("interpolation_type", ST.ENUM)],
+    'FunctionNodeFloatToInt' : [
+        NTPNodeSetting("rounding_mode", ST.ENUM)
+    ],
 
-    'ShaderNodeMath'          : [("operation", ST.ENUM),
-                                 ("use_clamp", ST.BOOL)],
+    'ShaderNodeMapRange' : [
+        NTPNodeSetting("clamp",              ST.BOOL),
+        NTPNodeSetting("data_type",          ST.ENUM, min_version = (3, 1, 0)),
+        NTPNodeSetting("interpolation_type", ST.ENUM)
+    ],
+
+    'ShaderNodeMath' : [
+        NTPNodeSetting("operation", ST.ENUM),
+        NTPNodeSetting("use_clamp", ST.BOOL)
+    ],
 
     # Utilities > Rotation
-    'FunctionNodeAlignEulerToVector'    : [("axis",       ST.ENUM),
-                                           ("pivot_axis", ST.ENUM)],
+    'FunctionNodeAlignEulerToVector' : [
+        NTPNodeSetting("axis",       ST.ENUM),
+        NTPNodeSetting("pivot_axis", ST.ENUM)
+    ],
 
-    'FunctionNodeAxisAngleToRotation'   : [],
-    'FunctionNodeEulerToRotation'       : [],
-    'FunctionNodeInvertRotation'        : [],
+    'FunctionNodeAxisAngleToRotation' : [],
+    'FunctionNodeEulerToRotation'     : [],
+    'FunctionNodeInvertRotation'      : [],
                                         
-    'FunctionNodeRotateEuler'           : [("space", ST.ENUM),
-                                           ("type",  ST.ENUM)],
+    'FunctionNodeRotateEuler' : [
+        NTPNodeSetting("space", ST.ENUM),
+        NTPNodeSetting("type",  ST.ENUM)
+    ],
 
     'FunctionNodeRotateVector'          : [],
     'FunctionNodeRotationToAxisAngle'   : [],
@@ -459,15 +654,21 @@ geo_node_settings : dict[str, list[(str, ST)]] = {
     'FunctionNodeQuaternionToRotation'  : [],
 
     # MISC
-    'GeometryNodeGroup' : [("node_tree", ST.NODE_TREE)],
+    'GeometryNodeGroup' : [
+        NTPNodeSetting("node_tree", ST.NODE_TREE)
+    ],
 
-    'NodeFrame'       : [("label_size", ST.INT),
-                         ("shrink", ST.BOOL),
-                         ("text", ST.TEXT)],
+    'NodeFrame' : [
+        NTPNodeSetting("label_size", ST.INT),
+        NTPNodeSetting("shrink", ST.BOOL),
+        NTPNodeSetting("text", ST.TEXT)
+    ],
 
     'NodeGroupInput'  : [],
 
-    'NodeGroupOutput' : [("is_active_output", ST.BOOL)],
+    'NodeGroupOutput' : [
+        NTPNodeSetting("is_active_output", ST.BOOL)
+    ],
 
     'NodeReroute'     : []
 
