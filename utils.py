@@ -45,8 +45,8 @@ class ST(Enum):
     FONT = auto() #unimplemented
     MASK = auto() #unimplemented
     CRYPTOMATTE_ENTRIES = auto() #unimplemented
-    IMAGE_FORMAT_SETTINGS = auto()
-    FILE_SLOTS = auto()
+    IMAGE_FORMAT_SETTINGS = auto() #unimplemented
+    FILE_SLOTS = auto() #unimplemented
     LAYER_SLOTS = auto() #unimplemented
 
 class NTPNodeSetting(NamedTuple):
