@@ -2,7 +2,7 @@ bl_info = {
     "name": "Node to Python", 
     "description": "Convert Blender node groups to a Python add-on!",
     "author": "Brendan Parmer",
-    "version": (2, 2, 0),
+    "version": (3, 0, 0),
     "blender": (3, 0, 0),
     "location": "Node", 
     "category": "Node",
@@ -10,15 +10,18 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    importlib.reload(materials)
-    importlib.reload(geo_nodes)
+    importlib.reload(compositor)
+    importlib.reload(geometry)
+    importlib.reload(material)
     importlib.reload(options)
 else:
-    from . import materials
-    from . import geo_nodes
+    from . import compositor
+    from . import geometry
+    from . import material
     from . import options
 
 import bpy
+
 
 class NodeToPythonMenu(bpy.types.Menu):
     bl_idname = "NODE_MT_node_to_python"
@@ -33,17 +36,23 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
 
 
-
-
 classes = [NodeToPythonMenu,
+            #options
             options.NTPOptions,
-            geo_nodes.GeoNodesToPython,
-            geo_nodes.SelectGeoNodesMenu,
-            geo_nodes.GeoNodesToPythonPanel,
-            materials.MaterialToPython,
-            materials.SelectMaterialMenu,
-            materials.MaterialToPythonPanel,
-            options.NTPOptionsPanel
+            options.NTPOptionsPanel,
+            #compositor
+            compositor.operator.NTPCompositorOperator,
+            compositor.ui.NTPCompositorScenesMenu,
+            compositor.ui.NTPCompositorGroupsMenu,
+            compositor.ui.NTPCompositorPanel,
+            #geometry
+            geometry.operator.NTPGeoNodesOperator,
+            geometry.ui.NTPGeoNodesMenu,
+            geometry.ui.NTPGeoNodesPanel,
+            #material
+            material.operator.NTPMaterialOperator,
+            material.ui.NTPMaterialMenu,
+            material.ui.NTPMaterialPanel,
             ]
 
 def register():
