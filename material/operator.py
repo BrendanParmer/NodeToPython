@@ -11,7 +11,7 @@ from .node_settings import shader_node_settings
 
 MAT_VAR = "mat"
 NODE = "node"
-shader_op_reserved_names = {MAT_VAR, NODE}
+SHADER_OP_RESERVED_NAMES = {MAT_VAR, NODE}
 
 class NTPMaterialOperator(NTP_Operator):
     bl_idname = "node.ntp_material"
@@ -24,7 +24,7 @@ class NTPMaterialOperator(NTP_Operator):
     def __init__(self):
         super().__init__()
         self._settings = shader_node_settings
-        for name in shader_op_reserved_names:
+        for name in SHADER_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
     
     def _create_material(self, indent: str):

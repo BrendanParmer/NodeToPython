@@ -13,7 +13,7 @@ BASE_NAME = "base_name"
 END_NAME = "end_name"
 NODE = "node"
 
-comp_op_reserved_names = {SCENE, BASE_NAME, END_NAME, NODE} 
+COMP_OP_RESERVED_NAMES = {SCENE, BASE_NAME, END_NAME, NODE} 
 
 class NTPCompositorOperator(NTP_Operator):
     bl_idname = "node.ntp_compositor"
@@ -34,7 +34,7 @@ class NTPCompositorOperator(NTP_Operator):
     def __init__(self):
         super().__init__()
         self._settings = compositor_node_settings
-        for name in comp_op_reserved_names:
+        for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
 
@@ -87,16 +87,16 @@ class NTPCompositorOperator(NTP_Operator):
         node (CompositorNodeColorBalance): the color balance node
         """
         if node.correction_method == 'LIFT_GAMMA_GAIN':
-            lst = [("correction_method", ST.ENUM),                 
-                   ("gain",              ST.COLOR),
-                   ("gamma",             ST.COLOR),
-                   ("lift",              ST.COLOR)]
+            lst = [NTPNodeSetting("correction_method", ST.ENUM),                 
+                   NTPNodeSetting("gain",              ST.COLOR),
+                   NTPNodeSetting("gamma",             ST.COLOR),
+                   NTPNodeSetting("lift",              ST.COLOR)]
         else:
-            lst = [("correction_method", ST.ENUM),
-                   ("offset",            ST.COLOR),
-                   ("offset_basis",      ST.FLOAT),
-                   ("power",             ST.COLOR),
-                   ("slope",             ST.COLOR)]
+            lst = [NTPNodeSetting("correction_method", ST.ENUM),
+                   NTPNodeSetting("offset",            ST.COLOR),
+                   NTPNodeSetting("offset_basis",      ST.FLOAT),
+                   NTPNodeSetting("power",             ST.COLOR),
+                   NTPNodeSetting("slope",             ST.COLOR)]
 
         self._settings['CompositorNodeColorBalance'] = lst
 

@@ -21,12 +21,17 @@ IMAGE_DIR_NAME = "imgs"
 IMAGE_PATH = "image_path"
 BASE_DIR = "base_dir"
 
-reserved_names = {
+RESERVED_NAMES = {
                   INDEX,
                   IMAGE_DIR_NAME,
                   IMAGE_PATH,
                   BASE_DIR
                  }
+
+#node input sockets that are messy to set default values for
+DONT_SET_DEFAULTS = {'NodeSocketGeometry',
+                     'NodeSocketShader',
+                     'NodeSocketVirtual'}
 
 class NTP_Operator(Operator):
     """
@@ -96,7 +101,7 @@ class NTP_Operator(Operator):
         # Dictionary used for setting node properties
         self._settings: dict[str, list[(str, ST)]] = {}
 
-        for name in reserved_names:
+        for name in RESERVED_NAMES:
             self._used_vars[name] = 0
 
     def _write(self, string: str, indent: str = None):
@@ -273,57 +278,63 @@ class NTP_Operator(Operator):
 
         node_var = self._node_vars[node]
 
-        for (attr_name, type) in self._settings[node.bl_idname]:
+        for setting in self._settings[node.bl_idname]:
+
+            attr_name = setting.name
+            st = setting.st 
+
             if not hasattr(node, attr_name):
-                self.report({'WARNING'},
-                            f"NodeToPython: Couldn't find attribute "
-                            f"\"{attr_name}\" for node {node.name} of type "
-                            f"{node.bl_idname}")
+                if (bpy.app.version >= setting.min_version and 
+                    bpy.app.version <= setting.max_version):
+                    self.report({'WARNING'},
+                                f"NodeToPython: Couldn't find attribute "
+                                f"\"{attr_name}\" for node {node.name} of type "
+                                f"{node.bl_idname}")
                 continue
             attr = getattr(node, attr_name, None)
             if attr is None:
                 continue
 
             setting_str = f"{node_var}.{attr_name}"
-            if type == ST.ENUM:
+            if st == ST.ENUM:
                 if attr != '':
                     self._write(f"{setting_str} = {enum_to_py_str(attr)}")
-            elif type == ST.ENUM_SET:
+            elif st == ST.ENUM_SET:
                 self._write(f"{setting_str} = {attr}")
-            elif type == ST.STRING:
+            elif st == ST.STRING:
                 self._write(f"{setting_str} = {str_to_py_str(attr)}")
-            elif type == ST.BOOL or type == ST.INT or type == ST.FLOAT:
+            elif st == ST.BOOL or st == ST.INT or st == ST.FLOAT:
                 self._write(f"{setting_str} = {attr}")
-            elif type == ST.VEC1:
+            elif st == ST.VEC1:
                 self._write(f"{setting_str} = {vec1_to_py_str(attr)}")
-            elif type == ST.VEC2:
+            elif st == ST.VEC2:
                 self._write(f"{setting_str} = {vec2_to_py_str(attr)}")
-            elif type == ST.VEC3:
+            elif st == ST.VEC3:
                 self._write(f"{setting_str} = {vec3_to_py_str(attr)}")
-            elif type == ST.VEC4:
+            elif st == ST.VEC4:
                 self._write(f"{setting_str} = {vec4_to_py_str(attr)}")
-            elif type == ST.COLOR:
+            elif st == ST.COLOR:
                 self._write(f"{setting_str} = {color_to_py_str(attr)}")
-            elif type == ST.MATERIAL:
+            elif st == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
                 self._write((f"if {name} in bpy.data.materials:"))
                 self._write((f"\t{setting_str} = bpy.data.materials[{name}]"))
-            elif type == ST.OBJECT:
+            elif st == ST.OBJECT:
                 name = str_to_py_str(attr.name)
                 self._write((f"if {name} in bpy.data.objects:"))
                 self._write((f"\t{setting_str} = bpy.data.objects[{name}]"))
-            elif type == ST.COLOR_RAMP:
+            elif st == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, attr_name)
-            elif type == ST.CURVE_MAPPING:
+            elif st == ST.CURVE_MAPPING:
                 self._curve_mapping_settings(node, attr_name)
-            elif type == ST.NODE_TREE:
+            elif st == ST.NODE_TREE:
                 self._node_tree_settings(node, attr_name)
-            elif type == ST.IMAGE:
+            elif st == ST.IMAGE:
                 if self._addon_dir is not None and attr is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
                         self._save_image(attr)
                         self._load_image(attr, f"{node_var}.{attr_name}")
-            elif type == ST.IMAGE_USER:
+            elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
@@ -663,7 +674,7 @@ class NTP_Operator(Operator):
         node_var = self._node_vars[node]
 
         for i, input in enumerate(node.inputs):
-            if input.bl_idname not in dont_set_defaults and not input.is_linked:
+            if input.bl_idname not in DONT_SET_DEFAULTS and not input.is_linked:
                 # TODO: this could be cleaner
                 socket_var = f"{node_var}.inputs[{i}]"
 
