@@ -186,7 +186,8 @@ class NTPCompositorOperator(NTP_Operator):
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
-            self._setup_addon_directories(context, comp_var)
+            if not self._setup_addon_directories(context, comp_var):
+                return {'CANCELLED'}
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
 

@@ -137,7 +137,8 @@ class NTPMaterialOperator(NTP_Operator):
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
-            self._setup_addon_directories(context, mat_var)
+            if not self._setup_addon_directories(context, mat_var):
+                return {'CANCELLED'}
 
             self._file = open(f"{self._addon_dir}/__init__.py", "w")
 
@@ -171,7 +172,7 @@ class NTPMaterialOperator(NTP_Operator):
         self._file.close()
         
         if self.mode == 'ADDON':
-            self._zip_addon(self._zip_dir)
+            self._zip_addon()
 
         self._report_finished("material")
 
