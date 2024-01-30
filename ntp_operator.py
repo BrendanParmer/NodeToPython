@@ -109,23 +109,32 @@ class NTP_Operator(Operator):
             indent = self._inner
         self._file.write(f"{indent}{string}\n")
 
-    def _setup_addon_directories(self, context: Context, nt_var: str) -> None:
+    def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
         Finds/creates directories to save add-on to
+
+        Parameters:
+        context (Context): the current scene context
+        nt_var (str): variable name of the ndoe tree
+
+        Returns:
+        (bool): success of addon directory setup
         """
         # find base directory to save new addon
         self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
         if not self._dir or self._dir == "":
             self.report({'ERROR'},
-                        ("NodeToPython: Save your blend file before using "
-                         "NodeToPython!"))  # TODO: Still valid??
-            return {'CANCELLED'}  # TODO
+                        ("NodeToPython: No save location found. Please select "
+                         "one in the NodeToPython Options panel"))
+            return False
 
         self._zip_dir = os.path.join(self._dir, nt_var)
         self._addon_dir = os.path.join(self._zip_dir, nt_var)
 
         if not os.path.exists(self._addon_dir):
             os.makedirs(self._addon_dir)
+        
+        return True
 
     def _create_header(self, name: str) -> None:
         """
