@@ -294,7 +294,7 @@ class NTP_Operator(Operator):
 
             if not hasattr(node, attr_name):
                 if (bpy.app.version >= setting.min_version and 
-                    bpy.app.version <= setting.max_version):
+                    bpy.app.version < setting.max_version):
                     self.report({'WARNING'},
                                 f"NodeToPython: Couldn't find attribute "
                                 f"\"{attr_name}\" for node {node.name} of type "
