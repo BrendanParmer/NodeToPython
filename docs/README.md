@@ -5,7 +5,7 @@
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/releases) [![GitHub](https://img.shields.io/github/license/BrendanParmer/NodeToPython)](https://github.com/BrendanParmer/NodeToPython/blob/main/LICENSE) ![](https://visitor-badge.laobi.icu/badge?page_id=BrendanParmer.NodeToPython) ![](https://img.shields.io/github/downloads/BrendanParmer/NodeToPython/total.svg)
  
 ## About
-A Blender add-on to create scripts and add-ons! This add-on will take your Geometry Nodes or Materials and convert them into legible Python code.
+A Blender add-on to create scripts and add-ons! This add-on will take your Geometry Nodes, Materials, and Compositing nodes and convert them into legible Python code.
 
 Node To Python automatically handles node layout, default values, subgroups, naming, colors, and more! 
 
@@ -15,7 +15,7 @@ Blender's node-based editors are powerful, yet accessible tools, and I wanted to
 * interfacing with other parts of the software or properties of an object
 
 ## Supported Versions
-NodeToPython v3.0 is supported for Blender 3.0 - 4.0 on Windows, macOS, and Linux. I generally try to update the add-on to handle new nodes around the beta release of each update.
+NodeToPython v3.1 is supported for Blender 3.0 - 4.1 on Windows, macOS, and Linux. I generally try to update the add-on to handle new nodes around the beta release of each update.
 
 ## Installation
 1. Download the `NodeToPython.zip` file from the [latest release](https://github.com/BrendanParmer/NodeToPython/releases)
