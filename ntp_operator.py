@@ -345,6 +345,8 @@ class NTP_Operator(Operator):
                         self._load_image(attr, f"{node_var}.{attr_name}")
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
+            elif st == ST.INDEX_SWITCH_ITEMS:
+                self._index_switch_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -1042,6 +1044,22 @@ class NTP_Operator(Operator):
         for img_usr_attr in img_usr_attrs:
             self._write(f"{img_user_var}.{img_usr_attr} = "
                         f"{getattr(img_user, img_usr_attr)}")
+
+    if bpy.app.version >= (4, 1, 0):
+        def _index_switch_items(self, switch_items: bpy.types.NodeIndexSwitchItems,   
+                                items_str: str) -> None:
+            """
+            Set the proper amount of index switch items
+
+            Parameters:
+            switch_items (bpy.types.NodeIndexSwitchItems): switch items to copy
+            items_str (str): string for the generated switch items attribute
+            """
+            num_items = len(switch_items)
+            self._write(f"{items_str}.clear()")
+            for i in range(num_items):
+                self._write(f"{items_str}.new()")
+
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
