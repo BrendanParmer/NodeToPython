@@ -29,8 +29,9 @@ class ST(Enum):
     CURVE_MAPPING = auto()
     NODE_TREE = auto()
 
-    ENUM_DEFINITION = auto() #TODO: unimplemented
-    INDEX_SWITCH_ITEMS = auto() #TODO: unimplemented
+    ENUM_DEFINITION = auto()
+    INDEX_SWITCH_ITEMS = auto()
+    BAKE_ITEMS = auto()
 
     # Asset Library
     MATERIAL = auto() # Handle with asset library

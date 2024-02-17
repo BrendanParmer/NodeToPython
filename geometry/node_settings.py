@@ -140,7 +140,8 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     'GeometryNodeToolSetSelection' : [],
 
     # Geometry > Operations
-    'GeometryNodeBake' : [ #TODO
+    'GeometryNodeBake' : [
+        NTPNodeSetting("bake_items", ST.BAKE_ITEMS, min_version = (4, 1, 0))
     ],
 
     'GeometryNodeBoundBox' : [],
