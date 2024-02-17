@@ -29,6 +29,10 @@ class ST(Enum):
     CURVE_MAPPING = auto()
     NODE_TREE = auto()
 
+    ENUM_DEFINITION = auto()
+    INDEX_SWITCH_ITEMS = auto()
+    BAKE_ITEMS = auto()
+
     # Asset Library
     MATERIAL = auto() # Handle with asset library
     OBJECT = auto() # Handle with asset library
@@ -53,7 +57,7 @@ class NTPNodeSetting(NamedTuple):
     name: str
     st: ST
     min_version: tuple = (3, 0, 0)
-    max_version: tuple = (4, 1, 0)
+    max_version: tuple = (4, 2, 0) #first version where a setting is invalid
 
 
 def clean_string(string: str, lower: bool = True) -> str:

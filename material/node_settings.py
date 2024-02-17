@@ -194,13 +194,14 @@ shader_node_settings : dict[str, list[NTPNodeSetting]] = {
     ],
 
     'ShaderNodeTexMusgrave' : [
-        NTPNodeSetting("musgrave_dimensions", ST.ENUM),
-        NTPNodeSetting("musgrave_type",       ST.ENUM)
+        NTPNodeSetting("musgrave_dimensions", ST.ENUM, max_version = (4, 1, 0)),
+        NTPNodeSetting("musgrave_type",       ST.ENUM, max_version = (4, 1, 0))
     ],
 
     'ShaderNodeTexNoise' : [
         NTPNodeSetting("noise_dimensions", ST.ENUM),
-        NTPNodeSetting("normalize",        ST.BOOL, min_version = (4, 0, 0))
+        NTPNodeSetting("noise_type",       ST.ENUM, min_version=(4, 1, 0)),
+        NTPNodeSetting("normalize",        ST.BOOL, min_version=(4, 0, 0)),
     ],
 
     'ShaderNodeTexPointDensity' : [

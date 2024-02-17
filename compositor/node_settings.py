@@ -261,14 +261,19 @@ compositor_node_settings : dict[str, list[NTPNodeSetting]] = {
     ],
     
     'CompositorNodeKuwahara' : [
-        NTPNodeSetting("eccentricity", ST.FLOAT, min_version = (4, 0, 0)),
-        NTPNodeSetting("sharpness",    ST.FLOAT, min_version = (4, 0, 0)),
-        NTPNodeSetting("size",         ST.INT,   min_version = (4, 0, 0)),
-        NTPNodeSetting("uniformity",   ST.INT,   min_version = (4, 0, 0)),
-        NTPNodeSetting("variation",    ST.ENUM,  min_version = (4, 0, 0))
+        NTPNodeSetting("eccentricity",       ST.FLOAT, min_version = (4, 0, 0)),
+        NTPNodeSetting("sharpness",          ST.FLOAT, min_version = (4, 0, 0)),
+        NTPNodeSetting("size",               ST.INT,   min_version = (4, 0, 0), 
+                                                       max_version = (4, 1, 0)),
+        NTPNodeSetting("uniformity",         ST.INT,   min_version = (4, 0, 0)),
+        NTPNodeSetting("variation",          ST.ENUM,  min_version = (4, 0, 0)),
+        NTPNodeSetting("use_high_precision", ST.BOOL,  min_version = (4, 1, 0))
     ],
 
-    'CompositorNodePixelate' : [],
+    'CompositorNodePixelate' : [
+        NTPNodeSetting("pixel_size", ST.INT, min_version = (4, 1, 0))
+    ],
+    
     'CompositorNodePosterize' : [],
 
     'CompositorNodeSunBeams' : [
@@ -324,7 +329,7 @@ compositor_node_settings : dict[str, list[NTPNodeSetting]] = {
         NTPNodeSetting("distance",   ST.FLOAT),
         NTPNodeSetting("iterations", ST.INT),
         NTPNodeSetting("spin",       ST.FLOAT),
-        NTPNodeSetting("use_wrap",   ST.BOOL, max_version = (3, 4, 0)),
+        NTPNodeSetting("use_wrap",   ST.BOOL, max_version = (3, 5, 0)),
         NTPNodeSetting("zoom",       ST.FLOAT)
     ],
     
@@ -571,6 +576,10 @@ compositor_node_settings : dict[str, list[NTPNodeSetting]] = {
     
     'CompositorNodeNormalize' : [],
 
+    'CompositorNodeSplit' : [
+        NTPNodeSetting("axis",   ST.ENUM, min_version=(4, 1, 0)),
+        NTPNodeSetting("factor", ST.INT,  min_version=(4, 1, 0))
+    ],
 
     'CompositorNodeSwitch' : [
         NTPNodeSetting("check", ST.BOOL)

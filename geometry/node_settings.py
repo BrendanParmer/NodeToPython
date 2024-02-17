@@ -71,6 +71,8 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     # Input > Scene
     'GeometryNodeTool3DCursor' : [],
 
+    'GeometryNodeInputActiveCamera' : [],
+    
     'GeometryNodeCollectionInfo' : [
         NTPNodeSetting("transform_space", ST.ENUM)
     ],
@@ -138,6 +140,10 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     'GeometryNodeToolSetSelection' : [],
 
     # Geometry > Operations
+    'GeometryNodeBake' : [
+        NTPNodeSetting("bake_items", ST.BAKE_ITEMS, min_version = (4, 1, 0))
+    ],
+
     'GeometryNodeBoundBox' : [],
     'GeometryNodeConvexHull' : [],
 
@@ -152,6 +158,10 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
 
     'GeometryNodeMergeByDistance' : [
         NTPNodeSetting("mode", ST.ENUM, min_version = (3, 1, 0))
+    ],
+
+    'GeometryNodeSortElements' : [
+        NTPNodeSetting("domain", ST.ENUM, min_version = (4, 1, 0))
     ],
 
     'GeometryNodeTransform' : [],
@@ -279,7 +289,7 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
 
     'GeometryNodeRealizeInstances' : [
         NTPNodeSetting("legacy_behavior", ST.BOOL, min_version = (3, 1, 0), 
-                                                   max_version = (3, 6, 0))
+                                                   max_version = (4, 0, 0))
     ],
 
     'GeometryNodeRotateInstances'       : [],
@@ -472,12 +482,14 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     ],
 
     'ShaderNodeTexMusgrave' : [
-        NTPNodeSetting("musgrave_dimensions", ST.ENUM),
-        NTPNodeSetting("musgrave_type",       ST.ENUM)
+        NTPNodeSetting("musgrave_dimensions", ST.ENUM, max_version = (4, 1, 0)),
+        NTPNodeSetting("musgrave_type",       ST.ENUM, max_version = (4, 1, 0))
     ],
 
     'ShaderNodeTexNoise' : [
-        NTPNodeSetting("noise_dimensions", ST.ENUM)
+        NTPNodeSetting("noise_dimensions", ST.ENUM),
+        NTPNodeSetting("noise_type",       ST.ENUM, min_version=(4, 1, 0)),
+        NTPNodeSetting("normalize",        ST.BOOL, min_version=(4, 0, 0)),
     ],
 
     'ShaderNodeTexVoronoi' : [
@@ -499,6 +511,16 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
 
 
     # UTILITIES
+    'GeometryNodeIndexSwitch' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (4, 1, 0)),
+        NTPNodeSetting("index_switch_items", ST.INDEX_SWITCH_ITEMS, min_version = (4, 1, 0))
+    ],
+
+    'GeometryNodeMenuSwitch' : [
+        NTPNodeSetting("data_type", ST.ENUM, min_version = (4, 1, 0)),
+        NTPNodeSetting("enum_definition", ST.ENUM_DEFINITION, min_version = (4, 1, 0))
+    ],
+
     'ShaderNodeMix' : [
         NTPNodeSetting("blend_type",   ST.ENUM, min_version = (3, 4, 0)),
         NTPNodeSetting("clamp_factor", ST.BOOL, min_version = (3, 4, 0)),
@@ -610,7 +632,7 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     ],
 
     'FunctionNodeCompareFloats' : [
-        NTPNodeSetting("operation", ST.ENUM, max_version = (3, 0, 0))
+        NTPNodeSetting("operation", ST.ENUM, max_version = (3, 2, 0))
     ],
 
     'ShaderNodeFloatCurve' : [
@@ -641,7 +663,11 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     'FunctionNodeAxisAngleToRotation' : [],
     'FunctionNodeEulerToRotation'     : [],
     'FunctionNodeInvertRotation'      : [],
-                                        
+
+    'FunctionNodeRotateRotation' : [
+        NTPNodeSetting("rotation_space", ST.ENUM, min_version = (4, 1, 0))
+    ],
+
     'FunctionNodeRotateEuler' : [
         NTPNodeSetting("space", ST.ENUM),
         NTPNodeSetting("type",  ST.ENUM)

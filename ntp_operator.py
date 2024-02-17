@@ -294,7 +294,7 @@ class NTP_Operator(Operator):
 
             if not hasattr(node, attr_name):
                 if (bpy.app.version >= setting.min_version and 
-                    bpy.app.version <= setting.max_version):
+                    bpy.app.version < setting.max_version):
                     self.report({'WARNING'},
                                 f"NodeToPython: Couldn't find attribute "
                                 f"\"{attr_name}\" for node {node.name} of type "
@@ -345,6 +345,12 @@ class NTP_Operator(Operator):
                         self._load_image(attr, f"{node_var}.{attr_name}")
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
+            elif st == ST.INDEX_SWITCH_ITEMS:
+                self._index_switch_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.ENUM_DEFINITION:
+                self._enum_definition(attr, f"{node_var}.{attr_name}")
+            elif st == ST.BAKE_ITEMS:
+                self._bake_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -703,6 +709,10 @@ class NTP_Operator(Operator):
                 elif input.bl_idname == 'NodeSocketString':
                     default_val = str_to_py_str(input.default_value)
 
+                #menu
+                elif input.bl_idname == 'NodeSocketMenu':
+                    default_val = enum_to_py_str(input.default_value)
+
                 # images
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
@@ -1042,6 +1052,61 @@ class NTP_Operator(Operator):
         for img_usr_attr in img_usr_attrs:
             self._write(f"{img_user_var}.{img_usr_attr} = "
                         f"{getattr(img_user, img_usr_attr)}")
+
+    if bpy.app.version >= (4, 1, 0):
+        def _index_switch_items(self, switch_items: bpy.types.NodeIndexSwitchItems,   
+                                items_str: str) -> None:
+            """
+            Set the proper amount of index switch items
+
+            Parameters:
+            switch_items (bpy.types.NodeIndexSwitchItems): switch items to copy
+            items_str (str): string for the generated switch items attribute
+            """
+            num_items = len(switch_items)
+            self._write(f"{items_str}.clear()")
+            for i in range(num_items):
+                self._write(f"{items_str}.new()")
+
+        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
+                             enum_def_str: str) -> None:
+            """
+            Set enum definition item for a node
+            
+            Parameters:
+            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
+            enum_def_str (str): string for the generated enum definition
+            """
+            self._write(f"{enum_def_str}.enum_items.clear()")
+            for i, enum_item in enumerate(enum_def.enum_items):
+                name = str_to_py_str(enum_item.name)
+                self._write(f"{enum_def_str}.enum_items.new({name})")
+                if enum_item.description != "":
+                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
+                                f"{str_to_py_str(enum_item.description)}")
+
+        def _bake_items(self, bake_items: bpy.types.NodeGeometryBakeItems,
+                        bake_items_str: str) -> None:
+            """
+            Set bake items for a node
+            
+            Parameters:
+            bake_items (bpy.types.NodeGeometryBakeItems): bake items to replicate
+            bake_items_str (str): string for the generated bake items
+            """
+            self._write(f"{bake_items_str}.clear()")
+            for i, bake_item in enumerate(bake_items):
+                socket_type = enum_to_py_str(bake_item.socket_type)
+                name = str_to_py_str(bake_item.name)
+                self._write(f"{bake_items_str}.new({socket_type}, {name})")
+                
+                ad = enum_to_py_str(bake_item.attribute_domain)
+                self._write(f"{bake_items_str}[{i}].attribute_domain = {ad}")
+
+                if bake_item.is_attribute:
+                    self._write(f"{bake_items_str}[{i}].is_attribute = True")
+
+
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
