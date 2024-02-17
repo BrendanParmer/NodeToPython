@@ -347,6 +347,8 @@ class NTP_Operator(Operator):
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
             elif st == ST.INDEX_SWITCH_ITEMS:
                 self._index_switch_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.ENUM_DEFINITION:
+                self._enum_definition(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -705,6 +707,10 @@ class NTP_Operator(Operator):
                 elif input.bl_idname == 'NodeSocketString':
                     default_val = str_to_py_str(input.default_value)
 
+                #menu
+                elif input.bl_idname == 'NodeSocketMenu':
+                    default_val = enum_to_py_str(input.default_value)
+
                 # images
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
@@ -1059,6 +1065,23 @@ class NTP_Operator(Operator):
             self._write(f"{items_str}.clear()")
             for i in range(num_items):
                 self._write(f"{items_str}.new()")
+
+        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
+                             enum_def_str: str) -> None:
+            """
+            Set enum definition item for a node
+            
+            Parameters:
+            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
+            enum_def_str (str): string for the generated enum definition
+            """
+            self._write(f"{enum_def_str}.enum_items.clear()")
+            for i, enum_item in enumerate(enum_def.enum_items):
+                name = str_to_py_str(enum_item.name)
+                self._write(f"{enum_def_str}.enum_items.new({name})")
+                if enum_item.description != "":
+                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
+                                f"{str_to_py_str(enum_item.description)}")
 
 
     def _set_parents(self, node_tree: NodeTree) -> None:
