@@ -269,6 +269,9 @@ class NTP_Operator(Operator):
         if node.mute:
             self._write(f"{node_var}.mute = True")
 
+        # hide
+        if node.hide:
+            self._write(f"{node_var}.hide = True")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
@@ -292,14 +295,18 @@ class NTP_Operator(Operator):
             attr_name = setting.name
             st = setting.st 
 
+            is_version_valid = (bpy.app.version >= setting.min_version and
+                                bpy.app.version < setting.max_version)
             if not hasattr(node, attr_name):
-                if (bpy.app.version >= setting.min_version and 
-                    bpy.app.version < setting.max_version):
+                if is_version_valid:
                     self.report({'WARNING'},
                                 f"NodeToPython: Couldn't find attribute "
                                 f"\"{attr_name}\" for node {node.name} of type "
                                 f"{node.bl_idname}")
                 continue
+            elif not is_version_valid:
+                continue
+            
             attr = getattr(node, attr_name, None)
             if attr is None:
                 continue
@@ -1168,6 +1175,9 @@ class NTP_Operator(Operator):
         links = node_tree.links
         if links:
             self._write(f"#initialize {nt_var} links")
+            if hasattr(links[0], "multi_input_sort_id"):
+                # generate links in the correct order for multi input sockets
+                links = sorted(links, key=lambda link: link.multi_input_sort_id)
 
         for link in links:
             in_node_var = self._node_vars[link.from_node]
