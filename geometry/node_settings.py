@@ -669,8 +669,9 @@ geo_node_settings : dict[str, list[NTPNodeSetting]] = {
     ],
 
     'FunctionNodeRotateEuler' : [
+        NTPNodeSetting("rotation_type", ST.ENUM, min_version = (4, 1, 0)),
         NTPNodeSetting("space", ST.ENUM),
-        NTPNodeSetting("type",  ST.ENUM)
+        NTPNodeSetting("type",  ST.ENUM, max_version = (4, 1, 0))
     ],
 
     'FunctionNodeRotateVector'          : [],
