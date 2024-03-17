@@ -295,14 +295,18 @@ class NTP_Operator(Operator):
             attr_name = setting.name
             st = setting.st 
 
+            is_version_valid = (bpy.app.version >= setting.min_version and
+                                bpy.app.version < setting.max_version)
             if not hasattr(node, attr_name):
-                if (bpy.app.version >= setting.min_version and 
-                    bpy.app.version < setting.max_version):
+                if is_version_valid:
                     self.report({'WARNING'},
                                 f"NodeToPython: Couldn't find attribute "
                                 f"\"{attr_name}\" for node {node.name} of type "
                                 f"{node.bl_idname}")
                 continue
+            elif not is_version_valid:
+                continue
+            
             attr = getattr(node, attr_name, None)
             if attr is None:
                 continue
