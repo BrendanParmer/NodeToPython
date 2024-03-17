@@ -269,6 +269,9 @@ class NTP_Operator(Operator):
         if node.mute:
             self._write(f"{node_var}.mute = True")
 
+        # hide
+        if node.hide:
+            self._write(f"{node_var}.hide = True")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
