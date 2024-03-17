@@ -1175,6 +1175,9 @@ class NTP_Operator(Operator):
         links = node_tree.links
         if links:
             self._write(f"#initialize {nt_var} links")
+            if hasattr(links[0], "multi_input_sort_id"):
+                # generate links in the correct order for multi input sockets
+                links = sorted(links, key=lambda link: link.multi_input_sort_id)
 
         for link in links:
             in_node_var = self._node_vars[link.from_node]
