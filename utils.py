@@ -29,6 +29,8 @@ class ST(Enum):
     CURVE_MAPPING = auto()
     NODE_TREE = auto()
 
+    SIM_OUTPUT_ITEMS = auto()
+    REPEAT_OUTPUT_ITEMS = auto()
     ENUM_DEFINITION = auto()
     INDEX_SWITCH_ITEMS = auto()
     BAKE_ITEMS = auto()
