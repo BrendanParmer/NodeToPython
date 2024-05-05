@@ -6,7 +6,7 @@ from ..ntp_operator import NTP_Operator, INDEX
 from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
 from io import StringIO
-from .node_settings import compositor_node_settings
+from ..node_settings import node_settings
 
 SCENE = "scene"
 BASE_NAME = "base_name"
@@ -33,7 +33,7 @@ class NTPCompositorOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = compositor_node_settings
+        self._settings = node_settings
         for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
