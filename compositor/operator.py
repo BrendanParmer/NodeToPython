@@ -6,7 +6,7 @@ from ..ntp_operator import NTP_Operator, INDEX
 from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
 from io import StringIO
-from .node_settings import compositor_node_settings
+from ..node_settings import node_settings
 
 SCENE = "scene"
 BASE_NAME = "base_name"
@@ -33,7 +33,7 @@ class NTPCompositorOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = compositor_node_settings
+        self._settings = node_settings
         for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
@@ -77,6 +77,27 @@ class NTPCompositorOperator(NTP_Operator):
                          f"type = \'CompositorNodeTree\', "
                          f"name = {str_to_py_str(nt_name)})"))
             self._write("")
+
+        # Compositor node tree settings
+        #TODO: might be good to make this optional
+        enum_settings = ["chunk_size", "edit_quality", "execution_mode",
+                         "precision", "render_quality"]
+        for enum in enum_settings:
+            if not hasattr(ntp_nt.node_tree, enum):
+                continue
+            setting = getattr(ntp_nt.node_tree, enum)
+            if setting is not None and setting is not "":
+                py_str = enum_to_py_str(setting)
+                self._write(f"{ntp_nt.var}.{enum} = {py_str}")
+        
+        bool_settings = ["use_groupnode_buffer", "use_opencl", "use_two_pass",
+                         "use_viewer_border"]
+        for bool_setting in bool_settings:
+            if not hasattr(ntp_nt.node_tree, bool_setting):
+                continue
+            if getattr(ntp_nt.node_tree, bool_setting) is True:
+                self._write(f"{ntp_nt.var}.{bool_setting} = True")
+        
 
     def _set_color_balance_settings(self, node: CompositorNodeColorBalance
                                    ) -> None:

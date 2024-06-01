@@ -7,14 +7,12 @@ from io import StringIO
 from ..ntp_operator import NTP_Operator
 from ..utils import *
 from .node_tree import NTP_GeoNodeTree
-from .node_settings import geo_node_settings
+from ..node_settings import node_settings
 
-ITEM = "item"
 OBJECT_NAME = "name"
 OBJECT = "obj"
 MODIFIER = "mod"
-GEO_OP_RESERVED_NAMES = {ITEM, 
-                         OBJECT_NAME, 
+GEO_OP_RESERVED_NAMES = {OBJECT_NAME, 
                          OBJECT,
                          MODIFIER}
 
@@ -35,37 +33,9 @@ class NTPGeoNodesOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = geo_node_settings
+        self._settings = node_settings
         for name in GEO_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
-
-    if bpy.app.version >= (3, 6, 0):
-        def _process_zone_output_node(self, node: GeometryNode) -> None:
-            is_sim = False
-            if node.bl_idname == 'GeometryNodeSimulationOutput':
-                items = "state_items"
-                is_sim = True
-            elif node.bl_idname == 'GeometryNodeRepeatOutput':
-                items = "repeat_items"
-            else:
-                self.report({'WARNING'}, f"NodeToPython: {node.bl_idname} is "
-                                         f"not recognized as a valid zone output")
-
-            node_var = self._node_vars[node]
-
-            self._write(f"# Remove generated {items}")
-            self._write(f"for {ITEM} in {node_var}.{items}:")
-            self._write(f"\t{node_var}.{items}.remove(item)")
-
-            for i, item in enumerate(getattr(node, items)):
-                socket_type = enum_to_py_str(item.socket_type)
-                name = str_to_py_str(item.name)
-                self._write(f"# Create item {name}")
-                self._write(f"{node_var}.{items}.new({socket_type}, {name})")
-                if is_sim:
-                    item_var = f"{node_var}.{items}[{i}]"
-                    ad = enum_to_py_str(item.attribute_domain)
-                    self._write(f"{item_var}.attribute_domain = {ad}")
 
     def _process_node(self, node: Node, ntp_nt: NTP_GeoNodeTree) -> None:
         """
@@ -90,14 +60,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         if node.bl_idname == 'GeometryNodeSimulationInput':
             ntp_nt.sim_inputs.append(node)
 
-        elif node.bl_idname == 'GeometryNodeSimulationOutput':
-            self._process_zone_output_node(node)
-
         elif node.bl_idname == 'GeometryNodeRepeatInput':
             ntp_nt.repeat_inputs.append(node)
-        
-        elif node.bl_idname == 'GeometryNodeRepeatOutput':
-            self._process_zone_output_node(node)
         
         self._hide_hidden_sockets(node)
 
@@ -139,14 +103,16 @@ class NTPGeoNodesOperator(NTP_Operator):
             if is_tool:
                 self._write(f"{nt_var}.is_tool = True")
 
-                tool_flags =  ["is_mode_edit", 
+                tool_flags =  ["is_mode_object",
+                               "is_mode_edit", 
                                "is_mode_sculpt",
                                "is_type_curve",
                                "is_type_mesh",
                                "is_type_point_cloud"]
             
                 for flag in tool_flags:
-                    self._write(f"{nt_var}.{flag} = {getattr(node_tree, flag)}")
+                    if hasattr(node_tree, flag) is True:
+                        self._write(f"{nt_var}.{flag} = {getattr(node_tree, flag)}")
             self._write("")
 
     def _process_node_tree(self, node_tree: GeometryNodeTree) -> None:

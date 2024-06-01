@@ -7,13 +7,13 @@ from io import StringIO
 from ..utils import *
 from ..ntp_operator import NTP_Operator
 from ..ntp_node_tree import NTP_NodeTree
-from .node_settings import shader_node_settings
+from ..node_settings import node_settings
 
 MAT_VAR = "mat"
 NODE = "node"
 SHADER_OP_RESERVED_NAMES = {MAT_VAR, NODE}
 
-class NTPMaterialOperator(NTP_Operator):
+class NTPShaderOperator(NTP_Operator):
     bl_idname = "node.ntp_material"
     bl_label =  "Material to Python"
     bl_options = {'REGISTER', 'UNDO'}
@@ -23,7 +23,7 @@ class NTPMaterialOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = shader_node_settings
+        self._settings = node_settings
         for name in SHADER_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
     
