@@ -19,12 +19,14 @@ from .utils import *
 INDEX = "i"
 IMAGE_DIR_NAME = "imgs"
 IMAGE_PATH = "image_path"
+ITEM = "item"
 BASE_DIR = "base_dir"
 
 RESERVED_NAMES = {
                   INDEX,
                   IMAGE_DIR_NAME,
                   IMAGE_PATH,
+                  ITEM,
                   BASE_DIR
                  }
 
@@ -312,6 +314,10 @@ class NTP_Operator(Operator):
                 continue
 
             setting_str = f"{node_var}.{attr_name}"
+            """
+            A switch statement would've been nice here, 
+            but Blender 3.0 was on Python v3.9
+            """
             if st == ST.ENUM:
                 if attr != '':
                     self._write(f"{setting_str} = {enum_to_py_str(attr)}")
@@ -352,6 +358,10 @@ class NTP_Operator(Operator):
                         self._load_image(attr, f"{node_var}.{attr_name}")
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
+            elif st == ST.SIM_OUTPUT_ITEMS:
+                self._output_zone_items(attr, f"{node_var}.{attr_name}", True)
+            elif st == ST.REPEAT_OUTPUT_ITEMS:
+                self._output_zone_items(attr, f"{node_var}.{attr_name}", False)
             elif st == ST.INDEX_SWITCH_ITEMS:
                 self._index_switch_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.ENUM_DEFINITION:
@@ -1059,6 +1069,28 @@ class NTP_Operator(Operator):
         for img_usr_attr in img_usr_attrs:
             self._write(f"{img_user_var}.{img_usr_attr} = "
                         f"{getattr(img_user, img_usr_attr)}")
+
+    if bpy.app.version >= (3, 6, 0):
+        def _output_zone_items(self, output_items, items_str: str, 
+                               is_sim: bool) -> None:
+            """
+            Set items for a zone's output
+
+            output_items (NodeGeometry(Simulation/Repeat)OutputItems): items
+                to copy
+            items_str (str): 
+            """
+            self._write(f"{items_str}.clear()")
+            for i, item in enumerate(output_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name = str_to_py_str(item.name)
+                self._write(f"# Create item {name}")
+                self._write(f"{items_str}.new({socket_type}, {name})")
+
+                if is_sim:
+                    item_var = f"{items_str}[{i}]"
+                    ad = enum_to_py_str(item.attribute_domain)
+                    self._write(f"{item_var}.attribute_domain = {ad}")
 
     if bpy.app.version >= (4, 1, 0):
         def _index_switch_items(self, switch_items: bpy.types.NodeIndexSwitchItems,   

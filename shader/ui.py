@@ -1,9 +1,9 @@
 import bpy
 from bpy.types import Panel
 from bpy.types import Menu
-from .operator import NTPMaterialOperator
+from .operator import NTPShaderOperator
 
-class NTPMaterialPanel(Panel):
+class NTPShaderPanel(Panel):
     bl_label = "Material to Python"
     bl_idname = "NODE_PT_mat_to_python"
     bl_space_type = 'NODE_EDITOR'
@@ -31,7 +31,7 @@ class NTPMaterialPanel(Panel):
         row.operator_context = 'INVOKE_DEFAULT'
         row.menu("NODE_MT_ntp_material", text="Materials")
 
-class NTPMaterialMenu(Menu):
+class NTPShaderMenu(Menu):
     bl_idname = "NODE_MT_ntp_material"
     bl_label = "Select Material"
     
@@ -44,6 +44,6 @@ class NTPMaterialMenu(Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
         for mat in bpy.data.materials:
             if mat.node_tree:
-                op = layout.operator(NTPMaterialOperator.bl_idname, 
+                op = layout.operator(NTPShaderOperator.bl_idname, 
                                      text=mat.name)
                 op.material_name = mat.name
