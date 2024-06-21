@@ -374,6 +374,8 @@ class NTP_Operator(Operator):
                 self._bake_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.CAPTURE_ATTRIBUTE_ITEMS:
                 self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.MENU_SWITCH_ITEMS:
+                self._menu_switch_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -1159,6 +1161,14 @@ class NTP_Operator(Operator):
                 data_type = enum_to_py_str(item.data_type)
                 name = str_to_py_str(item.name)
                 self._write(f"{capture_attrs_str}.new({data_type}, {name})")
+
+        def _menu_switch_items(self, menu_switch_items: bpy.types.NodeMenuSwitchItems, menu_switch_items_str: str) -> None:
+            self._write(f"{menu_switch_items_str}.clear()")
+            for i, item in enumerate(menu_switch_items):
+                name_str = str_to_py_str(item.name)
+                self._write(f"{menu_switch_items_str}.new({name_str})")
+                desc_str = str_to_py_str(item.description)
+                self._write(f"{menu_switch_items_str}[{i}].description = {desc_str}")
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
