@@ -5,6 +5,7 @@ from bpy.types import Node, CompositorNodeColorBalance, CompositorNodeTree
 from ..ntp_operator import NTP_Operator, INDEX
 from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
+from ..node_settings import NTPNodeSetting, ST
 from io import StringIO
 from ..node_settings import node_settings
 
@@ -33,7 +34,7 @@ class NTPCompositorOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = node_settings
+        self._node_infos = node_settings
         for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
@@ -86,7 +87,7 @@ class NTPCompositorOperator(NTP_Operator):
             if not hasattr(ntp_nt.node_tree, enum):
                 continue
             setting = getattr(ntp_nt.node_tree, enum)
-            if setting is not None and setting is not "":
+            if setting != None and setting != "":
                 py_str = enum_to_py_str(setting)
                 self._write(f"{ntp_nt.var}.{enum} = {py_str}")
         
@@ -119,7 +120,7 @@ class NTPCompositorOperator(NTP_Operator):
                    NTPNodeSetting("power",             ST.COLOR),
                    NTPNodeSetting("slope",             ST.COLOR)]
 
-        self._settings['CompositorNodeColorBalance'] = lst
+        self._node_infos['CompositorNodeColorBalance'].attributes_ = lst
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """

@@ -14,6 +14,7 @@ from typing import TextIO
 import shutil
 
 from .ntp_node_tree import NTP_NodeTree
+from .node_settings import NodeInfo, ST
 from .utils import *
 
 INDEX = "i"
@@ -33,6 +34,7 @@ RESERVED_NAMES = {
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {'NodeSocketGeometry',
                      'NodeSocketShader',
+                     'NodeSocketMatrix',
                      'NodeSocketVirtual'}
 
 class NTP_Operator(Operator):
@@ -101,7 +103,7 @@ class NTP_Operator(Operator):
         self._used_vars: dict[str, int] = {}
 
         # Dictionary used for setting node properties
-        self._settings: dict[str, list[(str, ST)]] = {}
+        self._node_infos: dict[str, NodeInfo] = {}
 
         for name in RESERVED_NAMES:
             self._used_vars[name] = 0
@@ -284,7 +286,7 @@ class NTP_Operator(Operator):
         node (Node): the node object we're copying settings from
         node_var (str): name of the variable we're using for the node in our add-on
         """
-        if node.bl_idname not in self._settings:
+        if node.bl_idname not in self._node_infos:
             self.report({'WARNING'},
                         (f"NodeToPython: couldn't find {node.bl_idname} in "
                          f"settings. Your Blender version may not be supported"))
@@ -292,13 +294,15 @@ class NTP_Operator(Operator):
 
         node_var = self._node_vars[node]
 
-        for setting in self._settings[node.bl_idname]:
+        node_info = self._node_infos[node.bl_idname]
+        for attr_info in node_info.attributes_:
+            attr_name = attr_info.name_
+            st = attr_info.st_
 
-            attr_name = setting.name
-            st = setting.st 
-
-            is_version_valid = (bpy.app.version >= setting.min_version and
-                                bpy.app.version < setting.max_version)
+            version_gte_min = bpy.app.version >= max(attr_info.min_version_, node_info.min_version_)
+            version_lt_max = bpy.app.version < min(attr_info.max_version_, node_info.max_version_)
+            
+            is_version_valid = version_gte_min and version_lt_max
             if not hasattr(node, attr_name):
                 if is_version_valid:
                     self.report({'WARNING'},
@@ -1107,23 +1111,6 @@ class NTP_Operator(Operator):
             for i in range(num_items):
                 self._write(f"{items_str}.new()")
 
-        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
-                             enum_def_str: str) -> None:
-            """
-            Set enum definition item for a node
-            
-            Parameters:
-            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
-            enum_def_str (str): string for the generated enum definition
-            """
-            self._write(f"{enum_def_str}.enum_items.clear()")
-            for i, enum_item in enumerate(enum_def.enum_items):
-                name = str_to_py_str(enum_item.name)
-                self._write(f"{enum_def_str}.enum_items.new({name})")
-                if enum_item.description != "":
-                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
-                                f"{str_to_py_str(enum_item.description)}")
-
         def _bake_items(self, bake_items: bpy.types.NodeGeometryBakeItems,
                         bake_items_str: str) -> None:
             """
@@ -1144,6 +1131,24 @@ class NTP_Operator(Operator):
 
                 if bake_item.is_attribute:
                     self._write(f"{bake_items_str}[{i}].is_attribute = True")
+
+    if bpy.app.version >= (4, 1, 0) and bpy.app.version < (4, 2, 0):
+        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
+                             enum_def_str: str) -> None:
+            """
+            Set enum definition item for a node
+            
+            Parameters:
+            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
+            enum_def_str (str): string for the generated enum definition
+            """
+            self._write(f"{enum_def_str}.enum_items.clear()")
+            for i, enum_item in enumerate(enum_def.enum_items):
+                name = str_to_py_str(enum_item.name)
+                self._write(f"{enum_def_str}.enum_items.new({name})")
+                if enum_item.description != "":
+                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
+                                f"{str_to_py_str(enum_item.description)}")
 
 
 

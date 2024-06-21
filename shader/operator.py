@@ -23,7 +23,7 @@ class NTPShaderOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = node_settings
+        self._node_infos = node_settings
         for name in SHADER_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
     
