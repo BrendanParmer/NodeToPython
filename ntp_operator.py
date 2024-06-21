@@ -372,6 +372,8 @@ class NTP_Operator(Operator):
                 self._enum_definition(attr, f"{node_var}.{attr_name}")
             elif st == ST.BAKE_ITEMS:
                 self._bake_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.CAPTURE_ATTRIBUTE_ITEMS:
+                self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -1150,7 +1152,13 @@ class NTP_Operator(Operator):
                     self._write(f"{enum_def_str}.enum_items[{i}].description = "
                                 f"{str_to_py_str(enum_item.description)}")
 
-
+    if bpy.app.version >= (4, 2, 0):
+        def _capture_attribute_items(self, capture_attribute_items: bpy.types.NodeGeometryCaptureAttributeItems, capture_attrs_str: str) -> None:
+            self._write(f"{capture_attrs_str}.clear()")
+            for i, item in enumerate(capture_attribute_items):
+                data_type = enum_to_py_str(item.data_type)
+                name = str_to_py_str(item.name)
+                self._write(f"{capture_attrs_str}.new({data_type}, {name})")
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
