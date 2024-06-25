@@ -149,6 +149,8 @@ class NTPShaderOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
+            if context.scene.ntp_options.include_imports:
+                self._file.write("import bpy, mathutils\n\n")
 
         if self.mode == 'ADDON':
             self._create_material("\t\t")

@@ -10,6 +10,11 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Save location if generating an add-on",
         default = "//"
     )
+    include_imports : bpy.props.BoolProperty(
+        name = "Include imports",
+        description="Generate necessary import statements",
+        default = True
+    )
 
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
@@ -26,3 +31,4 @@ class NTPOptionsPanel(bpy.types.Panel):
         layout = self.layout
         layout.operator_context = 'INVOKE_DEFAULT'
         layout.prop(context.scene.ntp_options, "dir_path")
+        layout.prop(context.scene.ntp_options, "include_imports")

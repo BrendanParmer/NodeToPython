@@ -219,6 +219,8 @@ class NTPCompositorOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
+            if context.scene.ntp_options.include_imports:
+                self._file.write("import bpy, mathutils\n\n")
 
         if self.is_scene:
             if self.mode == 'ADDON':
