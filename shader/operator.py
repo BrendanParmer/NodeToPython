@@ -123,6 +123,8 @@ class NTPShaderOperator(NTP_Operator):
         
 
     def execute(self, context):
+        self._setup_options(context.scene.ntp_options)
+        
         #find node group to replicate
         self._base_node_tree = bpy.data.materials[self.material_name].node_tree
         if self._base_node_tree is None:
@@ -149,7 +151,7 @@ class NTPShaderOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
-            if context.scene.ntp_options.include_imports:
+            if self._include_imports:
                 self._file.write("import bpy, mathutils\n\n")
 
         if self.mode == 'ADDON':

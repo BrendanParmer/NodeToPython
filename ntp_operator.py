@@ -14,6 +14,7 @@ from typing import TextIO
 import shutil
 
 from .ntp_node_tree import NTP_NodeTree
+from .options import NTPOptions
 from .utils import *
 
 INDEX = "i"
@@ -106,10 +107,27 @@ class NTP_Operator(Operator):
         for name in RESERVED_NAMES:
             self._used_vars[name] = 0
 
+        # Generate socket default, min, and max values
+        self._include_socket_values = True
+
+        # Set dimensions of generated nodes
+        self._should_set_dimensions = True
+
+        if bpy.app.version >= (3, 4, 0):
+            # Set default values for hidden sockets
+            self._set_hidden_defaults = False
+
     def _write(self, string: str, indent: str = None):
         if indent is None:
             indent = self._inner
         self._file.write(f"{indent}{string}\n")
+
+    def _setup_options(self, options: NTPOptions) -> None:
+        self._include_imports = options.include_imports
+        self._include_socket_values = options.include_socket_values
+        self._should_set_dimensions = options.set_dimensions
+        if bpy.app.version >= (3, 4, 0):
+            self._set_hidden_defaults = options.set_hidden_defaults
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
@@ -381,6 +399,9 @@ class NTP_Operator(Operator):
                 with the input/output
             socket_var (str): variable name for the socket
             """
+            if not self._include_socket_values:
+                return
+
             if socket_interface.type not in self.default_sockets_v3:
                 return
 
@@ -477,6 +498,8 @@ class NTP_Operator(Operator):
                 with the input/output
             socket_var (str): variable name for the socket
             """
+            if not self._include_socket_values:
+                return
             if type(socket_interface) in self.nondefault_sockets_v4:
                 return
 
@@ -707,6 +730,10 @@ class NTP_Operator(Operator):
 
         for i, input in enumerate(node.inputs):
             if input.bl_idname not in DONT_SET_DEFAULTS and not input.is_linked:
+                if bpy.app.version >= (3, 4, 0):
+                    if (not self._set_hidden_defaults) and input.is_unavailable:
+                        continue
+                    
                 # TODO: this could be cleaner
                 socket_var = f"{node_var}.inputs[{i}]"
 
@@ -1187,6 +1214,9 @@ class NTP_Operator(Operator):
         Parameters:
         node_tree (NodeTree): node tree we're obtaining nodes from
         """
+        if not self._should_set_dimensions:
+            return
+
         self._write(f"#Set dimensions")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]

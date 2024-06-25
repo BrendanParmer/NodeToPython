@@ -15,6 +15,22 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Generate necessary import statements",
         default = True
     )
+    include_socket_values : bpy.props.BoolProperty(
+        name = "Include socket values",
+        description = "Generate group socket default, min, and max values",
+        default = True
+    )
+    set_dimensions : bpy.props.BoolProperty(
+        name = "Set dimensions",
+        description = "Set dimensions of generated nodes",
+        default = True
+    )
+    if bpy.app.version >= (3, 4, 0):
+        set_hidden_defaults : bpy.props.BoolProperty(
+            name = "Set hidden defaults",
+            description = "Set default values for hidden sockets",
+            default = False
+        )
 
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
@@ -30,5 +46,14 @@ class NTPOptionsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_DEFAULT'
-        layout.prop(context.scene.ntp_options, "dir_path")
-        layout.prop(context.scene.ntp_options, "include_imports")
+        ntp_options = context.scene.ntp_options
+
+        option_list = [
+            "dir_path", 
+            "include_imports", "include_socket_values",
+            "set_dimensions"
+        ]
+        if bpy.app.version >= (3, 4, 0):
+            option_list.append("set_hidden_defaults")
+        for option in option_list:
+            layout.prop(ntp_options, option)

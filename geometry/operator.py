@@ -179,6 +179,8 @@ class NTPGeoNodesOperator(NTP_Operator):
 
 
     def execute(self, context):
+        self._setup_options(context.scene.ntp_options)
+
         #find node group to replicate
         nt = bpy.data.node_groups[self.geo_nodes_group_name]
 
@@ -200,7 +202,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
-            if context.scene.ntp_options.include_imports:
+            if self._include_imports:
                 self._file.write("import bpy, mathutils\n\n")
 
 
