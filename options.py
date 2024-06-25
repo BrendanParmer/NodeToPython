@@ -15,8 +15,8 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Generate necessary import statements",
         default = True
     )
-    include_socket_values : bpy.props.BoolProperty(
-        name = "Include socket values",
+    include_group_socket_values : bpy.props.BoolProperty(
+        name = "Include group socket values",
         description = "Generate group socket default, min, and max values",
         default = True
     )
@@ -26,9 +26,9 @@ class NTPOptions(bpy.types.PropertyGroup):
         default = True
     )
     if bpy.app.version >= (3, 4, 0):
-        set_hidden_defaults : bpy.props.BoolProperty(
-            name = "Set hidden defaults",
-            description = "Set default values for hidden sockets",
+        set_unavailable_defaults : bpy.props.BoolProperty(
+            name = "Set unavailable defaults",
+            description = "Set default values for unavailable sockets",
             default = False
         )
 
@@ -50,7 +50,8 @@ class NTPOptionsPanel(bpy.types.Panel):
 
         option_list = [
             "dir_path", 
-            "include_imports", "include_socket_values",
+            "include_imports", 
+            "include_group_socket_values",
             "set_dimensions"
         ]
         if bpy.app.version >= (3, 4, 0):
