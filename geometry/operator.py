@@ -152,6 +152,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         if bpy.app.version >= (4, 0, 0):
             self._process_zones(ntp_nt.repeat_inputs)
 
+        self._set_node_tree_properties(node_tree)
+        
         #set look of nodes
         self._set_parents(node_tree)
         self._set_locations(node_tree)

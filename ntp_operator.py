@@ -1264,6 +1264,15 @@ class NTP_Operator(Operator):
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
 
+    def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
+        nt_var = self._node_tree_vars[node_tree]
+        
+        if bpy.app.version >= (4, 2, 0):
+            color_tag_str = enum_to_py_str(node_tree.color_tag)
+            self._write(f"{nt_var}.color_tag = {color_tag_str}")
+            desc_str = str_to_py_str(node_tree.description)
+            self._write(f"{nt_var}.description = {desc_str}")
+
     def _hide_hidden_sockets(self, node: Node) -> None:
         """
         Hide hidden sockets

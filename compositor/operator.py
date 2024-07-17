@@ -177,14 +177,19 @@ class NTPCompositorOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
+        self._set_node_tree_properties(node_tree)
+        
+        #set look of nodes
         self._set_parents(node_tree)
         self._set_locations(node_tree)
         self._set_dimensions(node_tree)
-        
+
+        #create connections
         self._init_links(node_tree)
         
         self._write(f"return {nt_var}\n")
 
+        #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
     
     def execute(self, context):
