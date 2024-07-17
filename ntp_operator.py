@@ -626,9 +626,8 @@ class NTP_Operator(Operator):
                 closed_str = f", default_closed=True"
                 
             parent_str = ""
-            if parent is not None:
-                parent_str = f", parent = {panel_dict[parent]}"
-                
+            if parent is not None and bpy.app.version < (4, 2, 0):
+                parent_str = f", parent = {panel_dict[parent]}"     
 
             self._write(f"{panel_var} = "
                         f"{ntp_nt.var}.interface.new_panel("
