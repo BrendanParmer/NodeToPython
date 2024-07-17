@@ -168,6 +168,8 @@ class NTPCompositorOperator(NTP_Operator):
         ntp_nt = NTP_NodeTree(node_tree, nt_var)
         self._initialize_compositor_node_tree(ntp_nt, nt_name)
 
+        self._set_node_tree_properties(node_tree)
+        
         if bpy.app.version >= (4, 0, 0):
             self._tree_interface_settings(ntp_nt)
 
@@ -176,8 +178,6 @@ class NTPCompositorOperator(NTP_Operator):
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
-
-        self._set_node_tree_properties(node_tree)
         
         #set look of nodes
         self._set_parents(node_tree)

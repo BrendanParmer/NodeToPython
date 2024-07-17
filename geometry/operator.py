@@ -133,17 +133,17 @@ class NTPGeoNodesOperator(NTP_Operator):
                     f"type = \'GeometryNodeTree\', "
                     f"name = {str_to_py_str(node_tree.name)})\n")
 
+        self._set_node_tree_properties(node_tree)
         if bpy.app.version >= (4, 0, 0):
             self._set_geo_tree_properties(node_tree)
     
-        #initialize nodes
-        self._write(f"#initialize {nt_var} nodes")
-
         ntp_nt = NTP_GeoNodeTree(node_tree, nt_var)
 
         if bpy.app.version >= (4, 0, 0):
             self._tree_interface_settings(ntp_nt)
 
+        #initialize nodes
+        self._write(f"#initialize {nt_var} nodes")
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
@@ -152,8 +152,6 @@ class NTPGeoNodesOperator(NTP_Operator):
         if bpy.app.version >= (4, 0, 0):
             self._process_zones(ntp_nt.repeat_inputs)
 
-        self._set_node_tree_properties(node_tree)
-        
         #set look of nodes
         self._set_parents(node_tree)
         self._set_locations(node_tree)
