@@ -7,6 +7,7 @@ tagline = "Turn node groups into Python code"
 maintainer = "Brendan Parmer <brendanparmer+nodetopython@gmail.com>"
 type = "add-on"
 
+# In add-on mode, NodeToPython will create and write to files at a specified directory
 permissions = ["files"]
 
 website = "https://github.com/BrendanParmer/NodeToPython"
