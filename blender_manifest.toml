@@ -1,33 +1,21 @@
 schema_version = "1.0.0"
 
-# Example of manifest file for a Blender extension
-# Change the values according to your extension
 id = "node_to_python"
 version = "3.2.0"
 name = "Node To Python"
 tagline = "Turn node groups into Python code"
 maintainer = "Brendan Parmer <brendanparmer+nodetopython@gmail.com>"
-# Supported types: "add-on", "theme"
 type = "add-on"
 
-# Optional: add-ons can list which resources they will require:
-# * "files" (for access of any filesystem operations)
-# * "network" (for internet access)
-# * "clipboard" (to read and/or write the system clipboard)
-# * "camera" (to capture photos and videos)
-# * "microphone" (to capture audio)
-# permissions = ["files"]
+# In add-on mode, NodeToPython will create and write to files at a specified directory
+permissions = ["files"]
 
-# Optional link to documentation, support, source files, etc
-# website = "https://github.com/BrendanParmer/NodeToPython"
+website = "https://github.com/BrendanParmer/NodeToPython"
 
-# Optional list defined by Blender and server, see:
-# https://docs.blender.org/manual/en/dev/extensions/tags.html
-tags = ["Development", "Compositing", "Geometry Nodes", "Material"]
+tags = ["Development", "Compositing", "Geometry Nodes", "Material", "Node"]
 
 blender_version_min = "4.2.0"
-# Optional: maximum supported Blender version
-# blender_version_max = "5.1.0"
+blender_version_max = "4.3.0"
 
 license = [
     "SPDX:MIT",

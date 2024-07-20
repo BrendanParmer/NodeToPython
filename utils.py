@@ -2,64 +2,8 @@ import bpy
 from bpy_types import bpy_types
 import mathutils
 
-from enum import Enum, auto
 import keyword
 import re
-from typing import NamedTuple
-
-class ST(Enum):
-    """
-    Settings Types
-    """
-    # Primitives
-    ENUM = auto()
-    ENUM_SET = auto()
-    STRING = auto()
-    BOOL = auto()
-    INT = auto()
-    FLOAT = auto()
-    VEC1 = auto()
-    VEC2 = auto()
-    VEC3 = auto()
-    VEC4 = auto()
-    COLOR = auto()
-    
-    # Special settings
-    COLOR_RAMP = auto()
-    CURVE_MAPPING = auto()
-    NODE_TREE = auto()
-
-    SIM_OUTPUT_ITEMS = auto()
-    REPEAT_OUTPUT_ITEMS = auto()
-    ENUM_DEFINITION = auto()
-    INDEX_SWITCH_ITEMS = auto()
-    BAKE_ITEMS = auto()
-
-    # Asset Library
-    MATERIAL = auto() # Handle with asset library
-    OBJECT = auto() # Handle with asset library
-
-    # Image
-    IMAGE = auto() #needs refactor
-    IMAGE_USER = auto() #needs refactor
-    MOVIE_CLIP = auto() #unimplmented
-
-    TEXTURE = auto() #unimplemented
-    TEXT = auto() #unimplemented
-    SCENE = auto() #unimplemented
-    PARTICLE_SYSTEM = auto() #unimplemented
-    FONT = auto() #unimplemented
-    MASK = auto() #unimplemented
-    CRYPTOMATTE_ENTRIES = auto() #unimplemented
-    IMAGE_FORMAT_SETTINGS = auto() #unimplemented
-    FILE_SLOTS = auto() #unimplemented
-    LAYER_SLOTS = auto() #unimplemented
-
-class NTPNodeSetting(NamedTuple):
-    name: str
-    st: ST
-    min_version: tuple = (3, 0, 0)
-    max_version: tuple = (4, 2, 0) #first version where a setting is invalid
 
 
 def clean_string(string: str, lower: bool = True) -> str:
