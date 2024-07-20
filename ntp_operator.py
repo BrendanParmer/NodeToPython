@@ -1151,11 +1151,18 @@ class NTP_Operator(Operator):
 
     if bpy.app.version >= (4, 2, 0):
         def _capture_attribute_items(self, capture_attribute_items: bpy.types.NodeGeometryCaptureAttributeItems, capture_attrs_str: str) -> None:
+            """
+            Sets capture attribute items
+            """
             self._write(f"{capture_attrs_str}.clear()")
-            for i, item in enumerate(capture_attribute_items):
-                data_type = enum_to_py_str(item.data_type)
+            for item in capture_attribute_items:
                 name = str_to_py_str(item.name)
-                self._write(f"{capture_attrs_str}.new({data_type}, {name})")
+                self._write(f"{capture_attrs_str}.new('FLOAT', {name})")
+
+                # Need to initialize capture attribute item with a socket,
+                # which has a slightly different enum to the attribute type
+                data_type = enum_to_py_str(item.data_type)
+                self._write(f"{capture_attrs_str}[{name}].data_type = {data_type}")
 
         def _menu_switch_items(self, menu_switch_items: bpy.types.NodeMenuSwitchItems, menu_switch_items_str: str) -> None:
             self._write(f"{menu_switch_items_str}.clear()")
