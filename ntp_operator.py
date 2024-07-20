@@ -617,10 +617,6 @@ class NTP_Operator(Operator):
             panel_var = self._create_var(panel.name + "_panel")
             panel_dict[panel] = panel_var
 
-            description_str = ""
-            if panel.description != "":
-                description_str = f", description = {str_to_py_str(panel.description)}"
-
             closed_str = ""
             if panel.default_closed is True:
                 closed_str = f", default_closed=True"
@@ -631,10 +627,10 @@ class NTP_Operator(Operator):
 
             self._write(f"{panel_var} = "
                         f"{ntp_nt.var}.interface.new_panel("
-                        f"{str_to_py_str(panel.name)}{description_str}"
+                        f"{str_to_py_str(panel.name)}"
                         f"{closed_str}{parent_str})")
 
-                # tooltip
+            # tooltip
             if panel.description != "":
                 description = str_to_py_str(panel.description)
                 self._write(f"{panel_var}.description = {description}")
