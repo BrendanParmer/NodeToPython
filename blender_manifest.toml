@@ -7,9 +7,6 @@ tagline = "Turn node groups into Python code"
 maintainer = "Brendan Parmer <brendanparmer+nodetopython@gmail.com>"
 type = "add-on"
 
-# In add-on mode, NodeToPython will create and write to files at a specified directory
-permissions = ["files"]
-
 website = "https://github.com/BrendanParmer/NodeToPython"
 
 tags = ["Development", "Compositing", "Geometry Nodes", "Material", "Node"]
@@ -20,3 +17,6 @@ blender_version_max = "4.3.0"
 license = [
     "SPDX:MIT",
 ]
+
+[permissions]
+files = "In add-on mode, NodeToPython will create and write to files in a specified directory"
