@@ -55,6 +55,6 @@ class NTPOptionsPanel(bpy.types.Panel):
             "set_dimensions"
         ]
         if bpy.app.version >= (3, 4, 0):
-            option_list.append("set_hidden_defaults")
+            option_list.append("set_unavailable_defaults")
         for option in option_list:
             layout.prop(ntp_options, option)
