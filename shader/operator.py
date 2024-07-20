@@ -23,7 +23,7 @@ class NTPShaderOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = node_settings
+        self._node_infos = node_settings
         for name in SHADER_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
     
@@ -102,6 +102,8 @@ class NTPShaderOperator(NTP_Operator):
 
         self._initialize_shader_node_tree(ntp_nt, nt_name)
 
+        self._set_node_tree_properties(node_tree)
+        
         if bpy.app.version >= (4, 0, 0):
             self._tree_interface_settings(ntp_nt)
 
@@ -111,14 +113,17 @@ class NTPShaderOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
+        #set look of nodes
         self._set_parents(node_tree)
         self._set_locations(node_tree)
         self._set_dimensions(node_tree)
 
+        #create connections
         self._init_links(node_tree)
-
+        
         self._write(f"return {nt_var}\n")
 
+        #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
         
 

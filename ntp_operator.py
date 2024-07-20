@@ -14,6 +14,7 @@ from typing import TextIO
 import shutil
 
 from .ntp_node_tree import NTP_NodeTree
+from .node_settings import NodeInfo, ST
 from .utils import *
 
 INDEX = "i"
@@ -33,6 +34,7 @@ RESERVED_NAMES = {
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {'NodeSocketGeometry',
                      'NodeSocketShader',
+                     'NodeSocketMatrix',
                      'NodeSocketVirtual'}
 
 class NTP_Operator(Operator):
@@ -101,7 +103,7 @@ class NTP_Operator(Operator):
         self._used_vars: dict[str, int] = {}
 
         # Dictionary used for setting node properties
-        self._settings: dict[str, list[(str, ST)]] = {}
+        self._node_infos: dict[str, NodeInfo] = {}
 
         for name in RESERVED_NAMES:
             self._used_vars[name] = 0
@@ -284,7 +286,7 @@ class NTP_Operator(Operator):
         node (Node): the node object we're copying settings from
         node_var (str): name of the variable we're using for the node in our add-on
         """
-        if node.bl_idname not in self._settings:
+        if node.bl_idname not in self._node_infos:
             self.report({'WARNING'},
                         (f"NodeToPython: couldn't find {node.bl_idname} in "
                          f"settings. Your Blender version may not be supported"))
@@ -292,13 +294,15 @@ class NTP_Operator(Operator):
 
         node_var = self._node_vars[node]
 
-        for setting in self._settings[node.bl_idname]:
+        node_info = self._node_infos[node.bl_idname]
+        for attr_info in node_info.attributes_:
+            attr_name = attr_info.name_
+            st = attr_info.st_
 
-            attr_name = setting.name
-            st = setting.st 
-
-            is_version_valid = (bpy.app.version >= setting.min_version and
-                                bpy.app.version < setting.max_version)
+            version_gte_min = bpy.app.version >= max(attr_info.min_version_, node_info.min_version_)
+            version_lt_max = bpy.app.version < min(attr_info.max_version_, node_info.max_version_)
+            
+            is_version_valid = version_gte_min and version_lt_max
             if not hasattr(node, attr_name):
                 if is_version_valid:
                     self.report({'WARNING'},
@@ -368,6 +372,10 @@ class NTP_Operator(Operator):
                 self._enum_definition(attr, f"{node_var}.{attr_name}")
             elif st == ST.BAKE_ITEMS:
                 self._bake_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.CAPTURE_ATTRIBUTE_ITEMS:
+                self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.MENU_SWITCH_ITEMS:
+                self._menu_switch_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -609,25 +617,20 @@ class NTP_Operator(Operator):
             panel_var = self._create_var(panel.name + "_panel")
             panel_dict[panel] = panel_var
 
-            description_str = ""
-            if panel.description != "":
-                description_str = f", description = {str_to_py_str(panel.description)}"
-
             closed_str = ""
             if panel.default_closed is True:
                 closed_str = f", default_closed=True"
                 
             parent_str = ""
-            if parent is not None:
-                parent_str = f", parent = {panel_dict[parent]}"
-                
+            if parent is not None and bpy.app.version < (4, 2, 0):
+                parent_str = f", parent = {panel_dict[parent]}"     
 
             self._write(f"{panel_var} = "
                         f"{ntp_nt.var}.interface.new_panel("
-                        f"{str_to_py_str(panel.name)}{description_str}"
+                        f"{str_to_py_str(panel.name)}"
                         f"{closed_str}{parent_str})")
 
-                # tooltip
+            # tooltip
             if panel.description != "":
                 description = str_to_py_str(panel.description)
                 self._write(f"{panel_var}.description = {description}")
@@ -1107,23 +1110,6 @@ class NTP_Operator(Operator):
             for i in range(num_items):
                 self._write(f"{items_str}.new()")
 
-        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
-                             enum_def_str: str) -> None:
-            """
-            Set enum definition item for a node
-            
-            Parameters:
-            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
-            enum_def_str (str): string for the generated enum definition
-            """
-            self._write(f"{enum_def_str}.enum_items.clear()")
-            for i, enum_item in enumerate(enum_def.enum_items):
-                name = str_to_py_str(enum_item.name)
-                self._write(f"{enum_def_str}.enum_items.new({name})")
-                if enum_item.description != "":
-                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
-                                f"{str_to_py_str(enum_item.description)}")
-
         def _bake_items(self, bake_items: bpy.types.NodeGeometryBakeItems,
                         bake_items_str: str) -> None:
             """
@@ -1145,7 +1131,46 @@ class NTP_Operator(Operator):
                 if bake_item.is_attribute:
                     self._write(f"{bake_items_str}[{i}].is_attribute = True")
 
+    if bpy.app.version >= (4, 1, 0) and bpy.app.version < (4, 2, 0):
+        def _enum_definition(self, enum_def: bpy.types.NodeEnumDefinition, 
+                             enum_def_str: str) -> None:
+            """
+            Set enum definition item for a node
+            
+            Parameters:
+            enum_def (bpy.types.NodeEnumDefinition): enum definition to replicate
+            enum_def_str (str): string for the generated enum definition
+            """
+            self._write(f"{enum_def_str}.enum_items.clear()")
+            for i, enum_item in enumerate(enum_def.enum_items):
+                name = str_to_py_str(enum_item.name)
+                self._write(f"{enum_def_str}.enum_items.new({name})")
+                if enum_item.description != "":
+                    self._write(f"{enum_def_str}.enum_items[{i}].description = "
+                                f"{str_to_py_str(enum_item.description)}")
 
+    if bpy.app.version >= (4, 2, 0):
+        def _capture_attribute_items(self, capture_attribute_items: bpy.types.NodeGeometryCaptureAttributeItems, capture_attrs_str: str) -> None:
+            """
+            Sets capture attribute items
+            """
+            self._write(f"{capture_attrs_str}.clear()")
+            for item in capture_attribute_items:
+                name = str_to_py_str(item.name)
+                self._write(f"{capture_attrs_str}.new('FLOAT', {name})")
+
+                # Need to initialize capture attribute item with a socket,
+                # which has a slightly different enum to the attribute type
+                data_type = enum_to_py_str(item.data_type)
+                self._write(f"{capture_attrs_str}[{name}].data_type = {data_type}")
+
+        def _menu_switch_items(self, menu_switch_items: bpy.types.NodeMenuSwitchItems, menu_switch_items_str: str) -> None:
+            self._write(f"{menu_switch_items_str}.clear()")
+            for i, item in enumerate(menu_switch_items):
+                name_str = str_to_py_str(item.name)
+                self._write(f"{menu_switch_items_str}.new({name_str})")
+                desc_str = str_to_py_str(item.description)
+                self._write(f"{menu_switch_items_str}[{i}].description = {desc_str}")
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
@@ -1240,6 +1265,15 @@ class NTP_Operator(Operator):
             self._write(f"{nt_var}.links.new({in_node_var}"
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
+
+    def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
+        nt_var = self._node_tree_vars[node_tree]
+
+        if bpy.app.version >= (4, 2, 0):
+            color_tag_str = enum_to_py_str(node_tree.color_tag)
+            self._write(f"{nt_var}.color_tag = {color_tag_str}")
+            desc_str = str_to_py_str(node_tree.description)
+            self._write(f"{nt_var}.description = {desc_str}\n")
 
     def _hide_hidden_sockets(self, node: Node) -> None:
         """

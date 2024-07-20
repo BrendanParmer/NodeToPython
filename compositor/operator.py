@@ -5,6 +5,7 @@ from bpy.types import Node, CompositorNodeColorBalance, CompositorNodeTree
 from ..ntp_operator import NTP_Operator, INDEX
 from ..ntp_node_tree import NTP_NodeTree
 from ..utils import *
+from ..node_settings import NTPNodeSetting, ST
 from io import StringIO
 from ..node_settings import node_settings
 
@@ -33,7 +34,7 @@ class NTPCompositorOperator(NTP_Operator):
 
     def __init__(self):
         super().__init__()
-        self._settings = node_settings
+        self._node_infos = node_settings
         for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
 
@@ -86,7 +87,7 @@ class NTPCompositorOperator(NTP_Operator):
             if not hasattr(ntp_nt.node_tree, enum):
                 continue
             setting = getattr(ntp_nt.node_tree, enum)
-            if setting is not None and setting is not "":
+            if setting != None and setting != "":
                 py_str = enum_to_py_str(setting)
                 self._write(f"{ntp_nt.var}.{enum} = {py_str}")
         
@@ -119,7 +120,7 @@ class NTPCompositorOperator(NTP_Operator):
                    NTPNodeSetting("power",             ST.COLOR),
                    NTPNodeSetting("slope",             ST.COLOR)]
 
-        self._settings['CompositorNodeColorBalance'] = lst
+        self._node_infos['CompositorNodeColorBalance'].attributes_ = lst
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """
@@ -167,6 +168,8 @@ class NTPCompositorOperator(NTP_Operator):
         ntp_nt = NTP_NodeTree(node_tree, nt_var)
         self._initialize_compositor_node_tree(ntp_nt, nt_name)
 
+        self._set_node_tree_properties(node_tree)
+        
         if bpy.app.version >= (4, 0, 0):
             self._tree_interface_settings(ntp_nt)
 
@@ -175,15 +178,18 @@ class NTPCompositorOperator(NTP_Operator):
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
-
+        
+        #set look of nodes
         self._set_parents(node_tree)
         self._set_locations(node_tree)
         self._set_dimensions(node_tree)
-        
+
+        #create connections
         self._init_links(node_tree)
         
         self._write(f"return {nt_var}\n")
 
+        #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
     
     def execute(self, context):
