@@ -20,14 +20,6 @@ class NTPGeoNodesOperator(NTP_Operator):
     bl_idname = "node.ntp_geo_nodes"
     bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
-    
-    mode: bpy.props.EnumProperty(
-        name = "Mode",
-        items = [
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON',  "Addon", "Create a full addon")
-        ]
-    )
 
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
 
@@ -179,13 +171,16 @@ class NTPGeoNodesOperator(NTP_Operator):
 
 
     def execute(self, context):
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
+
         #find node group to replicate
         nt = bpy.data.node_groups[self.geo_nodes_group_name]
 
         #set up names to use in generated addon
         nt_var = clean_string(nt.name)
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
@@ -200,13 +195,16 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
+            if self._include_imports:
+                self._file.write("import bpy, mathutils\n\n")
+
 
         node_trees_to_process = self._topological_sort(nt)
 
         for node_tree in node_trees_to_process:  
             self._process_node_tree(node_tree)
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._apply_modifier(nt, nt_var)
             self._write("return {'FINISHED'}\n", self._outer)
             self._create_menu_func()
@@ -217,7 +215,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             context.window_manager.clipboard = self._file.getvalue()
         self._file.close()
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._zip_addon()
 
         self._report_finished("geometry node group")

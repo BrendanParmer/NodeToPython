@@ -20,14 +20,6 @@ class NTPCompositorOperator(NTP_Operator):
     bl_idname = "node.ntp_compositor"
     bl_label =  "Compositor to Python"
     bl_options = {'REGISTER', 'UNDO'}
-
-    mode : bpy.props.EnumProperty(
-        name = "Mode",
-        items = [
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON', "Addon", "Create a full addon")
-        ]
-    )
     
     compositor_name: bpy.props.StringProperty(name="Node Group")
     is_scene : bpy.props.BoolProperty(name="Is Scene", description="Blender stores compositing node trees differently for scenes and in groups")
@@ -193,6 +185,9 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
     
     def execute(self, context):
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
+
         #find node group to replicate
         if self.is_scene:
             self._base_node_tree = bpy.data.scenes[self.compositor_name].node_tree
@@ -209,7 +204,7 @@ class NTPCompositorOperator(NTP_Operator):
         #set up names to use in generated addon
         comp_var = clean_string(self.compositor_name)
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
@@ -225,11 +220,13 @@ class NTPCompositorOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
+            if self._include_imports:
+                self._file.write("import bpy, mathutils\n\n")
 
         if self.is_scene:
-            if self.mode == 'ADDON':
+            if self._mode == 'ADDON':
                 self._create_scene("\t\t")
-            elif self.mode == 'SCRIPT':
+            elif self._mode == 'SCRIPT':
                 self._create_scene("")
 
         node_trees_to_process = self._topological_sort(self._base_node_tree)
@@ -237,7 +234,7 @@ class NTPCompositorOperator(NTP_Operator):
         for node_tree in node_trees_to_process:  
             self._process_node_tree(node_tree)
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._write("return {'FINISHED'}\n", self._outer)
 
             self._create_menu_func()
@@ -249,7 +246,7 @@ class NTPCompositorOperator(NTP_Operator):
 
         self._file.close()
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._zip_addon()
         
         self._report_finished("compositor nodes")

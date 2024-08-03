@@ -128,6 +128,9 @@ class NTPShaderOperator(NTP_Operator):
         
 
     def execute(self, context):
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
+        
         #find node group to replicate
         self._base_node_tree = bpy.data.materials[self.material_name].node_tree
         if self._base_node_tree is None:
@@ -138,7 +141,7 @@ class NTPShaderOperator(NTP_Operator):
         #set up names to use in generated addon
         mat_var = clean_string(self.material_name)
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
@@ -154,10 +157,12 @@ class NTPShaderOperator(NTP_Operator):
             self._write("def execute(self, context):", "\t")
         else:
             self._file = StringIO("")
+            if self._include_imports:
+                self._file.write("import bpy, mathutils\n\n")
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._create_material("\t\t")
-        elif self.mode == 'SCRIPT':
+        elif self._mode == 'SCRIPT':
             self._create_material("")   
         
         node_trees_to_process = self._topological_sort(self._base_node_tree)
@@ -165,7 +170,7 @@ class NTPShaderOperator(NTP_Operator):
         for node_tree in node_trees_to_process:
             self._process_node_tree(node_tree)
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._write("return {'FINISHED'}", self._outer)
             self._create_menu_func()
             self._create_register_func()
@@ -176,7 +181,7 @@ class NTPShaderOperator(NTP_Operator):
 
         self._file.close()
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._zip_addon()
 
         self._report_finished("material")

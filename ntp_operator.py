@@ -14,6 +14,7 @@ from typing import TextIO
 import shutil
 
 from .ntp_node_tree import NTP_NodeTree
+from .options import NTPOptions
 from .node_settings import NodeInfo, ST
 from .utils import *
 
@@ -46,14 +47,6 @@ class NTP_Operator(Operator):
     bl_idname = ""
     bl_label = ""
 
-    mode: bpy.props.EnumProperty(
-        name="Mode",
-        items=[
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON', "Addon", "Create a full addon")
-        ]
-    )
-
     # node tree input sockets that have default properties
     if bpy.app.version < (4, 0, 0):
         default_sockets_v3 = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
@@ -73,9 +66,6 @@ class NTP_Operator(Operator):
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
-
-        # Path to the current directory
-        self._dir: str = None
 
         # Path to the directory of the zip file
         self._zip_dir: str = None
@@ -108,10 +98,48 @@ class NTP_Operator(Operator):
         for name in RESERVED_NAMES:
             self._used_vars[name] = 0
 
+        # Generate socket default, min, and max values
+        self._include_group_socket_values = True
+
+        # Set dimensions of generated nodes
+        self._should_set_dimensions = True
+
+        if bpy.app.version >= (3, 4, 0):
+            # Set default values for hidden sockets
+            self._set_unavailable_defaults = False
+
     def _write(self, string: str, indent: str = None):
         if indent is None:
             indent = self._inner
         self._file.write(f"{indent}{string}\n")
+
+    def _setup_options(self, options: NTPOptions) -> bool:
+        # General
+        self._mode = options.mode
+        self._include_group_socket_values = options.include_group_socket_values
+        self._should_set_dimensions = options.set_dimensions
+        if bpy.app.version >= (3, 4, 0):
+            self._set_unavailable_defaults = options.set_unavailable_defaults
+
+        #Script
+        if options.mode == 'SCRIPT':
+            self._include_imports = options.include_imports
+        #Addon
+        elif options.mode == 'ADDON':
+            self._dir_path = bpy.path.abspath(options.dir_path)
+            self._name_override = options.name_override
+            self._description = options.description
+            self._author_name = options.author_name
+            self._version = options.version
+            self._location = options.location
+            self._category = options.category
+            self._custom_category = options.custom_category
+            if options.menu_id in dir(bpy.types):
+                self._menu_id = options.menu_id
+            else:
+                self.report({'ERROR'}, f"{options.menu_id} is not a valid menu")
+                return False
+            return True
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
@@ -124,15 +152,13 @@ class NTP_Operator(Operator):
         Returns:
         (bool): success of addon directory setup
         """
-        # find base directory to save new addon
-        self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
-        if not self._dir or self._dir == "":
+        if not self._dir_path or self._dir_path == "":
             self.report({'ERROR'},
                         ("NodeToPython: No save location found. Please select "
                          "one in the NodeToPython Options panel"))
             return False
 
-        self._zip_dir = os.path.join(self._dir, nt_var)
+        self._zip_dir = os.path.join(self._dir_path, nt_var)
         self._addon_dir = os.path.join(self._zip_dir, nt_var)
 
         if not os.path.exists(self._addon_dir):
@@ -150,12 +176,19 @@ class NTP_Operator(Operator):
         """
 
         self._write("bl_info = {", "")
-        self._write(f"\t\"name\" : \"{name}\",", "")
-        self._write("\t\"author\" : \"Node To Python\",", "")
-        self._write("\t\"version\" : (1, 0, 0),", "")
+        if self._name_override and self._name_override != "":
+            name = self._name_override
+        self._write(f"\t\"name\" : {str_to_py_str(name)},", "")
+        if self._description and self._description != "":
+            self.write(f"\t\"description\" : {str_to_py_str(self._description)}," "")
+        self._write(f"\t\"author\" : {str_to_py_str(self._author_name)},", "")
+        self._write(f"\t\"version\" : {vec3_to_py_str(self._version)},", "")
         self._write(f"\t\"blender\" : {bpy.app.version},", "")
-        self._write("\t\"location\" : \"Object\",", "")  # TODO
-        self._write("\t\"category\" : \"Node\"", "")
+        self._write(f"\t\"location\" : {str_to_py_str(self._location)},", "")
+        category = self._category
+        if category == "Custom":
+            category = self._custom_category
+        self._write(f"\t\"category\" : {str_to_py_str(category)},", "")
         self._write("}\n", "")
         self._write("import bpy", "")
         self._write("import mathutils", "")
@@ -172,8 +205,8 @@ class NTP_Operator(Operator):
         label (str): appearence inside Blender
         """
         self._write(f"class {self._class_name}(bpy.types.Operator):", "")
-        self._write(f"\tbl_idname = \"object.{idname}\"", "")
-        self._write(f"\tbl_label = \"{label}\"", "")
+        self._write(f"\tbl_idname = \"node.{idname}\"", "")
+        self._write(f"\tbl_label = {str_to_py_str(label)}", "")
         self._write("\tbl_options = {\'REGISTER\', \'UNDO\'}", "")
         self._write("")
 
@@ -389,6 +422,9 @@ class NTP_Operator(Operator):
                 with the input/output
             socket_var (str): variable name for the socket
             """
+            if not self._include_group_socket_values:
+                return
+
             if socket_interface.type not in self.default_sockets_v3:
                 return
 
@@ -485,6 +521,8 @@ class NTP_Operator(Operator):
                 with the input/output
             socket_var (str): variable name for the socket
             """
+            if not self._include_group_socket_values:
+                return
             if type(socket_interface) in self.nondefault_sockets_v4:
                 return
 
@@ -710,6 +748,10 @@ class NTP_Operator(Operator):
 
         for i, input in enumerate(node.inputs):
             if input.bl_idname not in DONT_SET_DEFAULTS and not input.is_linked:
+                if bpy.app.version >= (3, 4, 0):
+                    if (not self._set_unavailable_defaults) and input.is_unavailable:
+                        continue
+                    
                 # TODO: this could be cleaner
                 socket_var = f"{node_var}.inputs[{i}]"
 
@@ -1006,13 +1048,19 @@ class NTP_Operator(Operator):
         if img is None:
             return
 
+        img_str = img_to_py_str(img)
+
+        if not img.has_data:
+            self.report({'WARNING'}, f"{img_str} has no data")
+            return
+
         # create image dir if one doesn't exist
         img_dir = os.path.join(self._addon_dir, IMAGE_DIR_NAME)
         if not os.path.exists(img_dir):
             os.mkdir(img_dir)
 
         # save the image
-        img_str = img_to_py_str(img)
+        
         img_path = f"{img_dir}/{img_str}"
         if not os.path.exists(img_path):
             img.save_render(img_path)
@@ -1212,6 +1260,9 @@ class NTP_Operator(Operator):
         Parameters:
         node_tree (NodeTree): node tree we're obtaining nodes from
         """
+        if not self._should_set_dimensions:
+            return
+
         self._write(f"#Set dimensions")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]
@@ -1305,7 +1356,7 @@ class NTP_Operator(Operator):
         """
         self._write("def register():", "")
         self._write(f"bpy.utils.register_class({self._class_name})", "\t")
-        self._write("bpy.types.VIEW3D_MT_object.append(menu_func)", "\t")
+        self._write(f"bpy.types.{self._menu_id}.append(menu_func)", "\t")
         self._write("")
 
     def _create_unregister_func(self) -> None:
@@ -1314,7 +1365,7 @@ class NTP_Operator(Operator):
         """
         self._write("def unregister():", "")
         self._write(f"bpy.utils.unregister_class({self._class_name})", "\t")
-        self._write("bpy.types.VIEW3D_MT_object.remove(menu_func)", "\t")
+        self._write(f"bpy.types.{self._menu_id}.remove(menu_func)", "\t")
         self._write("")
 
     def _create_main_func(self) -> None:
@@ -1347,18 +1398,12 @@ class NTP_Operator(Operator):
         object (str): the copied node tree or encapsulating structure
             (geometry node modifier, material, scene, etc.)
         """
-        if self.mode == 'SCRIPT':
+        if self._mode == 'SCRIPT':
             location = "clipboard"
         else:
-            location = self._dir
+            location = self._dir_path
         self.report({'INFO'}, f"NodeToPython: Saved {object} to {location}")
 
     # ABSTRACT
     def execute(self):
         return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-    def draw(self, context):
-        self.layout.prop(self, "mode")
