@@ -47,14 +47,6 @@ class NTP_Operator(Operator):
     bl_idname = ""
     bl_label = ""
 
-    mode: bpy.props.EnumProperty(
-        name="Mode",
-        items=[
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON', "Addon", "Create a full addon")
-        ]
-    )
-
     # node tree input sockets that have default properties
     if bpy.app.version < (4, 0, 0):
         default_sockets_v3 = {'VALUE', 'INT', 'BOOLEAN', 'VECTOR', 'RGBA'}
@@ -125,6 +117,7 @@ class NTP_Operator(Operator):
         self._file.write(f"{indent}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> None:
+        self.mode = options.mode
         self._include_imports = options.include_imports
         self._include_group_socket_values = options.include_group_socket_values
         self._should_set_dimensions = options.set_dimensions
@@ -1386,9 +1379,3 @@ class NTP_Operator(Operator):
     # ABSTRACT
     def execute(self):
         return {'FINISHED'}
-
-    def invoke(self, context, event):
-        return context.window_manager.invoke_props_dialog(self)
-
-    def draw(self, context):
-        self.layout.prop(self, "mode")

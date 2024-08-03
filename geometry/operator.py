@@ -21,14 +21,6 @@ class NTPGeoNodesOperator(NTP_Operator):
     bl_label = "Geo Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
-    mode: bpy.props.EnumProperty(
-        name = "Mode",
-        items = [
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON',  "Addon", "Create a full addon")
-        ]
-    )
-
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
 
     def __init__(self):

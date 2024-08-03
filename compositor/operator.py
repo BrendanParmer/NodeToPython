@@ -20,14 +20,6 @@ class NTPCompositorOperator(NTP_Operator):
     bl_idname = "node.ntp_compositor"
     bl_label =  "Compositor to Python"
     bl_options = {'REGISTER', 'UNDO'}
-
-    mode : bpy.props.EnumProperty(
-        name = "Mode",
-        items = [
-            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
-            ('ADDON', "Addon", "Create a full addon")
-        ]
-    )
     
     compositor_name: bpy.props.StringProperty(name="Node Group")
     is_scene : bpy.props.BoolProperty(name="Is Scene", description="Blender stores compositing node trees differently for scenes and in groups")

@@ -4,16 +4,13 @@ class NTPOptions(bpy.types.PropertyGroup):
     """
     Property group used during conversion of node group to python
     """
-    dir_path : bpy.props.StringProperty(
-        name = "Save Location",
-        subtype='DIR_PATH',
-        description="Save location if generating an add-on",
-        default = "//"
-    )
-    include_imports : bpy.props.BoolProperty(
-        name = "Include imports",
-        description="Generate necessary import statements",
-        default = True
+    # General properties
+    mode: bpy.props.EnumProperty(
+        name = "Mode",
+        items = [
+            ('SCRIPT', "Script", "Copy just the node group to the Blender clipboard"),
+            ('ADDON', "Addon", "Create a full add-on")
+        ]
     )
     include_group_socket_values : bpy.props.BoolProperty(
         name = "Include group socket values",
@@ -32,6 +29,20 @@ class NTPOptions(bpy.types.PropertyGroup):
             default = False
         )
 
+    #Script properties
+    include_imports : bpy.props.BoolProperty(
+        name = "Include imports",
+        description="Generate necessary import statements",
+        default = True
+    )
+    # Addon properties
+    dir_path : bpy.props.StringProperty(
+        name = "Save Location",
+        subtype='DIR_PATH',
+        description="Save location if generating an add-on",
+        default = "//"
+    )
+
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
     bl_idname = "NODE_PT_ntp_options"
@@ -49,12 +60,23 @@ class NTPOptionsPanel(bpy.types.Panel):
         ntp_options = context.scene.ntp_options
 
         option_list = [
-            "dir_path", 
-            "include_imports", 
+            "mode",
             "include_group_socket_values",
             "set_dimensions"
         ]
         if bpy.app.version >= (3, 4, 0):
             option_list.append("set_unavailable_defaults")
+        
+        if ntp_options.mode == 'SCRIPT':
+            script_options = [
+                "include_imports"
+            ]
+            option_list += script_options
+        elif ntp_options.mode == 'ADDON':
+            addon_options = [
+                "dir_path"
+            ]
+            option_list += addon_options
+
         for option in option_list:
             layout.prop(ntp_options, option)
