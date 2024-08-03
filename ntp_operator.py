@@ -394,8 +394,8 @@ class NTP_Operator(Operator):
             elif st == ST.IMAGE:
                 if self._addon_dir is not None and attr is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
-                        self._save_image(attr)
-                        self._load_image(attr, f"{node_var}.{attr_name}")
+                        if self._save_image(attr):
+                            self._load_image(attr, f"{node_var}.{attr_name}")
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
             elif st == ST.SIM_OUTPUT_ITEMS:
@@ -782,8 +782,8 @@ class NTP_Operator(Operator):
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
                     if img is not None and self._addon_dir != None:  # write in a better way
-                        self._save_image(img)
-                        self._load_image(img, f"{socket_var}.default_value")
+                        if self._save_image(img):
+                            self._load_image(img, f"{socket_var}.default_value")
                     default_val = None
 
                 # materials
@@ -1040,7 +1040,7 @@ class NTP_Operator(Operator):
             self.report({'WARNING'}, (f"NodeToPython: Node tree dependency graph " 
                                     f"wasn't properly initialized"))
 
-    def _save_image(self, img: bpy.types.Image) -> None:
+    def _save_image(self, img: bpy.types.Image) -> bool:
         """
         Saves an image to an image directory of the add-on
 
@@ -1049,13 +1049,13 @@ class NTP_Operator(Operator):
         """
 
         if img is None:
-            return
+            return False
 
         img_str = img_to_py_str(img)
 
         if not img.has_data:
             self.report({'WARNING'}, f"{img_str} has no data")
-            return
+            return False
 
         # create image dir if one doesn't exist
         img_dir = os.path.join(self._addon_dir, IMAGE_DIR_NAME)
@@ -1067,6 +1067,7 @@ class NTP_Operator(Operator):
         img_path = f"{img_dir}/{img_str}"
         if not os.path.exists(img_path):
             img.save_render(img_path)
+        return True
 
     def _load_image(self, img: bpy.types.Image, img_var: str) -> None:
         """
