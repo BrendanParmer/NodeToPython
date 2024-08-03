@@ -203,7 +203,7 @@ class NTPCompositorOperator(NTP_Operator):
         #set up names to use in generated addon
         comp_var = clean_string(self.compositor_name)
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._outer = "\t\t"
             self._inner = "\t\t\t"
 
@@ -223,9 +223,9 @@ class NTPCompositorOperator(NTP_Operator):
                 self._file.write("import bpy, mathutils\n\n")
 
         if self.is_scene:
-            if self.mode == 'ADDON':
+            if self._mode == 'ADDON':
                 self._create_scene("\t\t")
-            elif self.mode == 'SCRIPT':
+            elif self._mode == 'SCRIPT':
                 self._create_scene("")
 
         node_trees_to_process = self._topological_sort(self._base_node_tree)
@@ -233,7 +233,7 @@ class NTPCompositorOperator(NTP_Operator):
         for node_tree in node_trees_to_process:  
             self._process_node_tree(node_tree)
 
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._write("return {'FINISHED'}\n", self._outer)
 
             self._create_menu_func()
@@ -245,7 +245,7 @@ class NTPCompositorOperator(NTP_Operator):
 
         self._file.close()
         
-        if self.mode == 'ADDON':
+        if self._mode == 'ADDON':
             self._zip_addon()
         
         self._report_finished("compositor nodes")

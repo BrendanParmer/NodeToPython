@@ -117,12 +117,14 @@ class NTP_Operator(Operator):
         self._file.write(f"{indent}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> None:
-        self.mode = options.mode
+        self._mode = options.mode
         self._include_imports = options.include_imports
         self._include_group_socket_values = options.include_group_socket_values
         self._should_set_dimensions = options.set_dimensions
         if bpy.app.version >= (3, 4, 0):
             self._set_unavailable_defaults = options.set_unavailable_defaults
+        self._author_name = options.author_name
+        self._version = options.version
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
@@ -161,9 +163,9 @@ class NTP_Operator(Operator):
         """
 
         self._write("bl_info = {", "")
-        self._write(f"\t\"name\" : \"{name}\",", "")
-        self._write("\t\"author\" : \"Node To Python\",", "")
-        self._write("\t\"version\" : (1, 0, 0),", "")
+        self._write(f"\t\"name\" : {str_to_py_str(name)},", "")
+        self._write(f"\t\"author\" : {str_to_py_str(self._author_name)},", "")
+        self._write(f"\t\"version\" : {vec3_to_py_str(self._version)},", "")
         self._write(f"\t\"blender\" : {bpy.app.version},", "")
         self._write("\t\"location\" : \"Object\",", "")  # TODO
         self._write("\t\"category\" : \"Node\"", "")
@@ -1370,7 +1372,7 @@ class NTP_Operator(Operator):
         object (str): the copied node tree or encapsulating structure
             (geometry node modifier, material, scene, etc.)
         """
-        if self.mode == 'SCRIPT':
+        if self._mode == 'SCRIPT':
             location = "clipboard"
         else:
             location = self._dir

@@ -42,6 +42,16 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Save location if generating an add-on",
         default = "//"
     )
+    author_name : bpy.props.StringProperty(
+        name = "Author",
+        description = "Name used for the author/maintainer of the add-on",
+        default = "Node To Python"
+    )
+    version: bpy.props.IntVectorProperty(
+        name = "Version",
+        description="Version of the add-on",
+        default = (1, 0, 0)
+    )
 
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
@@ -74,7 +84,9 @@ class NTPOptionsPanel(bpy.types.Panel):
             option_list += script_options
         elif ntp_options.mode == 'ADDON':
             addon_options = [
-                "dir_path"
+                "dir_path",
+                "author_name",
+                "version"
             ]
             option_list += addon_options
 
