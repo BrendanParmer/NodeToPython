@@ -67,9 +67,6 @@ class NTP_Operator(Operator):
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
 
-        # Path to the current directory
-        self._dir: str = None
-
         # Path to the directory of the zip file
         self._zip_dir: str = None
 
@@ -117,14 +114,27 @@ class NTP_Operator(Operator):
         self._file.write(f"{indent}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> None:
+        # General
         self._mode = options.mode
-        self._include_imports = options.include_imports
         self._include_group_socket_values = options.include_group_socket_values
         self._should_set_dimensions = options.set_dimensions
         if bpy.app.version >= (3, 4, 0):
             self._set_unavailable_defaults = options.set_unavailable_defaults
-        self._author_name = options.author_name
-        self._version = options.version
+
+        #Script
+        if options.mode == 'SCRIPT':
+            self._include_imports = options.include_imports
+        #Addon
+        elif options.mode == 'ADDON':
+            self._dir_path = bpy.path.abspath(options.dir_path)
+            self._name_override = options.name_override
+            self._description = options.description
+            self._author_name = options.author_name
+            self._version = options.version
+            self._location = options.location
+            self._category = options.category
+            self._custom_category = options.custom_category
+            self._menu_id = options.menu_id
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
@@ -137,15 +147,13 @@ class NTP_Operator(Operator):
         Returns:
         (bool): success of addon directory setup
         """
-        # find base directory to save new addon
-        self._dir = bpy.path.abspath(context.scene.ntp_options.dir_path)
-        if not self._dir or self._dir == "":
+        if not self._dir_path or self._dir_path == "":
             self.report({'ERROR'},
                         ("NodeToPython: No save location found. Please select "
                          "one in the NodeToPython Options panel"))
             return False
 
-        self._zip_dir = os.path.join(self._dir, nt_var)
+        self._zip_dir = os.path.join(self._dir_path, nt_var)
         self._addon_dir = os.path.join(self._zip_dir, nt_var)
 
         if not os.path.exists(self._addon_dir):
@@ -163,12 +171,19 @@ class NTP_Operator(Operator):
         """
 
         self._write("bl_info = {", "")
+        if self._name_override and self._name_override != "":
+            name = self._name_override
         self._write(f"\t\"name\" : {str_to_py_str(name)},", "")
+        if self._description and self._description != "":
+            self.write(f"\t\"description\" : {str_to_py_str(self._description)}," "")
         self._write(f"\t\"author\" : {str_to_py_str(self._author_name)},", "")
         self._write(f"\t\"version\" : {vec3_to_py_str(self._version)},", "")
         self._write(f"\t\"blender\" : {bpy.app.version},", "")
-        self._write("\t\"location\" : \"Object\",", "")  # TODO
-        self._write("\t\"category\" : \"Node\"", "")
+        self._write(f"\t\"location\" : {str_to_py_str(self._location)},", "")
+        category = self._category
+        if category == "Custom":
+            category = self._custom_category
+        self._write(f"\t\"category\" : {str_to_py_str(category)},", "")
         self._write("}\n", "")
         self._write("import bpy", "")
         self._write("import mathutils", "")
@@ -185,8 +200,8 @@ class NTP_Operator(Operator):
         label (str): appearence inside Blender
         """
         self._write(f"class {self._class_name}(bpy.types.Operator):", "")
-        self._write(f"\tbl_idname = \"object.{idname}\"", "")
-        self._write(f"\tbl_label = \"{label}\"", "")
+        self._write(f"\tbl_idname = \"node.{idname}\"", "")
+        self._write(f"\tbl_label = {str_to_py_str(label)}", "")
         self._write("\tbl_options = {\'REGISTER\', \'UNDO\'}", "")
         self._write("")
 
@@ -1330,7 +1345,7 @@ class NTP_Operator(Operator):
         """
         self._write("def register():", "")
         self._write(f"bpy.utils.register_class({self._class_name})", "\t")
-        self._write("bpy.types.VIEW3D_MT_object.append(menu_func)", "\t")
+        self._write(f"bpy.types.{self._menu_id}.append(menu_func)", "\t")
         self._write("")
 
     def _create_unregister_func(self) -> None:
@@ -1339,7 +1354,7 @@ class NTP_Operator(Operator):
         """
         self._write("def unregister():", "")
         self._write(f"bpy.utils.unregister_class({self._class_name})", "\t")
-        self._write("bpy.types.VIEW3D_MT_object.remove(menu_func)", "\t")
+        self._write(f"bpy.types.{self._menu_id}.remove(menu_func)", "\t")
         self._write("")
 
     def _create_main_func(self) -> None:
@@ -1375,7 +1390,7 @@ class NTP_Operator(Operator):
         if self._mode == 'SCRIPT':
             location = "clipboard"
         else:
-            location = self._dir
+            location = self._dir_path
         self.report({'INFO'}, f"NodeToPython: Saved {object} to {location}")
 
     # ABSTRACT

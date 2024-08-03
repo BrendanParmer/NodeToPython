@@ -42,6 +42,16 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Save location if generating an add-on",
         default = "//"
     )
+    name_override : bpy.props.StringProperty(
+        name = "Name Override",
+        description="Name used for the add-on's, default is node group name",
+        default = ""
+    )
+    description : bpy.props.StringProperty(
+        name = "Description",
+        description="Description used for the add-on",
+        default=""
+    )
     author_name : bpy.props.StringProperty(
         name = "Author",
         description = "Name used for the author/maintainer of the add-on",
@@ -52,7 +62,61 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Version of the add-on",
         default = (1, 0, 0)
     )
-
+    location: bpy.props.StringProperty(
+        name = "Location",
+        description="Location of the addon",
+        default="Node"
+    )
+    menu_id: bpy.props.StringProperty(
+        name = "Menu ID",
+        description = "Python ID of the menu you'd like to register the add-on "
+                      "to. You can find this by enabling Python tooltips "
+                      "(Preferences > Interface > Python tooltips) and "
+                      "hovering over the desired menu",
+        default="NODE_MT_add"
+    )
+    category: bpy.props.EnumProperty(
+        name = "Category",
+        items = [
+            ('Custom',          "Custom",           "Use an unofficial category"),
+            ('3D View',         "3D View",          ""),
+            ('Add Curve',       "Add Curve",        ""),
+            ('Add Mesh',        "Add Mesh",         ""),
+            ('Animation',       "Animation",        ""),
+            ('Bake',            "Bake",             ""),
+            ('Compositing',     "Compositing",      ""),
+            ('Development',     "Development",      ""),
+            ('Game Engine',     "Game Engine",      ""),
+            ('Geometry Nodes',  "Geometry Nodes",   ""),
+            ("Grease Pencil",   "Grease Pencil",    ""),
+            ('Import-Export',   "Import-Export",    ""),
+            ('Lighting',        "Lighting",         ""),
+            ('Material',        "Material",         ""),
+            ('Mesh',            "Mesh",             ""),
+            ('Modeling',        "Modeling",         ""),
+            ('Node',            "Node",             ""),
+            ('Object',          "Object",           ""),
+            ('Paint',           "Paint",            ""),
+            ('Pipeline',        "Pipeline",         ""),
+            ('Physics',         "Physics",          ""),
+            ('Render',          "Render",           ""),
+            ('Rigging',         "Rigging",          ""),
+            ('Scene',           "Scene",            ""),
+            ('Sculpt',          "Sculpt",           ""),
+            ('Sequencer',       "Sequencer",        ""),
+            ('System',          "System",           ""),
+            ('Text Editor',     "Text Editor",      ""),
+            ('Tracking',        "Tracking",         ""),
+            ('UV',              "UV",               ""),
+            ('User Interface',  "User Interface",   ""),
+        ],
+        default = 'Node'
+    )
+    custom_category: bpy.props.StringProperty(
+        name="Custom Category",
+        description="Custom category",
+        default = ""
+    )
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
     bl_idname = "NODE_PT_ntp_options"
@@ -86,9 +150,14 @@ class NTPOptionsPanel(bpy.types.Panel):
             addon_options = [
                 "dir_path",
                 "author_name",
-                "version"
+                "version",
+                "location",
+                "menu_id",
+                "category"
             ]
             option_list += addon_options
+            if ntp_options.category == 'CUSTOM':
+                option_list.append("custom_category")
 
         for option in option_list:
             layout.prop(ntp_options, option)
