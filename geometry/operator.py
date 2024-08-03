@@ -171,7 +171,8 @@ class NTPGeoNodesOperator(NTP_Operator):
 
 
     def execute(self, context):
-        self._setup_options(context.scene.ntp_options)
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
 
         #find node group to replicate
         nt = bpy.data.node_groups[self.geo_nodes_group_name]

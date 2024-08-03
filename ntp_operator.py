@@ -113,7 +113,7 @@ class NTP_Operator(Operator):
             indent = self._inner
         self._file.write(f"{indent}{string}\n")
 
-    def _setup_options(self, options: NTPOptions) -> None:
+    def _setup_options(self, options: NTPOptions) -> bool:
         # General
         self._mode = options.mode
         self._include_group_socket_values = options.include_group_socket_values
@@ -134,7 +134,12 @@ class NTP_Operator(Operator):
             self._location = options.location
             self._category = options.category
             self._custom_category = options.custom_category
-            self._menu_id = options.menu_id
+            if options.menu_id in dir(bpy.types):
+                self._menu_id = options.menu_id
+            else:
+                self.report({'ERROR'}, f"{options.menu_id} is not a valid menu")
+                return False
+            return True
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """

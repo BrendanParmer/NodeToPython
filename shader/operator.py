@@ -128,7 +128,8 @@ class NTPShaderOperator(NTP_Operator):
         
 
     def execute(self, context):
-        self._setup_options(context.scene.ntp_options)
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
         
         #find node group to replicate
         self._base_node_tree = bpy.data.materials[self.material_name].node_tree

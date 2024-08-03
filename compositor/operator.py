@@ -185,7 +185,8 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
     
     def execute(self, context):
-        self._setup_options(context.scene.ntp_options)
+        if not self._setup_options(context.scene.ntp_options):
+            return {'CANCELLED'}
 
         #find node group to replicate
         if self.is_scene:
