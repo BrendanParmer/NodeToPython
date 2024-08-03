@@ -241,6 +241,8 @@ class NTPCompositorOperator(NTP_Operator):
             self._create_register_func()
             self._create_unregister_func()
             self._create_main_func()
+            if bpy.app.version >= (4, 2, 0):
+                self._create_manifest()
         else:
             context.window_manager.clipboard = self._file.getvalue()
 

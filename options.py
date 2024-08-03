@@ -35,6 +35,7 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Generate necessary import statements",
         default = True
     )
+    
     # Addon properties
     dir_path : bpy.props.StringProperty(
         name = "Save Location",
@@ -74,6 +75,26 @@ class NTPOptions(bpy.types.PropertyGroup):
                       "(Preferences > Interface > Python tooltips) and "
                       "hovering over the desired menu",
         default="NODE_MT_add"
+    )
+    license: bpy.props.EnumProperty(
+        name="License",
+        items = [
+            ('SPDX:GPL-2.0-or-later', "GNU General Public License v2.0 or later", ""),
+            ('SPDX:GPL-3.0-or-later', "GNU General Public License v3.0 or later", ""),
+            ('SPDX:LGPL-2.1-or-later', "GNU Lesser General Public License v2.1 or later", ""),
+            ('SPDX:LGPL-3.0-or-later', "GNU Lesser General Public License v3.0 or later", ""),
+            ('SPDX:BSD-1-Clause', "BSD 1-Clause \"Simplified\" License", ""),
+            ('SPDX:BSD-2-Clause', "BSD 2-Clause \"Simplified\" License", ""),
+            ('SPDX:BSD-3-Clause', "BSD 3-Clause “New” or “Revised” License", ""),
+            ('SPDX:BSL-1.0', "Boost Software License 1.0", ""),
+            ('SPDX:MIT', "MIT License", ""),
+            ('SPDX:MIT-0', "MIT No Attribution", ""),
+            ('SPDX:MPL-2.0', "Mozilla Public License 2.0", ""),
+            ('SPDX:Pixar', "Pixar License", ""),
+            ('SPDX:Zlib', "Zlib License", ""),
+            ('OTHER', "Other", "")
+        ],
+        default = 'OTHER'
     )
     category: bpy.props.EnumProperty(
         name = "Category",
@@ -117,6 +138,7 @@ class NTPOptions(bpy.types.PropertyGroup):
         description="Custom category",
         default = ""
     )
+
 class NTPOptionsPanel(bpy.types.Panel):
     bl_label = "Options"
     bl_idname = "NODE_PT_ntp_options"
@@ -149,10 +171,13 @@ class NTPOptionsPanel(bpy.types.Panel):
         elif ntp_options.mode == 'ADDON':
             addon_options = [
                 "dir_path",
+                "name_override",
+                "description",
                 "author_name",
                 "version",
                 "location",
                 "menu_id",
+                "license",
                 "category"
             ]
             option_list += addon_options
