@@ -88,6 +88,9 @@ def vec3_to_py_str(vec3) -> str:
     """
     return f"({vec3[0]}, {vec3[1]}, {vec3[2]})"
 
+def version_to_manifest_str(version) -> str:
+    return f"\"{version[0]}.{version[1]}.{version[2]}\""
+    
 def vec4_to_py_str(vec4) -> str:
     """
     Converts a 4D vector to a string usable by the add-on

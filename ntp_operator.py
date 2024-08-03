@@ -132,6 +132,7 @@ class NTP_Operator(Operator):
             self._author_name = options.author_name
             self._version = options.version
             self._location = options.location
+            self._license = options.license
             self._category = options.category
             self._custom_category = options.custom_category
             if options.menu_id in dir(bpy.types):
@@ -176,11 +177,12 @@ class NTP_Operator(Operator):
         """
 
         self._write("bl_info = {", "")
+        self._name = name
         if self._name_override and self._name_override != "":
-            name = self._name_override
-        self._write(f"\t\"name\" : {str_to_py_str(name)},", "")
+            self._name = self._name_override
+        self._write(f"\t\"name\" : {str_to_py_str(self._name)},", "")
         if self._description and self._description != "":
-            self.write(f"\t\"description\" : {str_to_py_str(self._description)}," "")
+            self._write(f"\t\"description\" : {str_to_py_str(self._description)}," "")
         self._write(f"\t\"author\" : {str_to_py_str(self._author_name)},", "")
         self._write(f"\t\"version\" : {vec3_to_py_str(self._version)},", "")
         self._write(f"\t\"blender\" : {bpy.app.version},", "")
@@ -204,6 +206,7 @@ class NTP_Operator(Operator):
         idname (str): name for the operator
         label (str): appearence inside Blender
         """
+        self._idname = idname
         self._write(f"class {self._class_name}(bpy.types.Operator):", "")
         self._write(f"\tbl_idname = \"node.{idname}\"", "")
         self._write(f"\tbl_label = {str_to_py_str(label)}", "")
@@ -391,8 +394,8 @@ class NTP_Operator(Operator):
             elif st == ST.IMAGE:
                 if self._addon_dir is not None and attr is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
-                        self._save_image(attr)
-                        self._load_image(attr, f"{node_var}.{attr_name}")
+                        if self._save_image(attr):
+                            self._load_image(attr, f"{node_var}.{attr_name}")
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
             elif st == ST.SIM_OUTPUT_ITEMS:
@@ -779,8 +782,8 @@ class NTP_Operator(Operator):
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
                     if img is not None and self._addon_dir != None:  # write in a better way
-                        self._save_image(img)
-                        self._load_image(img, f"{socket_var}.default_value")
+                        if self._save_image(img):
+                            self._load_image(img, f"{socket_var}.default_value")
                     default_val = None
 
                 # materials
@@ -1037,7 +1040,7 @@ class NTP_Operator(Operator):
             self.report({'WARNING'}, (f"NodeToPython: Node tree dependency graph " 
                                     f"wasn't properly initialized"))
 
-    def _save_image(self, img: bpy.types.Image) -> None:
+    def _save_image(self, img: bpy.types.Image) -> bool:
         """
         Saves an image to an image directory of the add-on
 
@@ -1046,13 +1049,13 @@ class NTP_Operator(Operator):
         """
 
         if img is None:
-            return
+            return False
 
         img_str = img_to_py_str(img)
 
         if not img.has_data:
             self.report({'WARNING'}, f"{img_str} has no data")
-            return
+            return False
 
         # create image dir if one doesn't exist
         img_dir = os.path.join(self._addon_dir, IMAGE_DIR_NAME)
@@ -1064,6 +1067,7 @@ class NTP_Operator(Operator):
         img_path = f"{img_dir}/{img_str}"
         if not os.path.exists(img_path):
             img.save_render(img_path)
+        return True
 
     def _load_image(self, img: bpy.types.Image, img_var: str) -> None:
         """
@@ -1374,6 +1378,25 @@ class NTP_Operator(Operator):
         """
         self._write("if __name__ == \"__main__\":", "")
         self._write("register()", "\t")
+
+    if bpy.app.version >= (4, 2, 0):
+        def _create_manifest(self) -> None:
+            manifest = open(f"{self._addon_dir}/blender_manifest.toml", "w")
+            manifest.write("schema_version = \"1.0.0\"\n\n")
+            manifest.write(f"id = {str_to_py_str(self._idname)}\n")
+
+            manifest.write(f"version = {version_to_manifest_str(self._version)}\n")
+            manifest.write(f"name = {str_to_py_str(self._name)}\n")
+            manifest.write(f"tagline = {str_to_py_str(self._description)}\n")
+            manifest.write(f"maintainer = {str_to_py_str(self._author_name)}\n")
+            manifest.write("type = \"add-on\"\n")
+            manifest.write(f"blender_version_min = {version_to_manifest_str(bpy.app.version)}\n")
+            if self._license != 'OTHER':
+                manifest.write(f"license = [{str_to_py_str(self._license)}]\n")
+            else:
+                self.report({'WARNING'}, "No license selected. Please add a license to the manifest file")
+
+            manifest.close()
 
     def _zip_addon(self) -> None:
         """
