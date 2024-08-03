@@ -1048,13 +1048,19 @@ class NTP_Operator(Operator):
         if img is None:
             return
 
+        img_str = img_to_py_str(img)
+
+        if not img.has_data:
+            self.report({'WARNING'}, f"{img_str} has no data")
+            return
+
         # create image dir if one doesn't exist
         img_dir = os.path.join(self._addon_dir, IMAGE_DIR_NAME)
         if not os.path.exists(img_dir):
             os.mkdir(img_dir)
 
         # save the image
-        img_str = img_to_py_str(img)
+        
         img_path = f"{img_dir}/{img_str}"
         if not os.path.exists(img_path):
             img.save_render(img_path)
