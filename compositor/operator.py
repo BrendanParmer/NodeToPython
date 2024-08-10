@@ -102,17 +102,26 @@ class NTPCompositorOperator(NTP_Operator):
         """
         if node.correction_method == 'LIFT_GAMMA_GAIN':
             lst = [NTPNodeSetting("correction_method", ST.ENUM),                 
-                   NTPNodeSetting("gain",              ST.COLOR),
-                   NTPNodeSetting("gamma",             ST.COLOR),
-                   NTPNodeSetting("lift",              ST.COLOR)]
+                   NTPNodeSetting("gain",  ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("gain",  ST.COLOR, min_version_=(3, 5, 0)),
+                   NTPNodeSetting("gamma", ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("gamma", ST.COLOR, min_version_=(3, 5, 0)),
+                   NTPNodeSetting("lift",  ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("lift",  ST.COLOR, min_version_=(3, 5, 0))]
         else:
             lst = [NTPNodeSetting("correction_method", ST.ENUM),
-                   NTPNodeSetting("offset",            ST.COLOR),
-                   NTPNodeSetting("offset_basis",      ST.FLOAT),
-                   NTPNodeSetting("power",             ST.COLOR),
-                   NTPNodeSetting("slope",             ST.COLOR)]
+                   NTPNodeSetting("offset", ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("offset", ST.COLOR, min_version_=(3, 5, 0)),
+                   NTPNodeSetting("offset_basis", ST.FLOAT),
+                   NTPNodeSetting("power", ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("power", ST.COLOR, min_version_=(3, 5, 0)),
+                   NTPNodeSetting("slope", ST.VEC3,  max_version_=(3, 5, 0)),
+                   NTPNodeSetting("slope", ST.COLOR, min_version_=(3, 5, 0))]
 
-        self._node_infos['CompositorNodeColorBalance'].attributes_ = lst
+        color_balance_info = self._node_infos['CompositorNodeColorBalance']
+        self._node_infos['CompositorNodeColorBalance'] = color_balance_info._replace(attributes_ = lst)
+        for setting in self._node_infos['CompositorNodeColorBalance'].attributes_:
+            print(setting.name_)
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """
