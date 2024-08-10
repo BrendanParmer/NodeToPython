@@ -241,6 +241,10 @@ class NTP_Operator(Operator):
             Parameters:
             nt (NodeTree): current node tree in the dependency graph
             """
+            if nt is None:
+                self.report({'ERROR'}, "NodeToPython: Found an invalid node tree. "
+                            "Are all data blocks valid?")
+                return
             if nt not in visited:
                 visited.add(nt)
                 for group_node in [node for node in nt.nodes
