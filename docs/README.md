@@ -32,7 +32,8 @@ In the tab, there are panels to create add-ons for Geometry Nodes, Materials, an
 
 In the options panel, select either **Script** or **Add-on**. 
 * **Script** mode creates a function that generates the node tree and copies it to your Blender clipboard.
-* **Add-on** mode generates a zip file for you in the save directory specified in the NodeToPython menu. From here, you can install it like a regular add-on. The generated add-on comes complete with operator registration and creating a modifier/material for the node tree to be used in.
+* **Add-on** mode generates a zip file for you in the save directory specified in the NodeToPython menu. From here, you can install it like a regular add-on. The generated add-on comes complete with operator registration and creating a modifier/material/scene for the node tree to be used in.
+    * When exporting to an add-on in Blender 4.2 or higher, you'll need to select a GPL-compliant liscense for Blender to be able to register the extension.
 
 ## Bug Reports and Suggestions
 
