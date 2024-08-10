@@ -85,7 +85,7 @@ class NTPOptions(bpy.types.PropertyGroup):
             ('SPDX:LGPL-3.0-or-later', "GNU Lesser General Public License v3.0 or later", ""),
             ('SPDX:BSD-1-Clause', "BSD 1-Clause \"Simplified\" License", ""),
             ('SPDX:BSD-2-Clause', "BSD 2-Clause \"Simplified\" License", ""),
-            ('SPDX:BSD-3-Clause', "BSD 3-Clause “New” or “Revised” License", ""),
+            ('SPDX:BSD-3-Clause', "BSD 3-Clause \"New\" or \"Revised\" License", ""),
             ('SPDX:BSL-1.0', "Boost Software License 1.0", ""),
             ('SPDX:MIT', "MIT License", ""),
             ('SPDX:MIT-0', "MIT No Attribution", ""),
