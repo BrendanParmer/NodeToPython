@@ -140,7 +140,7 @@ class NTP_Operator(Operator):
             else:
                 self.report({'ERROR'}, f"{options.menu_id} is not a valid menu")
                 return False
-            return True
+        return True
 
     def _setup_addon_directories(self, context: Context, nt_var: str) -> bool:
         """
@@ -1387,6 +1387,8 @@ class NTP_Operator(Operator):
 
             manifest.write(f"version = {version_to_manifest_str(self._version)}\n")
             manifest.write(f"name = {str_to_py_str(self._name)}\n")
+            if self._description == "":
+                self._description = self._name
             manifest.write(f"tagline = {str_to_py_str(self._description)}\n")
             manifest.write(f"maintainer = {str_to_py_str(self._author_name)}\n")
             manifest.write("type = \"add-on\"\n")
