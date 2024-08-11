@@ -1390,7 +1390,7 @@ class NTP_Operator(Operator):
             return
         license_file = open(f"{self._addon_dir}/LICENSE", "w")
         year = datetime.date.today().year
-        license_txt = license_templates[self._license](year, self._name)
+        license_txt = license_templates[self._license](year, self._author_name)
         license_file.write(license_txt)
         license_file.close()
 
