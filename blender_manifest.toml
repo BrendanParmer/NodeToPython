@@ -12,7 +12,7 @@ website = "https://github.com/BrendanParmer/NodeToPython"
 tags = ["Development", "Compositing", "Geometry Nodes", "Material", "Node"]
 
 blender_version_min = "4.2.0"
-blender_version_max = "4.3.0"
+blender_version_max = "4.4.0"
 
 license = [
     "SPDX:MIT",
