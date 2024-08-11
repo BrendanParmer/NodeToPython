@@ -176,6 +176,7 @@ class NTPShaderOperator(NTP_Operator):
             self._create_register_func()
             self._create_unregister_func()
             self._create_main_func()
+            self._create_license()
             if bpy.app.version >= (4, 2, 0):
                 self._create_manifest()
         else:

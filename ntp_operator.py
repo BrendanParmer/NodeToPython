@@ -9,10 +9,12 @@ else:
     from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceSocket
     from bpy.types import NodeTreeInterfaceItem
 
+import datetime
 import os
-from typing import TextIO
 import shutil
+from typing import TextIO
 
+from .license_templates import license_templates
 from .ntp_node_tree import NTP_NodeTree
 from .options import NTPOptions
 from .node_settings import NodeInfo, ST
@@ -1382,6 +1384,15 @@ class NTP_Operator(Operator):
         """
         self._write("if __name__ == \"__main__\":", "")
         self._write("register()", "\t")
+
+    def _create_license(self) -> None:
+        if self._license == 'OTHER':
+            return
+        license_file = open(f"{self._addon_dir}/LICENSE", "w")
+        year = datetime.date.today().year
+        license_txt = license_templates[self._license](year, self._name)
+        license_file.write(license_txt)
+        license_file.close()
 
     if bpy.app.version >= (4, 2, 0):
         def _create_manifest(self) -> None:
