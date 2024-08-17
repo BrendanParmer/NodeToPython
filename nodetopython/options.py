@@ -96,6 +96,11 @@ class NTPOptions(bpy.types.PropertyGroup):
         ],
         default = 'OTHER'
     )
+    should_create_license: bpy.props.BoolProperty(
+        name="Create License",
+        description="Should NodeToPython include a license file",
+        default=True
+    )
     category: bpy.props.EnumProperty(
         name = "Category",
         items = [
@@ -178,6 +183,7 @@ class NTPOptionsPanel(bpy.types.Panel):
                 "location",
                 "menu_id",
                 "license",
+                "should_create_license",
                 "category"
             ]
             option_list += addon_options

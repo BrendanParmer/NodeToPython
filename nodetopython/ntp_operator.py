@@ -135,6 +135,7 @@ class NTP_Operator(Operator):
             self._version = options.version
             self._location = options.location
             self._license = options.license
+            self._should_create_license = options.should_create_license
             self._category = options.category
             self._custom_category = options.custom_category
             if options.menu_id in dir(bpy.types):
@@ -1386,6 +1387,8 @@ class NTP_Operator(Operator):
         self._write("register()", "\t")
 
     def _create_license(self) -> None:
+        if not self._should_create_license:
+            return
         if self._license == 'OTHER':
             return
         license_file = open(f"{self._addon_dir}/LICENSE", "w")
