@@ -50,9 +50,9 @@ def str_to_py_str(string: str) -> str:
     Returns:
     (str): converted string
     """
-    repr_str = repr(string).replace('\"', '\\"')
+    repr_str = repr(string)
     if repr_str.startswith("'") and repr_str.endswith("'"):
-        repr_str = f"\"{repr_str[1:-1]}\""
+        repr_str = "\"" + repr_str[1:-1].replace('\"', '\\"') + "\""
     return repr_str
 
 def vec1_to_py_str(vec1) -> str:
