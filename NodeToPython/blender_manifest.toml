@@ -19,4 +19,4 @@ license = [
 ]
 
 [permissions]
-files = "In add-on mode, NodeToPython will create and write to files in a specified directory"
+files = "Creates and writes to files in a specified directory"

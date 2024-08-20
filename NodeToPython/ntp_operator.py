@@ -605,12 +605,13 @@ class NTP_Operator(Operator):
                         f"socket_type = {socket_type}"
                         f"{optional_parent_str})")
 
+            self._set_tree_socket_defaults(socket, socket_var)
+
             # subtype
             if hasattr(socket, "subtype"):
-                subtype = enum_to_py_str(socket.subtype)
-                self._write(f"{socket_var}.subtype = {subtype}")
-
-                self._set_tree_socket_defaults(socket, socket_var)
+                if socket.subtype != '':
+                    subtype = enum_to_py_str(socket.subtype)
+                    self._write(f"{socket_var}.subtype = {subtype}")
 
             # default attribute name
             if socket.default_attribute_name != "":

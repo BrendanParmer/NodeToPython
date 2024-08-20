@@ -36,24 +36,25 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
 
 
-classes = [NodeToPythonMenu,
-            #options
-            options.NTPOptions,
-            options.NTPOptionsPanel,
-            #compositor
-            compositor.operator.NTPCompositorOperator,
-            compositor.ui.NTPCompositorScenesMenu,
-            compositor.ui.NTPCompositorGroupsMenu,
-            compositor.ui.NTPCompositorPanel,
-            #geometry
-            geometry.operator.NTPGeoNodesOperator,
-            geometry.ui.NTPGeoNodesMenu,
-            geometry.ui.NTPGeoNodesPanel,
-            #material
-            shader.operator.NTPShaderOperator,
-            shader.ui.NTPShaderMenu,
-            shader.ui.NTPShaderPanel,
-            ]
+classes = [
+    NodeToPythonMenu,
+    #options
+    options.NTPOptions,
+    options.NTPOptionsPanel,
+    #compositor
+    compositor.operator.NTPCompositorOperator,
+    compositor.ui.NTPCompositorScenesMenu,
+    compositor.ui.NTPCompositorGroupsMenu,
+    compositor.ui.NTPCompositorPanel,
+    #geometry
+    geometry.operator.NTPGeoNodesOperator,
+    geometry.ui.NTPGeoNodesMenu,
+    geometry.ui.NTPGeoNodesPanel,
+    #material
+    shader.operator.NTPShaderOperator,
+    shader.ui.NTPShaderMenu,
+    shader.ui.NTPShaderPanel,
+]
 
 def register():
     for cls in classes:
