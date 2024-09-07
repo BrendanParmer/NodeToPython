@@ -120,8 +120,6 @@ class NTPCompositorOperator(NTP_Operator):
 
         color_balance_info = self._node_infos['CompositorNodeColorBalance']
         self._node_infos['CompositorNodeColorBalance'] = color_balance_info._replace(attributes_ = lst)
-        for setting in self._node_infos['CompositorNodeColorBalance'].attributes_:
-            print(setting.name_)
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """
