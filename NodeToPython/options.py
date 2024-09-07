@@ -92,7 +92,12 @@ class NTPOptions(bpy.types.PropertyGroup):
             ('SPDX:MPL-2.0', "Mozilla Public License 2.0", ""),
             ('SPDX:Pixar', "Pixar License", ""),
             ('SPDX:Zlib', "Zlib License", ""),
-            ('OTHER', "Other", "")
+            ('OTHER', "Other", "User is responsible for including the license "
+                               "and adding it to the manifest.\n"
+                               "Please note that by using the Blender Python "
+                               "API your add-on must comply with the GNU GPL. "
+                               "See https://www.blender.org/about/license/ for "
+                               "more details")
         ],
         default = 'OTHER'
     )
