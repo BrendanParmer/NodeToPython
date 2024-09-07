@@ -99,7 +99,7 @@ class NTPOptions(bpy.types.PropertyGroup):
                                "See https://www.blender.org/about/license/ for "
                                "more details")
         ],
-        default = 'OTHER'
+        default = 'SPDX:GPL-3.0-or-later'
     )
     should_create_license: bpy.props.BoolProperty(
         name="Create License",
