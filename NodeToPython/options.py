@@ -22,6 +22,19 @@ class NTPOptions(bpy.types.PropertyGroup):
         description = "Set dimensions of generated nodes",
         default = True
     )
+
+    indentation_type: bpy.props.EnumProperty(
+        name="Indentation Type",
+        description="Whitespace to use for each indentation block",
+        items = [
+            ('SPACES_2', "2 Spaces", ""),
+            ('SPACES_4', "4 Spaces", ""),
+            ('SPACES_8', "8 Spaces", ""),
+            ('TABS', "Tabs", "")
+        ],
+        default = 'SPACES_4'
+    )
+
     if bpy.app.version >= (3, 4, 0):
         set_unavailable_defaults : bpy.props.BoolProperty(
             name = "Set unavailable defaults",
@@ -168,7 +181,8 @@ class NTPOptionsPanel(bpy.types.Panel):
         option_list = [
             "mode",
             "include_group_socket_values",
-            "set_dimensions"
+            "set_dimensions", 
+            "indentation_type"
         ]
         if bpy.app.version >= (3, 4, 0):
             option_list.append("set_unavailable_defaults")
