@@ -31,45 +31,44 @@ class NTPCompositorOperator(NTP_Operator):
             self._used_vars[name] = 0
 
 
-    def _create_scene(self, indent: str):
+    def _create_scene(self, indent_level: int):
         #TODO: wrap in more general unique name util function
-        self._write(f"# Generate unique scene name", indent)
+        self._write(f"# Generate unique scene name", indent_level)
         self._write(f"{BASE_NAME} = {str_to_py_str(self.compositor_name)}",
-                    indent)
-        self._write(f"{END_NAME} = {BASE_NAME}", indent)
-        self._write(f"if bpy.data.scenes.get({END_NAME}) != None:", indent)
+                    indent_level)
+        self._write(f"{END_NAME} = {BASE_NAME}", indent_level)
+        self._write(f"if bpy.data.scenes.get({END_NAME}) != None:", indent_level)
 
-        indent2 = f"{indent}\t"
-        self._write(f"{INDEX} = 1", indent2)
+        self._write(f"{INDEX} = 1", indent_level + 1)
         self._write(f"{END_NAME} = {BASE_NAME} + f\".{{i:03d}}\"", 
-                    indent2)
+                    indent_level + 1)
         self._write(f"while bpy.data.scenes.get({END_NAME}) != None:",
-                    indent2)
+                    indent_level + 1)
         
-        indent3 = f"{indent}\t\t"
-        self._write(f"{END_NAME} = {BASE_NAME} + f\".{{{INDEX}:03d}}\"", indent3)
-        self._write(f"{INDEX} += 1\n", indent3)
+        self._write(f"{END_NAME} = {BASE_NAME} + f\".{{{INDEX}:03d}}\"", 
+                    indent_level + 2)
+        self._write(f"{INDEX} += 1\n", indent_level + 2)
 
-        self._write(f"{SCENE} = bpy.context.window.scene.copy()\n", indent) 
-        self._write(f"{SCENE}.name = {END_NAME}", indent)
-        self._write(f"{SCENE}.use_fake_user = True", indent)
-        self._write(f"bpy.context.window.scene = {SCENE}", indent)
+        self._write(f"{SCENE} = bpy.context.window.scene.copy()\n", indent_level) 
+        self._write(f"{SCENE}.name = {END_NAME}", indent_level)
+        self._write(f"{SCENE}.use_fake_user = True", indent_level)
+        self._write(f"bpy.context.window.scene = {SCENE}", indent_level)
 
     def _initialize_compositor_node_tree(self, ntp_nt, nt_name):
         #initialize node group
-        self._write(f"#initialize {nt_name} node group", self._outer)
-        self._write(f"def {ntp_nt.var}_node_group():", self._outer)
+        self._write(f"#initialize {nt_name} node group", self._outer_indent_level)
+        self._write(f"def {ntp_nt.var}_node_group():", self._outer_indent_level)
 
         if ntp_nt.node_tree == self._base_node_tree:
             self._write(f"{ntp_nt.var} = {SCENE}.node_tree")
             self._write(f"#start with a clean node tree")
             self._write(f"for {NODE} in {ntp_nt.var}.nodes:")
-            self._write(f"\t{ntp_nt.var}.nodes.remove({NODE})")
+            self._write(f"{ntp_nt.var}.nodes.remove({NODE})", self._inner_indent_level + 1)
         else:
             self._write((f"{ntp_nt.var} = bpy.data.node_groups.new("
                          f"type = \'CompositorNodeTree\', "
                          f"name = {str_to_py_str(nt_name)})"))
-            self._write("")
+            self._write("", 0)
 
         # Compositor node tree settings
         #TODO: might be good to make this optional
@@ -120,8 +119,6 @@ class NTPCompositorOperator(NTP_Operator):
 
         color_balance_info = self._node_infos['CompositorNodeColorBalance']
         self._node_infos['CompositorNodeColorBalance'] = color_balance_info._replace(attributes_ = lst)
-        for setting in self._node_infos['CompositorNodeColorBalance'].attributes_:
-            print(setting.name_)
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """
@@ -191,7 +188,7 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"return {nt_var}\n")
 
         #create node group
-        self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
+        self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)
     
     def execute(self, context):
         if not self._setup_options(context.scene.ntp_options):
@@ -214,8 +211,8 @@ class NTPCompositorOperator(NTP_Operator):
         comp_var = clean_string(self.compositor_name)
         
         if self._mode == 'ADDON':
-            self._outer = "\t\t"
-            self._inner = "\t\t\t"
+            self._outer_indent_level = 2
+            self._inner_indent_level = 3
 
             if not self._setup_addon_directories(context, comp_var):
                 return {'CANCELLED'}
@@ -226,7 +223,7 @@ class NTPCompositorOperator(NTP_Operator):
             self._class_name = clean_string(self.compositor_name, lower=False)
             self._init_operator(comp_var, self.compositor_name)
 
-            self._write("def execute(self, context):", "\t")
+            self._write("def execute(self, context):", 1)
         else:
             self._file = StringIO("")
             if self._include_imports:
@@ -234,9 +231,9 @@ class NTPCompositorOperator(NTP_Operator):
 
         if self.is_scene:
             if self._mode == 'ADDON':
-                self._create_scene("\t\t")
+                self._create_scene(2)
             elif self._mode == 'SCRIPT':
-                self._create_scene("")
+                self._create_scene(0)
 
         node_trees_to_process = self._topological_sort(self._base_node_tree)
 
@@ -244,7 +241,7 @@ class NTPCompositorOperator(NTP_Operator):
             self._process_node_tree(node_tree)
 
         if self._mode == 'ADDON':
-            self._write("return {'FINISHED'}\n", self._outer)
+            self._write("return {'FINISHED'}\n", self._outer_indent_level)
 
             self._create_menu_func()
             self._create_register_func()
