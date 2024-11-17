@@ -1,13 +1,17 @@
 import bpy
 from bpy.types import Context, Operator
 from bpy.types import Node, NodeTree
-from bpy_types import bpy_types
 
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
 else:
     from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceSocket
     from bpy.types import NodeTreeInterfaceItem
+
+if bpy.app.version >= (4, 3, 0):
+    from bpy.types import bpy_prop_array
+else:
+    from bpy_types.bpy_types import bpy_prop_array
 
 import datetime
 import os
@@ -574,7 +578,7 @@ class NTP_Operator(Operator):
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
-            elif type(dv) == bpy_types.bpy_prop_array:
+            elif type(dv) == bpy_prop_array:
                 dv = array_to_py_str(dv)
             elif type(dv) == str:
                 dv = str_to_py_str(dv)
