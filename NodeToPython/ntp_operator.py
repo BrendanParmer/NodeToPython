@@ -66,8 +66,8 @@ class NTP_Operator(Operator):
     def __init__(self):
         super().__init__()
 
-        # Call function after all the writes, such as the menu switch node and the menu socket
-        self._write_after_link: list[Callable] | None = None
+        # Write functions after nodes are mostly initialized and linked up
+        self._write_after_links: list[Callable] = []
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
@@ -541,16 +541,21 @@ class NTP_Operator(Operator):
 
             dv = socket_interface.default_value
 
-            # notice that the Node Socket Menu should be assign value after link to a menu switch node
             if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
-                if not self._write_after_link:
-                    self._write_after_link = []
+                if dv == "":
+                    self.report({'WARNING'},
+                        "NodeToPython: No menu found for socket "
+                        f"{socket_interface.name}"
+                    )
+                    return
 
-                self._write_after_link.append(
-                    lambda _var=socket_var, _dv=dv: self._write(f"{_var}.default_value = '{_dv}'"))
+                self._write_after_links.append(
+                    lambda _socket_var=socket_var, _dv=enum_to_py_str(dv): (
+                        self._write(f"{_socket_var}.default_value = {_dv}")
+                    )
+                )
                 return
-
-            if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
+            elif type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
@@ -796,6 +801,8 @@ class NTP_Operator(Operator):
 
                 #menu
                 elif input.bl_idname == 'NodeSocketMenu':
+                    if input.default_value == '':
+                        continue
                     default_val = enum_to_py_str(input.default_value)
 
                 # images
@@ -1341,9 +1348,10 @@ class NTP_Operator(Operator):
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
 
-        if self._write_after_link:
-            for _func in self._write_after_link:
-                _func()
+        for _func in self._write_after_links:
+            _func()
+        self._write_after_links = []
+            
 
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
         nt_var = self._node_tree_vars[node_tree]
