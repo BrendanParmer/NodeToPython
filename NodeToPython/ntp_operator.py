@@ -339,6 +339,11 @@ class NTP_Operator(Operator):
         # hide
         if node.hide:
             self._write(f"{node_var}.hide = True")
+
+        # Warning propagation
+        if bpy.app.version >= (4, 3, 0):
+            self._write(f"{node_var}.warning_propagation = "
+                        f"{enum_to_py_str(node.warning_propagation)}")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
