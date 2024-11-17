@@ -12,7 +12,7 @@ else:
 import datetime
 import os
 import shutil
-from typing import TextIO
+from typing import TextIO, Callable
 
 from .license_templates import license_templates
 from .ntp_node_tree import NTP_NodeTree
@@ -65,6 +65,9 @@ class NTP_Operator(Operator):
 
     def __init__(self):
         super().__init__()
+
+        # Write functions after nodes are mostly initialized and linked up
+        self._write_after_links: list[Callable] = []
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
@@ -553,7 +556,21 @@ class NTP_Operator(Operator):
 
             dv = socket_interface.default_value
 
-            if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
+            if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
+                if dv == "":
+                    self.report({'WARNING'},
+                        "NodeToPython: No menu found for socket "
+                        f"{socket_interface.name}"
+                    )
+                    return
+
+                self._write_after_links.append(
+                    lambda _socket_var=socket_var, _dv=enum_to_py_str(dv): (
+                        self._write(f"{_socket_var}.default_value = {_dv}")
+                    )
+                )
+                return
+            elif type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
@@ -799,6 +816,8 @@ class NTP_Operator(Operator):
 
                 #menu
                 elif input.bl_idname == 'NodeSocketMenu':
+                    if input.default_value == '':
+                        continue
                     default_val = enum_to_py_str(input.default_value)
 
                 # images
@@ -1345,6 +1364,11 @@ class NTP_Operator(Operator):
             self._write(f"{nt_var}.links.new({in_node_var}"
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
+
+        for _func in self._write_after_links:
+            _func()
+        self._write_after_links = []
+            
 
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
         nt_var = self._node_tree_vars[node_tree]
