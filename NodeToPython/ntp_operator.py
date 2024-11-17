@@ -12,7 +12,7 @@ else:
 import datetime
 import os
 import shutil
-from typing import TextIO
+from typing import TextIO, Callable
 
 from .license_templates import license_templates
 from .ntp_node_tree import NTP_NodeTree
@@ -65,6 +65,9 @@ class NTP_Operator(Operator):
 
     def __init__(self):
         super().__init__()
+
+        # Call function after all the writes, such as the menu switch node and the menu socket
+        self._write_after_link: list[Callable] | None = None
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
@@ -537,6 +540,15 @@ class NTP_Operator(Operator):
                 return
 
             dv = socket_interface.default_value
+
+            # notice that the Node Socket Menu should be assign value after link to a menu switch node
+            if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
+                if not self._write_after_link:
+                    self._write_after_link = []
+
+                self._write_after_link.append(
+                    lambda _var=socket_var, _dv=dv: self._write(f"{_var}.default_value = '{_dv}'"))
+                return
 
             if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
                 dv = vec4_to_py_str(dv)
@@ -1328,6 +1340,10 @@ class NTP_Operator(Operator):
             self._write(f"{nt_var}.links.new({in_node_var}"
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
+
+        if self._write_after_link:
+            for _func in self._write_after_link:
+                _func()
 
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
         nt_var = self._node_tree_vars[node_tree]
