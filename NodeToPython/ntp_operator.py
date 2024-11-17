@@ -446,6 +446,12 @@ class NTP_Operator(Operator):
                 self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.MENU_SWITCH_ITEMS:
                 self._menu_switch_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS:
+                self._foreach_geo_element_generation_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS:
+                self._foreach_geo_element_input_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS:
+                self._foreach_geo_element_main_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -1276,6 +1282,43 @@ class NTP_Operator(Operator):
                 self._write(f"{menu_switch_items_str}.new({name_str})")
                 desc_str = str_to_py_str(item.description)
                 self._write(f"{menu_switch_items_str}[{i}].description = {desc_str}")
+
+    if bpy.app.version >= (4, 3, 0):
+        def _foreach_geo_element_generation_items(self,
+            generation_items: bpy.types.NodeGeometryForeachGeometryElementGenerationItems,
+            generation_items_str: str
+        ) -> None:
+            self._write(f"{generation_items_str}.clear()")
+            for i, item in enumerate(generation_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{generation_items_str}.new({socket_type}, {name_str})")
+                
+                item_str = f"{generation_items_str}[{i}]"
+                
+                ad = enum_to_py_str(item.domain)
+                self._write(f"{item_str}.domain = {ad}")
+
+        def _foreach_geo_element_input_items(self,
+            input_items: bpy.types.NodeGeometryForeachGeometryElementInputItems,
+            input_items_str: str
+        ) -> None:
+            self._write(f"{input_items_str}.clear()")
+            for i, item in enumerate(input_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{input_items_str}.new({socket_type}, {name_str})")
+
+        def _foreach_geo_element_main_items(self,
+            main_items: bpy.types.NodeGeometryForeachGeometryElementMainItems,
+            main_items_str: str
+        ) -> None:
+            self._write(f"{main_items_str}.clear()")
+            for i, item in enumerate(main_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{main_items_str}.new({socket_type}, {name_str})")
+
 
     def _set_parents(self, node_tree: NodeTree) -> None:
         """

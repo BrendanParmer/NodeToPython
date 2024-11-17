@@ -51,14 +51,16 @@ class NTPGeoNodesOperator(NTP_Operator):
 
         if node.bl_idname == 'GeometryNodeSimulationInput':
             ntp_nt.sim_inputs.append(node)
-
         elif node.bl_idname == 'GeometryNodeRepeatInput':
             ntp_nt.repeat_inputs.append(node)
+        elif node.bl_idname == 'GeometryNodeForeachGeometryElementInput':
+            ntp_nt.foreach_element_inputs.append(node)
         
         self._hide_hidden_sockets(node)
 
         if node.bl_idname not in {'GeometryNodeSimulationInput', 
-                                  'GeometryNodeRepeatInput'}:
+                                  'GeometryNodeRepeatInput',
+                                  'GeometryNodeForeachGeometryElementInput'}:
             self._set_socket_defaults(node)
 
     if bpy.app.version >= (3, 6, 0):
@@ -143,6 +145,8 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._process_zones(ntp_nt.sim_inputs)
         if bpy.app.version >= (4, 0, 0):
             self._process_zones(ntp_nt.repeat_inputs)
+        if bpy.app.version >= (4, 3, 0):
+            self._process_zones(ntp_nt.foreach_element_inputs)
 
         #set look of nodes
         self._set_parents(node_tree)

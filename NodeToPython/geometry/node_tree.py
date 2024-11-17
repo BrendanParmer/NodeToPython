@@ -4,8 +4,11 @@ from bpy.types import GeometryNodeTree
 if bpy.app.version >= (3, 6, 0):
     from bpy.types import GeometryNodeSimulationInput
 
-if bpy.app.version > (4, 0, 0):
+if bpy.app.version >= (4, 0, 0):
     from bpy.types import GeometryNodeRepeatInput
+
+if bpy.app.version >= (4, 3, 0):
+    from bpy.types import GeometryNodeForeachGeometryElementInput
 
 from ..ntp_node_tree import NTP_NodeTree
 
@@ -16,3 +19,5 @@ class NTP_GeoNodeTree(NTP_NodeTree):
             self.sim_inputs: list[GeometryNodeSimulationInput] = []
         if bpy.app.version >= (4, 0, 0):
             self.repeat_inputs: list[GeometryNodeRepeatInput] = []
+        if bpy.app.version >= (4, 3, 0):
+            self.foreach_element_inputs: list[GeometryNodeForeachGeometryElementInput] = []

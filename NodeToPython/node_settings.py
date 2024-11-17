@@ -9,6 +9,7 @@ class ST(Enum):
 	COLOR = auto()
 	ENUM = auto()
 	ENUM_SET = auto()
+	EULER = auto()
 	FLOAT = auto()
 	INT = auto()
 	STRING = auto()
@@ -17,26 +18,28 @@ class ST(Enum):
 	VEC3 = auto()
 	VEC4 = auto()
 	BAKE_ITEMS = auto()
+	CAPTURE_ATTRIBUTE_ITEMS = auto()
 	COLOR_RAMP = auto()
 	CURVE_MAPPING = auto()
 	ENUM_DEFINITION = auto()
+	ENUM_ITEM = auto()
+	FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
+	FOREACH_GEO_ELEMENT_INPUT_ITEMS = auto()
+	FOREACH_GEO_ELEMENT_MAIN_ITEMS = auto()
 	INDEX_SWITCH_ITEMS = auto()
+	MENU_SWITCH_ITEMS = auto()
 	NODE_TREE = auto()
 	REPEAT_OUTPUT_ITEMS = auto()
 	SIM_OUTPUT_ITEMS = auto()
 	IMAGE = auto()
 	IMAGE_USER = auto()
-	CAPTURE_ATTRIBUTE_ITEMS = auto()
 	CRYPTOMATTE_ENTRIES = auto()
-	ENUM_ITEM = auto()
-	EULER = auto()
 	FILE_SLOTS = auto()
 	FONT = auto()
 	IMAGE_FORMAT_SETTINGS = auto()
 	LAYER_SLOTS = auto()
 	MASK = auto()
 	MATERIAL = auto()
-	MENU_SWITCH_ITEMS = auto()
 	MOVIE_CLIP = auto()
 	OBJECT = auto()
 	PARTICLE_SYSTEM = auto()
@@ -1467,7 +1470,10 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("active_input_index", ST.INT),
 			NTPNodeSetting("active_main_index", ST.INT),
 			NTPNodeSetting("domain", ST.ENUM),
+			NTPNodeSetting("generation_items", ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS),
+			NTPNodeSetting("input_items", ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS),
 			NTPNodeSetting("inspection_index", ST.INT),
+			NTPNodeSetting("main_items", ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS),
 		],
 		min_version_ = (4, 3, 0)
 	),
