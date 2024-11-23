@@ -1,10 +1,8 @@
 import bpy
 import mathutils
 
-if bpy.app.version >= (4, 3, 0):
-    from bpy.types import bpy_prop_array
-else:
-    from bpy_types.bpy_types import bpy_prop_array
+
+from bpy.types import bpy_prop_array
 
 import keyword
 import re
