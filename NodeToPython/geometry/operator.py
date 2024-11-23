@@ -49,12 +49,8 @@ class NTPGeoNodesOperator(NTP_Operator):
                 self._group_io_settings(node, "output", ntp_nt)
                 ntp_nt.outputs_set = True
 
-        if node.bl_idname == 'GeometryNodeSimulationInput':
-            ntp_nt.sim_inputs.append(node)
-        elif node.bl_idname == 'GeometryNodeRepeatInput':
-            ntp_nt.repeat_inputs.append(node)
-        elif node.bl_idname == 'GeometryNodeForeachGeometryElementInput':
-            ntp_nt.foreach_element_inputs.append(node)
+        if node.bl_idname in ntp_nt.zone_inputs_:
+            ntp_nt.zone_inputs_[node.bl_idname].append(node)
         
         self._hide_hidden_sockets(node)
 
@@ -141,12 +137,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
-        if bpy.app.version >= (3, 6, 0):
-            self._process_zones(ntp_nt.sim_inputs)
-        if bpy.app.version >= (4, 0, 0):
-            self._process_zones(ntp_nt.repeat_inputs)
-        if bpy.app.version >= (4, 3, 0):
-            self._process_zones(ntp_nt.foreach_element_inputs)
+        for zone_list in ntp_nt.zone_inputs_.values():
+            self._process_zones(zone_list)
 
         #set look of nodes
         self._set_parents(node_tree)
