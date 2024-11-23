@@ -18,6 +18,10 @@ Blender's node-based editors are powerful, yet accessible tools, and I wanted to
 NodeToPython v3.2.1 is supported for Blender 3.0 - 4.2 on Windows, macOS, and Linux.
 
 ## Installation
+### Blender Extensions Platform
+NodeToPython is now on the official [Blender Extensions Platform](https://extensions.blender.org/add-ons/node-to-python/)! See https://extensions.blender.org/about/ for installation instructions and more info. 
+
+### GitHub
 1. Download the `NodeToPython.zip` file from the [latest release](https://github.com/BrendanParmer/NodeToPython/releases)
     * If you download other options, you'll need to rename the zip and the first folder to "NodeToPython" so Blender can properly import the add-on
 2. In Blender, navigate to `Edit > Preferences > Add-ons`

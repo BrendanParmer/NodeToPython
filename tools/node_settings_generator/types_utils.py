@@ -9,6 +9,7 @@ class ST(Enum):
     COLOR       = auto()
     ENUM        = auto()
     ENUM_SET    = auto()
+    EULER       = auto()
     FLOAT       = auto()
     INT         = auto()
     STRING      = auto()
@@ -18,31 +19,33 @@ class ST(Enum):
     VEC4        = auto()
     
     # Special settings
-    BAKE_ITEMS          = auto()
-    COLOR_RAMP          = auto()
-    CURVE_MAPPING       = auto()
-    ENUM_DEFINITION     = auto()
-    INDEX_SWITCH_ITEMS  = auto()
-    NODE_TREE           = auto()
-    REPEAT_OUTPUT_ITEMS = auto()
-    SIM_OUTPUT_ITEMS    = auto()
+    BAKE_ITEMS                           = auto()
+    CAPTURE_ATTRIBUTE_ITEMS              = auto()
+    COLOR_RAMP                           = auto()
+    CURVE_MAPPING                        = auto()
+    ENUM_DEFINITION                      = auto()
+    ENUM_ITEM                            = auto()
+    FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
+    FOREACH_GEO_ELEMENT_INPUT_ITEMS      = auto()
+    FOREACH_GEO_ELEMENT_MAIN_ITEMS       = auto()
+    INDEX_SWITCH_ITEMS                   = auto()
+    MENU_SWITCH_ITEMS                    = auto()
+    NODE_TREE                            = auto()
+    REPEAT_OUTPUT_ITEMS                  = auto()
+    SIM_OUTPUT_ITEMS                     = auto()
 
     # Image
     IMAGE       = auto() #needs refactor
     IMAGE_USER  = auto() #needs refactor
 
     # Currently unimplemented
-    CAPTURE_ATTRIBUTE_ITEMS     = auto() #TODO NTP v3.2
     CRYPTOMATTE_ENTRIES         = auto()
-    ENUM_ITEM                   = auto() #TODO NTP v3.2
-    EULER                       = auto() #TODO NTP v3.2
     FILE_SLOTS                  = auto()
     FONT                        = auto()
     IMAGE_FORMAT_SETTINGS       = auto()
     LAYER_SLOTS                 = auto()
     MASK                        = auto()
     MATERIAL                    = auto() #TODO asset library
-    MENU_SWITCH_ITEMS           = auto() #TODO NTP v3.2
     MOVIE_CLIP                  = auto() 
     OBJECT                      = auto() #TODO asset library
     PARTICLE_SYSTEM             = auto()
@@ -59,6 +62,9 @@ READ_ONLY_TYPES : set[ST] = {
     ST.CURVE_MAPPING,
     ST.ENUM_DEFINITION,
     ST.FILE_SLOTS,
+    ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
+    ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
+    ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS,
     ST.IMAGE_FORMAT_SETTINGS,
     ST.IMAGE_USER,
     ST.INDEX_SWITCH_ITEMS,
@@ -100,6 +106,9 @@ doc_to_NTP_type_dict : dict[str, ST] = {
     "NodeEnumItem" : ST.ENUM_ITEM,
     "NodeGeometryBakeItems" : ST.BAKE_ITEMS,
     "NodeGeometryCaptureAttributeItems" : ST.CAPTURE_ATTRIBUTE_ITEMS,
+    "NodeGeometryForeachGeometryElementGenerationItems": ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
+    "NodeGeometryForeachGeometryElementInputItems" : ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
+    "NodeGeometryForeachGeometryElementMainItems": ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS,
     "NodeGeometryRepeatOutputItems" : ST.REPEAT_OUTPUT_ITEMS,
     "NodeGeometrySimulationOutputItems" : ST.SIM_OUTPUT_ITEMS,
     "NodeIndexSwitchItems" : ST.INDEX_SWITCH_ITEMS,

@@ -1,7 +1,6 @@
 import bpy
 from bpy.types import Context, Operator
 from bpy.types import Node, NodeTree
-from bpy_types import bpy_types
 
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
@@ -9,10 +8,12 @@ else:
     from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceSocket
     from bpy.types import NodeTreeInterfaceItem
 
+from bpy.types import bpy_prop_array
+
 import datetime
 import os
 import shutil
-from typing import TextIO
+from typing import TextIO, Callable
 
 from .license_templates import license_templates
 from .ntp_node_tree import NTP_NodeTree
@@ -65,6 +66,9 @@ class NTP_Operator(Operator):
 
     def __init__(self):
         super().__init__()
+
+        # Write functions after nodes are mostly initialized and linked up
+        self._write_after_links: list[Callable] = []
 
         # File (TextIO) or string (StringIO) the add-on/script is generated into
         self._file: TextIO = None
@@ -332,6 +336,12 @@ class NTP_Operator(Operator):
         # hide
         if node.hide:
             self._write(f"{node_var}.hide = True")
+
+        # Warning propagation
+        if bpy.app.version >= (4, 3, 0):
+            if node.warning_propagation != 'ALL':
+                self._write(f"{node_var}.warning_propagation = "
+                            f"{enum_to_py_str(node.warning_propagation)}")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
@@ -434,6 +444,12 @@ class NTP_Operator(Operator):
                 self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.MENU_SWITCH_ITEMS:
                 self._menu_switch_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS:
+                self._foreach_geo_element_generation_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS:
+                self._foreach_geo_element_input_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS:
+                self._foreach_geo_element_main_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -553,11 +569,25 @@ class NTP_Operator(Operator):
 
             dv = socket_interface.default_value
 
-            if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
+            if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
+                if dv == "":
+                    self.report({'WARNING'},
+                        "NodeToPython: No menu found for socket "
+                        f"{socket_interface.name}"
+                    )
+                    return
+
+                self._write_after_links.append(
+                    lambda _socket_var=socket_var, _dv=enum_to_py_str(dv): (
+                        self._write(f"{_socket_var}.default_value = {_dv}")
+                    )
+                )
+                return
+            elif type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
-            elif type(dv) == bpy_types.bpy_prop_array:
+            elif type(dv) == bpy_prop_array:
                 dv = array_to_py_str(dv)
             elif type(dv) == str:
                 dv = str_to_py_str(dv)
@@ -799,6 +829,8 @@ class NTP_Operator(Operator):
 
                 #menu
                 elif input.bl_idname == 'NodeSocketMenu':
+                    if input.default_value == '':
+                        continue
                     default_val = enum_to_py_str(input.default_value)
 
                 # images
@@ -1249,6 +1281,43 @@ class NTP_Operator(Operator):
                 desc_str = str_to_py_str(item.description)
                 self._write(f"{menu_switch_items_str}[{i}].description = {desc_str}")
 
+    if bpy.app.version >= (4, 3, 0):
+        def _foreach_geo_element_generation_items(self,
+            generation_items: bpy.types.NodeGeometryForeachGeometryElementGenerationItems,
+            generation_items_str: str
+        ) -> None:
+            self._write(f"{generation_items_str}.clear()")
+            for i, item in enumerate(generation_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{generation_items_str}.new({socket_type}, {name_str})")
+                
+                item_str = f"{generation_items_str}[{i}]"
+                
+                ad = enum_to_py_str(item.domain)
+                self._write(f"{item_str}.domain = {ad}")
+
+        def _foreach_geo_element_input_items(self,
+            input_items: bpy.types.NodeGeometryForeachGeometryElementInputItems,
+            input_items_str: str
+        ) -> None:
+            self._write(f"{input_items_str}.clear()")
+            for i, item in enumerate(input_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{input_items_str}.new({socket_type}, {name_str})")
+
+        def _foreach_geo_element_main_items(self,
+            main_items: bpy.types.NodeGeometryForeachGeometryElementMainItems,
+            main_items_str: str
+        ) -> None:
+            self._write(f"{main_items_str}.clear()")
+            for i, item in enumerate(main_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{main_items_str}.new({socket_type}, {name_str})")
+
+
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
         Sets parents for all nodes, mostly used to put nodes in frames
@@ -1346,6 +1415,11 @@ class NTP_Operator(Operator):
                         f".outputs[{input_idx}], "
                         f"{out_node_var}.inputs[{output_idx}])")
 
+        for _func in self._write_after_links:
+            _func()
+        self._write_after_links = []
+            
+
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
         nt_var = self._node_tree_vars[node_tree]
 
@@ -1353,7 +1427,11 @@ class NTP_Operator(Operator):
             color_tag_str = enum_to_py_str(node_tree.color_tag)
             self._write(f"{nt_var}.color_tag = {color_tag_str}")
             desc_str = str_to_py_str(node_tree.description)
-            self._write(f"{nt_var}.description = {desc_str}\n")
+            self._write(f"{nt_var}.description = {desc_str}")
+        if bpy.app.version >= (4, 3, 0):
+            default_width = node_tree.default_group_node_width
+            self._write(f"{nt_var}.default_group_node_width = {default_width}")
+        self._write("\n")
 
     def _hide_hidden_sockets(self, node: Node) -> None:
         """
