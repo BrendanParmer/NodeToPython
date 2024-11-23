@@ -339,8 +339,9 @@ class NTP_Operator(Operator):
 
         # Warning propagation
         if bpy.app.version >= (4, 3, 0):
-            self._write(f"{node_var}.warning_propagation = "
-                        f"{enum_to_py_str(node.warning_propagation)}")
+            if node.warning_propagation != 'ALL':
+                self._write(f"{node_var}.warning_propagation = "
+                            f"{enum_to_py_str(node.warning_propagation)}")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
