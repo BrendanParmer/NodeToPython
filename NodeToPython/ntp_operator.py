@@ -1,13 +1,14 @@
 import bpy
 from bpy.types import Context, Operator
 from bpy.types import Node, NodeTree
-from bpy_types import bpy_types
 
 if bpy.app.version < (4, 0, 0):
     from bpy.types import NodeSocketInterface
 else:
     from bpy.types import NodeTreeInterfacePanel, NodeTreeInterfaceSocket
     from bpy.types import NodeTreeInterfaceItem
+
+from bpy.types import bpy_prop_array
 
 import datetime
 import os
@@ -82,8 +83,8 @@ class NTP_Operator(Operator):
         self._class_name: str = None
 
         # Indentation to use for the default write function
-        self._outer: str = ""
-        self._inner: str = "\t"
+        self._outer_indent_level: int = 0
+        self._inner_indent_level: int = 1
 
         # Base node tree we're converting
         self._base_node_tree: NodeTree = None
@@ -109,20 +110,34 @@ class NTP_Operator(Operator):
         # Set dimensions of generated nodes
         self._should_set_dimensions = True
 
+        # Indentation string (default four spaces)
+        self._indentation = "    "
+
         if bpy.app.version >= (3, 4, 0):
             # Set default values for hidden sockets
             self._set_unavailable_defaults = False
 
-    def _write(self, string: str, indent: str = None):
-        if indent is None:
-            indent = self._inner
-        self._file.write(f"{indent}{string}\n")
+    def _write(self, string: str, indent_level: int = None):
+        if indent_level is None:
+            indent_level = self._inner_indent_level
+        indent_str = indent_level * self._indentation
+        self._file.write(f"{indent_str}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> bool:
         # General
         self._mode = options.mode
         self._include_group_socket_values = options.include_group_socket_values
         self._should_set_dimensions = options.set_dimensions
+
+        if options.indentation_type == 'SPACES_2':
+            self._indentation = "  "
+        elif options.indentation_type == 'SPACES_4':
+            self._indentation = "    "
+        elif options.indentation_type == 'SPACES_8':
+            self._indentation = "        "
+        elif options.indentation_type == 'TABS':
+            self._indentation = "\t"
+
         if bpy.app.version >= (3, 4, 0):
             self._set_unavailable_defaults = options.set_unavailable_defaults
 
@@ -182,25 +197,25 @@ class NTP_Operator(Operator):
         name (str): name of the add-on
         """
 
-        self._write("bl_info = {", "")
+        self._write("bl_info = {", 0)
         self._name = name
         if self._name_override and self._name_override != "":
             self._name = self._name_override
-        self._write(f"\t\"name\" : {str_to_py_str(self._name)},", "")
+        self._write(f"\"name\" : {str_to_py_str(self._name)},", 1)
         if self._description and self._description != "":
-            self._write(f"\t\"description\" : {str_to_py_str(self._description)}," "")
-        self._write(f"\t\"author\" : {str_to_py_str(self._author_name)},", "")
-        self._write(f"\t\"version\" : {vec3_to_py_str(self._version)},", "")
-        self._write(f"\t\"blender\" : {bpy.app.version},", "")
-        self._write(f"\t\"location\" : {str_to_py_str(self._location)},", "")
+            self._write(f"\"description\" : {str_to_py_str(self._description)},", 1)
+        self._write(f"\"author\" : {str_to_py_str(self._author_name)},", 1)
+        self._write(f"\"version\" : {vec3_to_py_str(self._version)},", 1)
+        self._write(f"\"blender\" : {bpy.app.version},", 1)
+        self._write(f"\"location\" : {str_to_py_str(self._location)},", 1)
         category = self._category
         if category == "Custom":
             category = self._custom_category
-        self._write(f"\t\"category\" : {str_to_py_str(category)},", "")
-        self._write("}\n", "")
-        self._write("import bpy", "")
-        self._write("import mathutils", "")
-        self._write("import os\n", "")
+        self._write(f"\"category\" : {str_to_py_str(category)},", 1)
+        self._write("}\n", 0)
+        self._write("import bpy", 0)
+        self._write("import mathutils", 0)
+        self._write("import os\n", 0)
 
     def _init_operator(self, idname: str, label: str) -> None:
         """
@@ -213,11 +228,10 @@ class NTP_Operator(Operator):
         label (str): appearence inside Blender
         """
         self._idname = idname
-        self._write(f"class {self._class_name}(bpy.types.Operator):", "")
-        self._write(f"\tbl_idname = \"node.{idname}\"", "")
-        self._write(f"\tbl_label = {str_to_py_str(label)}", "")
-        self._write("\tbl_options = {\'REGISTER\', \'UNDO\'}", "")
-        self._write("")
+        self._write(f"class {self._class_name}(bpy.types.Operator):", 0)
+        self._write(f"bl_idname = \"node.{idname}\"", 1)
+        self._write(f"bl_label = {str_to_py_str(label)}", 1)
+        self._write("bl_options = {\'REGISTER\', \'UNDO\'}\n", 1)
 
     def _topological_sort(self, node_tree: NodeTree) -> list[NodeTree]:
         """
@@ -322,6 +336,12 @@ class NTP_Operator(Operator):
         # hide
         if node.hide:
             self._write(f"{node_var}.hide = True")
+
+        # Warning propagation
+        if bpy.app.version >= (4, 3, 0):
+            if node.warning_propagation != 'ALL':
+                self._write(f"{node_var}.warning_propagation = "
+                            f"{enum_to_py_str(node.warning_propagation)}")
         return node_var
 
     def _set_settings_defaults(self, node: Node) -> None:
@@ -389,12 +409,14 @@ class NTP_Operator(Operator):
                 self._write(f"{setting_str} = {color_to_py_str(attr)}")
             elif st == ST.MATERIAL:
                 name = str_to_py_str(attr.name)
-                self._write((f"if {name} in bpy.data.materials:"))
-                self._write((f"\t{setting_str} = bpy.data.materials[{name}]"))
+                self._write(f"if {name} in bpy.data.materials:")
+                self._write(f"{setting_str} = bpy.data.materials[{name}]", 
+                            self._inner_indent_level + 1)
             elif st == ST.OBJECT:
                 name = str_to_py_str(attr.name)
-                self._write((f"if {name} in bpy.data.objects:"))
-                self._write((f"\t{setting_str} = bpy.data.objects[{name}]"))
+                self._write(f"if {name} in bpy.data.objects:")
+                self._write(f"{setting_str} = bpy.data.objects[{name}]",
+                            self._inner_indent_level + 1)
             elif st == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, attr_name)
             elif st == ST.CURVE_MAPPING:
@@ -422,6 +444,12 @@ class NTP_Operator(Operator):
                 self._capture_attribute_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.MENU_SWITCH_ITEMS:
                 self._menu_switch_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS:
+                self._foreach_geo_element_generation_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS:
+                self._foreach_geo_element_input_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS:
+                self._foreach_geo_element_main_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -518,8 +546,8 @@ class NTP_Operator(Operator):
                     if socket_interface.hide_in_modifier is True:
                         self._write(f"{socket_var}.hide_in_modifier = True")
 
-                self._write("")
-            self._write("")
+                self._write("", 0)
+            self._write("", 0)
 
     elif bpy.app.version >= (4, 0, 0):
         def _set_tree_socket_defaults(self, socket_interface: NodeTreeInterfaceSocket,
@@ -559,7 +587,7 @@ class NTP_Operator(Operator):
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
-            elif type(dv) == bpy_types.bpy_prop_array:
+            elif type(dv) == bpy_prop_array:
                 dv = array_to_py_str(dv)
             elif type(dv) == str:
                 dv = str_to_py_str(dv)
@@ -657,7 +685,7 @@ class NTP_Operator(Operator):
                 description = str_to_py_str(socket.description)
                 self._write(f"{socket_var}.description = {description}")
 
-            self._write("")
+            self._write("", 0)
 
         def _create_panel(self, panel: NodeTreeInterfacePanel, 
                           panel_dict: dict[NodeTreeInterfacePanel], 
@@ -706,7 +734,7 @@ class NTP_Operator(Operator):
             if len(panel.interface_items) > 0:
                 self._process_items(panel, panel_dict, items_processed, ntp_nt)
             
-            self._write("")
+            self._write("", 0)
 
         def _process_items(self, parent: NodeTreeInterfacePanel, 
                            panel_dict: dict[NodeTreeInterfacePanel], 
@@ -760,7 +788,7 @@ class NTP_Operator(Operator):
 
             self._process_items(None, panel_dict, items_processed, ntp_nt)
 
-            self._write("")
+            self._write("", 0)
 
     def _set_input_defaults(self, node: Node) -> None:
         """
@@ -838,7 +866,7 @@ class NTP_Operator(Operator):
                 if default_val is not None:
                     self._write(f"#{input.identifier}")
                     self._write(f"{socket_var}.default_value = {default_val}")
-        self._write("")
+        self._write("", 0)
 
     def _set_output_defaults(self, node: Node) -> None:
         """
@@ -882,7 +910,8 @@ class NTP_Operator(Operator):
             return
         name = str_to_py_str(input.default_value.name)
         self._write(f"if {name} in bpy.data.{type}:")
-        self._write(f"\t{socket_var}.default_value = bpy.data.{type}[{name}]")
+        self._write(f"{socket_var}.default_value = bpy.data.{type}[{name}]",
+                    self._inner_indent_level + 1)
 
     def _set_socket_defaults(self, node: Node):
         """
@@ -920,7 +949,7 @@ class NTP_Operator(Operator):
         #interpolation
         interpolation = enum_to_py_str(color_ramp.interpolation)
         self._write(f"{ramp_str}.interpolation = {interpolation}")
-        self._write("")
+        self._write("", 0)
 
         # key points
         self._write(f"#initialize color ramp elements")
@@ -1019,8 +1048,9 @@ class NTP_Operator(Operator):
         if (node.bl_idname == 'CompositorNodeHueCorrect'):
             self._write(f"for {INDEX} in range"
                         f"(len({curve_i_var}.points.values()) - 1, 1, -1):")
-            self._write(f"\t{curve_i_var}.points.remove("
-                        f"{curve_i_var}.points[{INDEX}])")
+            self._write(f"{curve_i_var}.points.remove("
+                        f"{curve_i_var}.points[{INDEX}])",
+                        self._inner_indent_level + 1)
 
         for j, point in enumerate(curve.points):
             self._create_curve_map_point(j, point, curve_i_var)
@@ -1115,8 +1145,8 @@ class NTP_Operator(Operator):
         self._write(f"{BASE_DIR} = "
                     f"os.path.dirname(os.path.abspath(__file__))")
         self._write(f"{IMAGE_PATH} = "
-                    f"os.path.join({BASE_DIR}, \"{IMAGE_DIR_NAME}\", "
-                    f"\"{img_str}\")")
+                    f"os.path.join({BASE_DIR}, {str_to_py_str(IMAGE_DIR_NAME)}, "
+                    f"{str_to_py_str(img_str)})")
         self._write(f"{img_var} = bpy.data.images.load"
                     f"({IMAGE_PATH}, check_existing = True)")
 
@@ -1251,6 +1281,43 @@ class NTP_Operator(Operator):
                 desc_str = str_to_py_str(item.description)
                 self._write(f"{menu_switch_items_str}[{i}].description = {desc_str}")
 
+    if bpy.app.version >= (4, 3, 0):
+        def _foreach_geo_element_generation_items(self,
+            generation_items: bpy.types.NodeGeometryForeachGeometryElementGenerationItems,
+            generation_items_str: str
+        ) -> None:
+            self._write(f"{generation_items_str}.clear()")
+            for i, item in enumerate(generation_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{generation_items_str}.new({socket_type}, {name_str})")
+                
+                item_str = f"{generation_items_str}[{i}]"
+                
+                ad = enum_to_py_str(item.domain)
+                self._write(f"{item_str}.domain = {ad}")
+
+        def _foreach_geo_element_input_items(self,
+            input_items: bpy.types.NodeGeometryForeachGeometryElementInputItems,
+            input_items_str: str
+        ) -> None:
+            self._write(f"{input_items_str}.clear()")
+            for i, item in enumerate(input_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{input_items_str}.new({socket_type}, {name_str})")
+
+        def _foreach_geo_element_main_items(self,
+            main_items: bpy.types.NodeGeometryForeachGeometryElementMainItems,
+            main_items_str: str
+        ) -> None:
+            self._write(f"{main_items_str}.clear()")
+            for i, item in enumerate(main_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{main_items_str}.new({socket_type}, {name_str})")
+
+
     def _set_parents(self, node_tree: NodeTree) -> None:
         """
         Sets parents for all nodes, mostly used to put nodes in frames
@@ -1267,7 +1334,7 @@ class NTP_Operator(Operator):
                 node_var = self._node_vars[node]
                 parent_var = self._node_vars[node.parent]
                 self._write(f"{node_var}.parent = {parent_var}")
-        self._write("")
+        self._write("", 0)
 
     def _set_locations(self, node_tree: NodeTree) -> None:
         """
@@ -1282,7 +1349,7 @@ class NTP_Operator(Operator):
             node_var = self._node_vars[node]
             self._write(f"{node_var}.location "
                         f"= ({node.location.x}, {node.location.y})")
-        self._write("")
+        self._write("", 0)
 
     def _set_dimensions(self, node_tree: NodeTree) -> None:
         """
@@ -1299,7 +1366,7 @@ class NTP_Operator(Operator):
             node_var = self._node_vars[node]
             self._write(f"{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}")
-        self._write("")
+        self._write("", 0)
 
     def _init_links(self, node_tree: NodeTree) -> None:
         """
@@ -1360,7 +1427,11 @@ class NTP_Operator(Operator):
             color_tag_str = enum_to_py_str(node_tree.color_tag)
             self._write(f"{nt_var}.color_tag = {color_tag_str}")
             desc_str = str_to_py_str(node_tree.description)
-            self._write(f"{nt_var}.description = {desc_str}\n")
+            self._write(f"{nt_var}.description = {desc_str}")
+        if bpy.app.version >= (4, 3, 0):
+            default_width = node_tree.default_group_node_width
+            self._write(f"{nt_var}.default_group_node_width = {default_width}")
+        self._write("\n")
 
     def _hide_hidden_sockets(self, node: Node) -> None:
         """
@@ -1382,34 +1453,31 @@ class NTP_Operator(Operator):
         """
         Creates the menu function
         """
-        self._write("def menu_func(self, context):", "")
-        self._write(f"self.layout.operator({self._class_name}.bl_idname)", "\t")
-        self._write("")
+        self._write("def menu_func(self, context):", 0)
+        self._write(f"self.layout.operator({self._class_name}.bl_idname)\n", 1)
 
     def _create_register_func(self) -> None:
         """
         Creates the register function
         """
-        self._write("def register():", "")
-        self._write(f"bpy.utils.register_class({self._class_name})", "\t")
-        self._write(f"bpy.types.{self._menu_id}.append(menu_func)", "\t")
-        self._write("")
+        self._write("def register():", 0)
+        self._write(f"bpy.utils.register_class({self._class_name})", 1)
+        self._write(f"bpy.types.{self._menu_id}.append(menu_func)\n", 1)
 
     def _create_unregister_func(self) -> None:
         """
         Creates the unregister function
         """
-        self._write("def unregister():", "")
-        self._write(f"bpy.utils.unregister_class({self._class_name})", "\t")
-        self._write(f"bpy.types.{self._menu_id}.remove(menu_func)", "\t")
-        self._write("")
+        self._write("def unregister():", 0)
+        self._write(f"bpy.utils.unregister_class({self._class_name})", 1)
+        self._write(f"bpy.types.{self._menu_id}.remove(menu_func)\n", 1)
 
     def _create_main_func(self) -> None:
         """
         Creates the main function
         """
-        self._write("if __name__ == \"__main__\":", "")
-        self._write("register()", "\t")
+        self._write("if __name__ == \"__main__\":", 0)
+        self._write("register()", 1)
 
     def _create_license(self) -> None:
         if not self._should_create_license:

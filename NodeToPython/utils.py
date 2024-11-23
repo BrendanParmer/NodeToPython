@@ -1,6 +1,8 @@
 import bpy
-from bpy_types import bpy_types
 import mathutils
+
+
+from bpy.types import bpy_prop_array
 
 import keyword
 import re
@@ -106,7 +108,7 @@ def vec4_to_py_str(vec4) -> str:
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
 
-def array_to_py_str(array: bpy_types.bpy_prop_array) -> str:
+def array_to_py_str(array: bpy_prop_array) -> str:
     """
     Converts a bpy_prop_array into a string
 

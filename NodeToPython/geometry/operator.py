@@ -49,16 +49,12 @@ class NTPGeoNodesOperator(NTP_Operator):
                 self._group_io_settings(node, "output", ntp_nt)
                 ntp_nt.outputs_set = True
 
-        if node.bl_idname == 'GeometryNodeSimulationInput':
-            ntp_nt.sim_inputs.append(node)
-
-        elif node.bl_idname == 'GeometryNodeRepeatInput':
-            ntp_nt.repeat_inputs.append(node)
+        if node.bl_idname in ntp_nt.zone_inputs:
+            ntp_nt.zone_inputs[node.bl_idname].append(node)
         
         self._hide_hidden_sockets(node)
 
-        if node.bl_idname not in {'GeometryNodeSimulationInput', 
-                                  'GeometryNodeRepeatInput'}:
+        if node.bl_idname not in ntp_nt.zone_inputs:
             self._set_socket_defaults(node)
 
     if bpy.app.version >= (3, 6, 0):
@@ -81,7 +77,7 @@ class NTPGeoNodesOperator(NTP_Operator):
                 #must set defaults after paired with output
                 self._set_socket_defaults(zone_input)
                 self._set_socket_defaults(zone_output)
-            self._write("")
+            self._write("", 0)
 
     if bpy.app.version >= (4, 0, 0):
         def _set_geo_tree_properties(self, node_tree: GeometryNodeTree) -> None:
@@ -105,7 +101,7 @@ class NTPGeoNodesOperator(NTP_Operator):
                 for flag in tool_flags:
                     if hasattr(node_tree, flag) is True:
                         self._write(f"{nt_var}.{flag} = {getattr(node_tree, flag)}")
-            self._write("")
+            self._write("", 0)
 
     def _process_node_tree(self, node_tree: GeometryNodeTree) -> None:
         """
@@ -119,8 +115,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._node_tree_vars[node_tree] = nt_var
 
         #initialize node group
-        self._write(f"#initialize {nt_var} node group", self._outer)
-        self._write(f"def {nt_var}_node_group():", self._outer)
+        self._write(f"#initialize {nt_var} node group", self._outer_indent_level)
+        self._write(f"def {nt_var}_node_group():", self._outer_indent_level)
         self._write(f"{nt_var} = bpy.data.node_groups.new("
                     f"type = \'GeometryNodeTree\', "
                     f"name = {str_to_py_str(node_tree.name)})\n")
@@ -139,10 +135,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
-        if bpy.app.version >= (3, 6, 0):
-            self._process_zones(ntp_nt.sim_inputs)
-        if bpy.app.version >= (4, 0, 0):
-            self._process_zones(ntp_nt.repeat_inputs)
+        for zone_list in ntp_nt.zone_inputs.values():
+            self._process_zones(zone_list)
 
         #set look of nodes
         self._set_parents(node_tree)
@@ -155,19 +149,19 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._write(f"return {nt_var}\n")
 
         #create node group
-        self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer)
+        self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)
 
 
     def _apply_modifier(self, nt: GeometryNodeTree, nt_var: str):
         #get object
-        self._write(f"{OBJECT_NAME} = bpy.context.object.name", self._outer)
-        self._write(f"{OBJECT} = bpy.data.objects[{OBJECT_NAME}]", self._outer)
+        self._write(f"{OBJECT_NAME} = bpy.context.object.name", self._outer_indent_level)
+        self._write(f"{OBJECT} = bpy.data.objects[{OBJECT_NAME}]", self._outer_indent_level)
 
         #set modifier to the one we just created
         mod_name = str_to_py_str(nt.name)
         self._write(f"{MODIFIER} = obj.modifiers.new(name = {mod_name}, "
-                    f"type = 'NODES')", self._outer)
-        self._write(f"{MODIFIER}.node_group = {nt_var}", self._outer)
+                    f"type = 'NODES')", self._outer_indent_level)
+        self._write(f"{MODIFIER}.node_group = {nt_var}", self._outer_indent_level)
 
 
     def execute(self, context):
@@ -181,8 +175,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         nt_var = clean_string(nt.name)
 
         if self._mode == 'ADDON':
-            self._outer = "\t\t"
-            self._inner = "\t\t\t"
+            self._outer_indent_level = 2
+            self._inner_indent_level = 3
 
             if not self._setup_addon_directories(context, nt_var):
                 return {'CANCELLED'}
@@ -192,7 +186,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._create_header(nt.name)
             self._class_name = clean_string(nt.name, lower = False)
             self._init_operator(nt_var, nt.name)
-            self._write("def execute(self, context):", "\t")
+            self._write("def execute(self, context):", 1)
         else:
             self._file = StringIO("")
             if self._include_imports:
@@ -206,7 +200,7 @@ class NTPGeoNodesOperator(NTP_Operator):
 
         if self._mode == 'ADDON':
             self._apply_modifier(nt, nt_var)
-            self._write("return {'FINISHED'}\n", self._outer)
+            self._write("return {'FINISHED'}\n", self._outer_indent_level)
             self._create_menu_func()
             self._create_register_func()
             self._create_unregister_func()

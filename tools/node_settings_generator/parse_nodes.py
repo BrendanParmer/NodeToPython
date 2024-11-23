@@ -97,17 +97,17 @@ def download_file(filepath: str, version: Version, local_path: str) -> bool:
     if not os.path.exists(os.path.dirname(local_path)):
         os.makedirs(os.path.dirname(local_path))
 
-    while True:
+    NUM_TRIES = 10
+    for i in range(NUM_TRIES):
         try:
             with urllib.request.urlopen(req) as response:
                 with open(local_path, 'wb') as file:
                     file.write(response.read())
                     break
-        except urllib.error.HTTPError as e:
-            if e.code == 429:
-                time.sleep(1.0)
-            else:
-                raise
+        except Exception as e:
+            if i == NUM_TRIES - 1:
+                raise e
+            time.sleep(1.0)
 
     print(f"Downloaded {file_url} to {local_path}")
     return True
@@ -121,14 +121,18 @@ def get_subclasses(current: str, parent: str, root_path: str,
     if not os.path.exists(current_path):
         download_file(relative_path, version, current_path)
 
+    if os.path.getsize(current_path) == 0:
+        download_file(relative_path, version, current_path)
+
     with open(current_path, "r") as current_file:
         current_html = current_file.read()
 
     soup = BeautifulSoup(current_html, "html.parser")
 
-    sections = soup.find_all(id=f"{current.lower()}-{parent.lower()}")
+    main_id = f"{current.lower()}-{parent.lower()}"
+    sections = soup.find_all(id=main_id)
     if not sections:
-        raise ValueError(f"{version.tuple_str()} {current}: Couldn't find main section")
+        raise ValueError(f"{version.tuple_str()} {current}: Couldn't find main section with id {main_id}")
 
     section = sections[0]
     paragraphs = section.find_all("p")
