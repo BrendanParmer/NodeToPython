@@ -569,21 +569,22 @@ class NTP_Operator(Operator):
 
             dv = socket_interface.default_value
 
-            if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
-                if dv == "":
-                    self.report({'WARNING'},
-                        "NodeToPython: No menu found for socket "
-                        f"{socket_interface.name}"
+            if bpy.app.version >= (4, 1, 0):
+                if type(socket_interface) is bpy.types.NodeTreeInterfaceSocketMenu:
+                    if dv == "":
+                        self.report({'WARNING'},
+                            "NodeToPython: No menu found for socket "
+                            f"{socket_interface.name}"
+                        )
+                        return
+
+                    self._write_after_links.append(
+                        lambda _socket_var=socket_var, _dv=enum_to_py_str(dv): (
+                            self._write(f"{_socket_var}.default_value = {_dv}")
+                        )
                     )
                     return
-
-                self._write_after_links.append(
-                    lambda _socket_var=socket_var, _dv=enum_to_py_str(dv): (
-                        self._write(f"{_socket_var}.default_value = {_dv}")
-                    )
-                )
-                return
-            elif type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
+            if type(socket_interface) == bpy.types.NodeTreeInterfaceSocketColor:
                 dv = vec4_to_py_str(dv)
             elif type(dv) in {mathutils.Vector, mathutils.Euler}:
                 dv = vec3_to_py_str(dv)
