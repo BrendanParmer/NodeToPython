@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "node_to_python"
-version = "3.3.0"
+version = "3.3.1"
 name = "Node To Python"
 tagline = "Turn node groups into Python code"
 maintainer = "Brendan Parmer <brendanparmer+nodetopython@gmail.com>"
