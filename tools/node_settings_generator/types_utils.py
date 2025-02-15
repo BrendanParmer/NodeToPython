@@ -39,6 +39,7 @@ class ST(Enum):
     IMAGE_USER  = auto() #needs refactor
 
     # Currently unimplemented
+    COLLECTION                  = auto()
     CRYPTOMATTE_ENTRIES         = auto()
     FILE_SLOTS                  = auto()
     FONT                        = auto()
@@ -78,6 +79,7 @@ doc_to_NTP_type_dict : dict[str, ST] = {
     "" : "",
     "bpy_prop_collection of CryptomatteEntry": ST.CRYPTOMATTE_ENTRIES,
     "boolean" : ST.BOOL,
+    "Collection" : ST.COLLECTION,
     "ColorMapping" : None, # Always read-only
     "ColorRamp" : ST.COLOR_RAMP,
     "CompositorNodeOutputFileFileSlots" : ST.FILE_SLOTS,
