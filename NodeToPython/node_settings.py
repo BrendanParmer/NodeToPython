@@ -33,6 +33,7 @@ class ST(Enum):
 	SIM_OUTPUT_ITEMS = auto()
 	IMAGE = auto()
 	IMAGE_USER = auto()
+	COLLECTION = auto()
 	CRYPTOMATTE_ENTRIES = auto()
 	FILE_SLOTS = auto()
 	FONT = auto()
@@ -51,12 +52,12 @@ class NTPNodeSetting(NamedTuple):
 	name_: str
 	st_: ST
 	min_version_: tuple = (3, 0, 0)
-	max_version_: tuple = (4, 4, 0)
+	max_version_: tuple = (4, 5, 0)
 
 class NodeInfo(NamedTuple):
 	attributes_: list[NTPNodeSetting]
 	min_version_: tuple = (3, 0, 0)
-	max_version_: tuple = (4, 4, 0)
+	max_version_: tuple = (4, 5, 0)
 
 node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeAlphaOver' : NodeInfo(
@@ -378,6 +379,7 @@ node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeDenoise' : NodeInfo(
 		[
 			NTPNodeSetting("prefilter", ST.ENUM),
+			NTPNodeSetting("quality", ST.ENUM, min_version_=(4, 4, 0)),
 			NTPNodeSetting("use_hdr", ST.BOOL),
 		]
 	),
@@ -882,6 +884,7 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("center_x", ST.FLOAT, max_version_=(4, 2, 0)),
 			NTPNodeSetting("center_y", ST.FLOAT, max_version_=(4, 2, 0)),
 			NTPNodeSetting("tile_order", ST.ENUM, max_version_=(4, 2, 0)),
+			NTPNodeSetting("ui_shortcut", ST.INT, min_version_=(4, 4, 0)),
 			NTPNodeSetting("use_alpha", ST.BOOL),
 		]
 	),
@@ -963,6 +966,11 @@ node_settings : dict[str, NodeInfo] = {
 	'FunctionNodeEulerToRotation' : NodeInfo(
 		[],
 		min_version_ = (4, 0, 0)
+	),
+
+	'FunctionNodeFindInString' : NodeInfo(
+		[],
+		min_version_ = (4, 4, 0)
 	),
 
 	'FunctionNodeFloatToInt' : NodeInfo(
@@ -1581,6 +1589,13 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 1, 0)
 	),
 
+	'GeometryNodeInputCollection' : NodeInfo(
+		[
+			NTPNodeSetting("collection", ST.COLLECTION),
+		],
+		min_version_ = (4, 4, 0)
+	),
+
 	'GeometryNodeInputCurveHandlePositions' : NodeInfo(
 		[]
 	),
@@ -1682,7 +1697,16 @@ node_settings : dict[str, NodeInfo] = {
 	),
 
 	'GeometryNodeInputNormal' : NodeInfo(
-		[]
+		[
+			NTPNodeSetting("legacy_corner_normals", ST.BOOL, min_version_=(4, 4, 0)),
+		]
+	),
+
+	'GeometryNodeInputObject' : NodeInfo(
+		[
+			NTPNodeSetting("object", ST.OBJECT),
+		],
+		min_version_ = (4, 4, 0)
 	),
 
 	'GeometryNodeInputPosition' : NodeInfo(
@@ -2282,6 +2306,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeResampleCurve' : NodeInfo(
 		[
+			NTPNodeSetting("keep_last_segment", ST.BOOL, min_version_=(4, 4, 0)),
 			NTPNodeSetting("mode", ST.ENUM),
 		]
 	),
