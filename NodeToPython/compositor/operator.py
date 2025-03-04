@@ -22,7 +22,9 @@ class NTPCompositorOperator(NTP_Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     compositor_name: bpy.props.StringProperty(name="Node Group")
-    is_scene : bpy.props.BoolProperty(name="Is Scene", description="Blender stores compositing node trees differently for scenes and in groups")
+    is_scene : bpy.props.BoolProperty(
+        name="Is Scene", 
+        description="Blender stores compositing node trees differently for scenes and in groups")
 
     def __init__(self):
         super().__init__()
@@ -59,7 +61,7 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"#initialize {nt_name} node group", self._outer_indent_level)
         self._write(f"def {ntp_nt.var}_node_group():", self._outer_indent_level)
 
-        if ntp_nt.node_tree == self._base_node_tree:
+        if ntp_nt.node_tree == self._base_node_tree and self.is_scene:
             self._write(f"{ntp_nt.var} = {SCENE}.node_tree")
             self._write(f"#start with a clean node tree")
             self._write(f"for {NODE} in {ntp_nt.var}.nodes:")
