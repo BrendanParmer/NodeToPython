@@ -26,8 +26,8 @@ class NTPCompositorOperator(NTP_Operator):
         name="Is Scene", 
         description="Blender stores compositing node trees differently for scenes and in groups")
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._node_infos = node_settings
         for name in COMP_OP_RESERVED_NAMES:
             self._used_vars[name] = 0

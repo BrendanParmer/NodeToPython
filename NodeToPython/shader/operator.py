@@ -21,8 +21,8 @@ class NTPShaderOperator(NTP_Operator):
     #TODO: add option for general shader node groups
     material_name: bpy.props.StringProperty(name="Node Group")
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self._node_infos = node_settings
         for name in SHADER_OP_RESERVED_NAMES:
             self._used_vars[name] = 0

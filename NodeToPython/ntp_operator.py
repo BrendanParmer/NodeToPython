@@ -64,8 +64,8 @@ class NTP_Operator(Operator):
             bpy.types.NodeTreeInterfaceSocketTexture
         }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Write functions after nodes are mostly initialized and linked up
         self._write_after_links: list[Callable] = []
@@ -229,6 +229,9 @@ class NTP_Operator(Operator):
         """
         self._idname = idname
         self._write(f"class {self._class_name}(bpy.types.Operator):", 0)
+        self._write("def __init__(self, *args, **kwargs):", 1)
+        self._write("super().__init__(*args, **kwargs)\n", 2)
+
         self._write(f"bl_idname = \"node.{idname}\"", 1)
         self._write(f"bl_label = {str_to_py_str(label)}", 1)
         self._write("bl_options = {\'REGISTER\', \'UNDO\'}\n", 1)
@@ -755,6 +758,7 @@ class NTP_Operator(Operator):
                 processed items, so none are done twice
             ntp_nt (NTP_NodeTree): owner of the socket
             """
+            
             if parent is None:
                 items = ntp_nt.node_tree.interface.items_tree
             else:
@@ -774,6 +778,14 @@ class NTP_Operator(Operator):
                 elif item.item_type == 'PANEL':
                     self._create_panel(item, panel_dict, items_processed,
                                        parent, ntp_nt)
+                    if bpy.app.version >= (4, 4, 0) and parent is not None:
+                        nt_var = self._node_tree_vars[ntp_nt.node_tree]
+                        interface_var = f"{nt_var}.interface"
+                        panel_var = panel_dict[item]
+                        parent_var = panel_dict[parent]
+                        self._write(f"{interface_var}.move_to_parent("
+                                    f"{panel_var}, {parent_var}, {item.index})")
+                                    
 
         def _tree_interface_settings(self, ntp_nt: NTP_NodeTree) -> None:
             """
