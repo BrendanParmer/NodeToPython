@@ -64,8 +64,8 @@ class NTP_Operator(Operator):
             bpy.types.NodeTreeInterfaceSocketTexture
         }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Write functions after nodes are mostly initialized and linked up
         self._write_after_links: list[Callable] = []

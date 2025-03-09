@@ -23,8 +23,9 @@ class NTPGeoNodesOperator(NTP_Operator):
 
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
         self._node_infos = node_settings
         for name in GEO_OP_RESERVED_NAMES:
             self._used_vars[name] = 0
