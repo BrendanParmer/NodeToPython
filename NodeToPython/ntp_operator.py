@@ -229,6 +229,9 @@ class NTP_Operator(Operator):
         """
         self._idname = idname
         self._write(f"class {self._class_name}(bpy.types.Operator):", 0)
+        self._write("def __init__(self, *args, **kwargs):", 1)
+        self._write("super().__init__(*args, **kwargs)\n", 2)
+
         self._write(f"bl_idname = \"node.{idname}\"", 1)
         self._write(f"bl_label = {str_to_py_str(label)}", 1)
         self._write("bl_options = {\'REGISTER\', \'UNDO\'}\n", 1)
