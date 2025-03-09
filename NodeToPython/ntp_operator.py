@@ -755,6 +755,7 @@ class NTP_Operator(Operator):
                 processed items, so none are done twice
             ntp_nt (NTP_NodeTree): owner of the socket
             """
+            
             if parent is None:
                 items = ntp_nt.node_tree.interface.items_tree
             else:
@@ -774,6 +775,14 @@ class NTP_Operator(Operator):
                 elif item.item_type == 'PANEL':
                     self._create_panel(item, panel_dict, items_processed,
                                        parent, ntp_nt)
+                    if bpy.app.version >= (4, 4, 0) and parent is not None:
+                        nt_var = self._node_tree_vars[ntp_nt.node_tree]
+                        interface_var = f"{nt_var}.interface"
+                        panel_var = panel_dict[item]
+                        parent_var = panel_dict[parent]
+                        self._write(f"{interface_var}.move_to_parent("
+                                    f"{panel_var}, {parent_var}, {item.index})")
+                                    
 
         def _tree_interface_settings(self, ntp_nt: NTP_NodeTree) -> None:
             """
