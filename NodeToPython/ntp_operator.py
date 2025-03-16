@@ -64,8 +64,8 @@ class NTP_Operator(Operator):
             bpy.types.NodeTreeInterfaceSocketTexture
         }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         # Write functions after nodes are mostly initialized and linked up
         self._write_after_links: list[Callable] = []
@@ -229,6 +229,9 @@ class NTP_Operator(Operator):
         """
         self._idname = idname
         self._write(f"class {self._class_name}(bpy.types.Operator):", 0)
+        self._write("def __init__(self, *args, **kwargs):", 1)
+        self._write("super().__init__(*args, **kwargs)\n", 2)
+
         self._write(f"bl_idname = \"node.{idname}\"", 1)
         self._write(f"bl_label = {str_to_py_str(label)}", 1)
         self._write("bl_options = {\'REGISTER\', \'UNDO\'}\n", 1)
@@ -408,15 +411,11 @@ class NTP_Operator(Operator):
             elif st == ST.COLOR:
                 self._write(f"{setting_str} = {color_to_py_str(attr)}")
             elif st == ST.MATERIAL:
-                name = str_to_py_str(attr.name)
-                self._write(f"if {name} in bpy.data.materials:")
-                self._write(f"{setting_str} = bpy.data.materials[{name}]", 
-                            self._inner_indent_level + 1)
+                self._set_if_in_blend_file(attr, setting_str, "materials")
             elif st == ST.OBJECT:
-                name = str_to_py_str(attr.name)
-                self._write(f"if {name} in bpy.data.objects:")
-                self._write(f"{setting_str} = bpy.data.objects[{name}]",
-                            self._inner_indent_level + 1)
+                self._set_if_in_blend_file(attr, setting_str, "objects")
+            elif st == ST.COLLECTION:
+                self._set_if_in_blend_file(attr, setting_str, "collections")
             elif st == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, attr_name)
             elif st == ST.CURVE_MAPPING:
@@ -424,10 +423,15 @@ class NTP_Operator(Operator):
             elif st == ST.NODE_TREE:
                 self._node_tree_settings(node, attr_name)
             elif st == ST.IMAGE:
-                if self._addon_dir is not None and attr is not None:
+                if attr is None:
+                    continue
+                if self._addon_dir is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
                         if self._save_image(attr):
                             self._load_image(attr, f"{node_var}.{attr_name}")
+                else:
+                    self._set_if_in_blend_file(attr, setting_str, "images")
+
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
             elif st == ST.SIM_OUTPUT_ITEMS:
@@ -755,6 +759,7 @@ class NTP_Operator(Operator):
                 processed items, so none are done twice
             ntp_nt (NTP_NodeTree): owner of the socket
             """
+            
             if parent is None:
                 items = ntp_nt.node_tree.interface.items_tree
             else:
@@ -774,6 +779,14 @@ class NTP_Operator(Operator):
                 elif item.item_type == 'PANEL':
                     self._create_panel(item, panel_dict, items_processed,
                                        parent, ntp_nt)
+                    if bpy.app.version >= (4, 4, 0) and parent is not None:
+                        nt_var = self._node_tree_vars[ntp_nt.node_tree]
+                        interface_var = f"{nt_var}.interface"
+                        panel_var = panel_dict[item]
+                        parent_var = panel_dict[parent]
+                        self._write(f"{interface_var}.move_to_parent("
+                                    f"{panel_var}, {parent_var}, {item.index})")
+                                    
 
         def _tree_interface_settings(self, ntp_nt: NTP_NodeTree) -> None:
             """
@@ -837,9 +850,12 @@ class NTP_Operator(Operator):
                 # images
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
-                    if img is not None and self._addon_dir != None:  # write in a better way
-                        if self._save_image(img):
-                            self._load_image(img, f"{socket_var}.default_value")
+                    if img is not None:
+                        if self._addon_dir != None:  # write in a better way
+                            if self._save_image(img):
+                                self._load_image(img, f"{socket_var}.default_value")
+                        else:
+                            self._in_file_inputs(input, socket_var, "images")
                     default_val = None
 
                 # materials
@@ -921,6 +937,16 @@ class NTP_Operator(Operator):
         self._set_input_defaults(node)
         self._set_output_defaults(node)
 
+    def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
+                              ) -> None:
+        """
+        Attempts to grab referenced thing from blend file
+        """
+        name = str_to_py_str(attr.name)
+        self._write(f"if {name} in bpy.data.{data_type}:")
+        self._write(f"{setting_str} = bpy.data.{data_type}[{name}]",
+                    self._inner_indent_level + 1)
+        
     def _color_ramp_settings(self, node: Node, color_ramp_name: str) -> None:
         """
         Replicate a color ramp node

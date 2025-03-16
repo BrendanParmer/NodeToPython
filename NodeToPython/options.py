@@ -4,6 +4,10 @@ class NTPOptions(bpy.types.PropertyGroup):
     """
     Property group used during conversion of node group to python
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     # General properties
     mode: bpy.props.EnumProperty(
         name = "Mode",
@@ -169,6 +173,9 @@ class NTPOptionsPanel(bpy.types.Panel):
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     @classmethod
     def poll(cls, context):
