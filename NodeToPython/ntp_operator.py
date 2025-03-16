@@ -411,15 +411,11 @@ class NTP_Operator(Operator):
             elif st == ST.COLOR:
                 self._write(f"{setting_str} = {color_to_py_str(attr)}")
             elif st == ST.MATERIAL:
-                name = str_to_py_str(attr.name)
-                self._write(f"if {name} in bpy.data.materials:")
-                self._write(f"{setting_str} = bpy.data.materials[{name}]", 
-                            self._inner_indent_level + 1)
+                self._set_if_in_blend_file(attr, setting_str, "materials")
             elif st == ST.OBJECT:
-                name = str_to_py_str(attr.name)
-                self._write(f"if {name} in bpy.data.objects:")
-                self._write(f"{setting_str} = bpy.data.objects[{name}]",
-                            self._inner_indent_level + 1)
+                self._set_if_in_blend_file(attr, setting_str, "objects")
+            elif st == ST.COLLECTION:
+                self._set_if_in_blend_file(attr, setting_str, "collections")
             elif st == ST.COLOR_RAMP:
                 self._color_ramp_settings(node, attr_name)
             elif st == ST.CURVE_MAPPING:
@@ -933,6 +929,16 @@ class NTP_Operator(Operator):
         self._set_input_defaults(node)
         self._set_output_defaults(node)
 
+    def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
+                              ) -> None:
+        """
+        Attempts to grab referenced thing from blend file
+        """
+        name = str_to_py_str(attr.name)
+        self._write(f"if {name} in bpy.data.{data_type}:")
+        self._write(f"{setting_str} = bpy.data.{data_type}[{name}]",
+                    self._inner_indent_level + 1)
+        
     def _color_ramp_settings(self, node: Node, color_ramp_name: str) -> None:
         """
         Replicate a color ramp node
