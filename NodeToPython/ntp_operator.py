@@ -423,10 +423,15 @@ class NTP_Operator(Operator):
             elif st == ST.NODE_TREE:
                 self._node_tree_settings(node, attr_name)
             elif st == ST.IMAGE:
-                if self._addon_dir is not None and attr is not None:
+                if attr is None:
+                    continue
+                if self._addon_dir is not None:
                     if attr.source in {'FILE', 'GENERATED', 'TILED'}:
                         if self._save_image(attr):
                             self._load_image(attr, f"{node_var}.{attr_name}")
+                else:
+                    self._set_if_in_blend_file(attr, setting_str, "images")
+
             elif st == ST.IMAGE_USER:
                 self._image_user_settings(attr, f"{node_var}.{attr_name}")
             elif st == ST.SIM_OUTPUT_ITEMS:
@@ -845,9 +850,12 @@ class NTP_Operator(Operator):
                 # images
                 elif input.bl_idname == 'NodeSocketImage':
                     img = input.default_value
-                    if img is not None and self._addon_dir != None:  # write in a better way
-                        if self._save_image(img):
-                            self._load_image(img, f"{socket_var}.default_value")
+                    if img is not None:
+                        if self._addon_dir != None:  # write in a better way
+                            if self._save_image(img):
+                                self._load_image(img, f"{socket_var}.default_value")
+                        else:
+                            self._in_file_inputs(input, socket_var, "images")
                     default_val = None
 
                 # materials
