@@ -181,9 +181,11 @@ def process_bpy_version(version: Version) -> None:
 
 def generate_versions(max_version_inc: Version) -> list[Version]:
     BLENDER_3_MAX_VERSION = 6
+    BLENDER_4_MAX_VERSION = 5
 
     versions = [Version(3, i) for i in range(0, BLENDER_3_MAX_VERSION + 1)]
-    versions += [Version(4, i) for i in range(0, max_version_inc[1] + 1)]
+    versions += [Version(4, i) for i in range(0, BLENDER_4_MAX_VERSION + 1)]
+    versions += [Version(5, i) for i in range(0, max_version_inc.minor_ + 1)]
     
     #lazy max version check
     for version in versions[::-1]:
