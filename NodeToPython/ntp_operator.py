@@ -831,14 +831,19 @@ class NTP_Operator(Operator):
 
                 # vector types
                 elif "Vector" in input.bl_idname:
-                    default_val = vec3_to_py_str(input.default_value)
+                    if "2D" in input.bl_idname:
+                        default_val = vec2_to_py_str(input.default_value)
+                    elif "4D" in input.bl_idname:
+                        default_val = vec4_to_py_str(input.default_value)
+                    else:
+                        default_val = vec3_to_py_str(input.default_value)
 
                 # rotation types
                 elif input.bl_idname == 'NodeSocketRotation':
                     default_val = vec3_to_py_str(input.default_value)
 
                 # strings
-                elif input.bl_idname == 'NodeSocketString':
+                elif input.bl_idname in {'NodeSocketString', 'NodeSocketStringFilePath'}:
                     default_val = str_to_py_str(input.default_value)
 
                 #menu
