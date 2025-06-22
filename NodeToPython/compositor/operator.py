@@ -93,45 +93,46 @@ class NTPCompositorOperator(NTP_Operator):
                 self._write(f"{ntp_nt.var}.{bool_setting} = True")
         
 
-    def _set_color_balance_settings(self, node: CompositorNodeColorBalance
-                                   ) -> None:
-        """
-        Sets the color balance settings so we only set the active variables,
-        preventing conflict
+    if bpy.app.version < (4, 5, 0):
+        def _set_color_balance_settings(self, node: CompositorNodeColorBalance
+                                    ) -> None:
+            """
+            Sets the color balance settings so we only set the active variables,
+            preventing conflict
 
-        node (CompositorNodeColorBalance): the color balance node
-        """
-        if node.correction_method == 'LIFT_GAMMA_GAIN':
-            lst = [NTPNodeSetting("correction_method", ST.ENUM),                 
-                   NTPNodeSetting("gain",  ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("gain",  ST.COLOR, min_version_=(3, 5, 0)),
-                   NTPNodeSetting("gamma", ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("gamma", ST.COLOR, min_version_=(3, 5, 0)),
-                   NTPNodeSetting("lift",  ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("lift",  ST.COLOR, min_version_=(3, 5, 0))]
-        elif node.correction_method == 'OFFSET_POWER_SLOPE':
-            lst = [NTPNodeSetting("correction_method", ST.ENUM),
-                   NTPNodeSetting("offset", ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("offset", ST.COLOR, min_version_=(3, 5, 0)),
-                   NTPNodeSetting("offset_basis", ST.FLOAT),
-                   NTPNodeSetting("power", ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("power", ST.COLOR, min_version_=(3, 5, 0)),
-                   NTPNodeSetting("slope", ST.VEC3,  max_version_=(3, 5, 0)),
-                   NTPNodeSetting("slope", ST.COLOR, min_version_=(3, 5, 0))]
-        elif node.correction_method == 'WHITEPOINT':
-            lst = [NTPNodeSetting("correction_method", ST.ENUM),
-                   NTPNodeSetting("input_temperature", ST.FLOAT),
-                   NTPNodeSetting("input_tint", ST.FLOAT),
-                   NTPNodeSetting("output_temperature", ST.FLOAT),
-                   NTPNodeSetting("output_tint", ST.FLOAT)]
-        else:
-            self.report({'ERROR'},
-                        f"Unknown color balance correction method "
-                        f"{enum_to_py_str(node.correction_method)}")
-            return
+            node (CompositorNodeColorBalance): the color balance node
+            """
+            if node.correction_method == 'LIFT_GAMMA_GAIN':
+                lst = [NTPNodeSetting("correction_method", ST.ENUM),                 
+                    NTPNodeSetting("gain",  ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("gain",  ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0)),
+                    NTPNodeSetting("gamma", ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("gamma", ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0)),
+                    NTPNodeSetting("lift",  ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("lift",  ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0))]
+            elif node.correction_method == 'OFFSET_POWER_SLOPE':
+                lst = [NTPNodeSetting("correction_method", ST.ENUM),
+                    NTPNodeSetting("offset", ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("offset", ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0)),
+                    NTPNodeSetting("offset_basis", ST.FLOAT),
+                    NTPNodeSetting("power", ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("power", ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0)),
+                    NTPNodeSetting("slope", ST.VEC3,  max_version_=(3, 5, 0)),
+                    NTPNodeSetting("slope", ST.COLOR, min_version_=(3, 5, 0), max_version_=(4, 5, 0))]
+            elif node.correction_method == 'WHITEPOINT':
+                lst = [NTPNodeSetting("correction_method", ST.ENUM, max_version_=(4, 5, 0)),
+                    NTPNodeSetting("input_temperature", ST.FLOAT, max_version_=(4, 5, 0)),
+                    NTPNodeSetting("input_tint", ST.FLOAT, max_version_=(4, 5, 0)),
+                    NTPNodeSetting("output_temperature", ST.FLOAT, max_version_=(4, 5, 0)),
+                    NTPNodeSetting("output_tint", ST.FLOAT, max_version_=(4, 5, 0))]
+            else:
+                self.report({'ERROR'},
+                            f"Unknown color balance correction method "
+                            f"{enum_to_py_str(node.correction_method)}")
+                return
 
-        color_balance_info = self._node_infos['CompositorNodeColorBalance']
-        self._node_infos['CompositorNodeColorBalance'] = color_balance_info._replace(attributes_ = lst)
+            color_balance_info = self._node_infos['CompositorNodeColorBalance']
+            self._node_infos['CompositorNodeColorBalance'] = color_balance_info._replace(attributes_ = lst)
 
     def _process_node(self, node: Node, ntp_nt: NTP_NodeTree):
         """
@@ -143,8 +144,9 @@ class NTPCompositorOperator(NTP_Operator):
         """
         node_var: str = self._create_node(node, ntp_nt.var)
         
-        if node.bl_idname == 'CompositorNodeColorBalance':
-            self._set_color_balance_settings(node)
+        if bpy.app.version < (4, 5, 0):
+            if node.bl_idname == 'CompositorNodeColorBalance':
+                self._set_color_balance_settings(node)
 
         self._set_settings_defaults(node)
         self._hide_hidden_sockets(node)
