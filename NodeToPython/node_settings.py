@@ -26,6 +26,7 @@ class ST(Enum):
 	FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_INPUT_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_MAIN_ITEMS = auto()
+	FORMAT_STRING_ITEMS = auto()
 	INDEX_SWITCH_ITEMS = auto()
 	MENU_SWITCH_ITEMS = auto()
 	NODE_TREE = auto()
@@ -410,9 +411,7 @@ node_settings : dict[str, NodeInfo] = {
 	),
 
 	'CompositorNodeDisplace' : NodeInfo(
-		[
-			NTPNodeSetting("interpolation", ST.ENUM, min_version_=(5, 0, 0)),
-		]
+		[]
 	),
 
 	'CompositorNodeDistanceMatte' : NodeInfo(
@@ -465,17 +464,17 @@ node_settings : dict[str, NodeInfo] = {
 
 	'CompositorNodeGlare' : NodeInfo(
 		[
-			NTPNodeSetting("angle_offset", ST.FLOAT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("color_modulation", ST.FLOAT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("fade", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("angle_offset", ST.FLOAT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("color_modulation", ST.FLOAT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("fade", ST.FLOAT, max_version_=(4, 4, 0)),
 			NTPNodeSetting("glare_type", ST.ENUM),
-			NTPNodeSetting("iterations", ST.INT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("mix", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("iterations", ST.INT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("mix", ST.FLOAT, max_version_=(4, 4, 0)),
 			NTPNodeSetting("quality", ST.ENUM),
-			NTPNodeSetting("size", ST.INT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("streaks", ST.INT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("threshold", ST.FLOAT, max_version_=(4, 5, 0)),
-			NTPNodeSetting("use_rotate_45", ST.BOOL, max_version_=(4, 5, 0)),
+			NTPNodeSetting("size", ST.INT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("streaks", ST.INT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("threshold", ST.FLOAT, max_version_=(4, 4, 0)),
+			NTPNodeSetting("use_rotate_45", ST.BOOL, max_version_=(4, 4, 0)),
 		]
 	),
 
@@ -848,13 +847,13 @@ node_settings : dict[str, NodeInfo] = {
 
 	'CompositorNodeTonemap' : NodeInfo(
 		[
-			NTPNodeSetting("adaptation", ST.FLOAT),
-			NTPNodeSetting("contrast", ST.FLOAT),
-			NTPNodeSetting("correction", ST.FLOAT),
-			NTPNodeSetting("gamma", ST.FLOAT),
-			NTPNodeSetting("intensity", ST.FLOAT),
-			NTPNodeSetting("key", ST.FLOAT),
-			NTPNodeSetting("offset", ST.FLOAT),
+			NTPNodeSetting("adaptation", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("contrast", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("correction", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("gamma", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("intensity", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("key", ST.FLOAT, max_version_=(4, 5, 0)),
+			NTPNodeSetting("offset", ST.FLOAT, max_version_=(4, 5, 0)),
 			NTPNodeSetting("tonemap_type", ST.ENUM),
 		]
 	),
@@ -1013,6 +1012,7 @@ node_settings : dict[str, NodeInfo] = {
 	'FunctionNodeFormatString' : NodeInfo(
 		[
 			NTPNodeSetting("active_index", ST.INT),
+			NTPNodeSetting("format_items", ST.FORMAT_STRING_ITEMS),
 		],
 		min_version_ = (4, 5, 0)
 	),
@@ -2805,9 +2805,7 @@ node_settings : dict[str, NodeInfo] = {
 	),
 
 	'GeometryNodeUVPackIslands' : NodeInfo(
-		[
-			NTPNodeSetting("shape_method", ST.ENUM, min_version_=(5, 0, 0)),
-		],
+		[],
 		min_version_ = (3, 3, 0)
 	),
 
@@ -3391,16 +3389,16 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("air_density", ST.FLOAT),
 			NTPNodeSetting("altitude", ST.FLOAT),
 			NTPNodeSetting("dust_density", ST.FLOAT),
-			NTPNodeSetting("ground_albedo", ST.FLOAT, max_version_=(5, 0, 0)),
+			NTPNodeSetting("ground_albedo", ST.FLOAT),
 			NTPNodeSetting("ozone_density", ST.FLOAT),
 			NTPNodeSetting("sky_type", ST.ENUM),
-			NTPNodeSetting("sun_direction", ST.VEC3, max_version_=(5, 0, 0)),
+			NTPNodeSetting("sun_direction", ST.VEC3),
 			NTPNodeSetting("sun_disc", ST.BOOL),
 			NTPNodeSetting("sun_elevation", ST.FLOAT),
 			NTPNodeSetting("sun_intensity", ST.FLOAT),
 			NTPNodeSetting("sun_rotation", ST.FLOAT),
 			NTPNodeSetting("sun_size", ST.FLOAT),
-			NTPNodeSetting("turbidity", ST.FLOAT, max_version_=(5, 0, 0)),
+			NTPNodeSetting("turbidity", ST.FLOAT),
 		]
 	),
 

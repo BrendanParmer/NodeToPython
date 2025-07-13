@@ -454,6 +454,8 @@ class NTP_Operator(Operator):
                 self._foreach_geo_element_input_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS:
                 self._foreach_geo_element_main_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FORMAT_STRING_ITEMS:
+                self._format_string_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -1348,6 +1350,16 @@ class NTP_Operator(Operator):
                 socket_type = enum_to_py_str(item.socket_type)
                 name_str = str_to_py_str(item.name)
                 self._write(f"{main_items_str}.new({socket_type}, {name_str})")
+
+    if bpy.app.version >= (4, 5, 0):
+        def _format_string_items(self,
+                          format_items : bpy.types.NodeFunctionFormatStringItems,
+                          format_items_str: str) -> None:
+            self._write(f"{format_items_str}.clear()")
+            for i, item in enumerate(format_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{format_items_str}.new({socket_type}, {name_str})")
 
 
     def _set_parents(self, node_tree: NodeTree) -> None:
