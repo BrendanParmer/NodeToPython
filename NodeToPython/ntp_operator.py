@@ -372,14 +372,14 @@ class NTP_Operator(Operator):
             version_lt_max = bpy.app.version < min(attr_info.max_version_, node_info.max_version_)
             
             is_version_valid = version_gte_min and version_lt_max
-            if not hasattr(node, attr_name):
-                if is_version_valid:
-                    self.report({'WARNING'},
-                                f"NodeToPython: Couldn't find attribute "
-                                f"\"{attr_name}\" for node {node.name} of type "
-                                f"{node.bl_idname}")
+            if not is_version_valid:
                 continue
-            elif not is_version_valid:
+
+            if not hasattr(node, attr_name):
+                self.report({'WARNING'},
+                            f"NodeToPython: Couldn't find attribute "
+                            f"\"{attr_name}\" for node {node.name} of type "
+                            f"{node.bl_idname}")
                 continue
             
             attr = getattr(node, attr_name, None)
@@ -473,6 +473,11 @@ class NTP_Operator(Operator):
                 return
 
             if socket_interface.type not in self.default_sockets_v3:
+                return
+            
+            if not hasattr(socket_interface, "default_value"):
+                self.report({'WARNING'},
+                            f"Socket {socket_interface.type} had no default value")
                 return
 
             if socket_interface.type == 'RGBA':
@@ -692,6 +697,32 @@ class NTP_Operator(Operator):
                 description = str_to_py_str(socket.description)
                 self._write(f"{socket_var}.description = {description}")
 
+            # layer selection field
+            if socket.layer_selection_field:
+                self._write(f"{socket_var}.layer_selection_field = True")
+
+            if bpy.app.version >= (4, 2, 0):
+                # is inspect output
+                if socket.is_inspect_output:
+                    self._write(f"{socket_var}.is_inspect_output = True")
+
+            if bpy.app.version >= (4, 5, 0):
+                # default input
+                default_input = enum_to_py_str(socket.default_input)
+                self._write(f"{socket_var}.default_input = {default_input}")
+
+                # is panel toggle
+                if socket.is_panel_toggle:
+                    self._write(f"{socket_var}.is_panel_toggle = True")
+
+                # menu expanded
+                if socket.menu_expanded:
+                    self._write(f"{socket_var}.menu_expanded = True")
+
+                # structure type
+                structure_type = enum_to_py_str(socket.structure_type)
+                self._write(f"{socket_var}.structure_type = {structure_type}")
+
             self._write("", 0)
 
         def _create_panel(self, panel: NodeTreeInterfacePanel, 
@@ -775,7 +806,7 @@ class NTP_Operator(Operator):
                 
                 items_processed.add(item)
 
-                if item.item_type == 'SOCKET':
+                if item.item_type in {'SOCKET', 'PANEL_TOGGLE'}:
                     self._create_socket(item, parent, panel_dict, ntp_nt)
 
                 elif item.item_type == 'PANEL':
