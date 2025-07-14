@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "node_to_python"
-version = "3.4.0"
+version = "3.5.0"
 name = "Node To Python"
 tagline = "Turn node groups into Python code"
 maintainer = "Brendan Parmer <brendanparmer+nodetopython@gmail.com>"
@@ -12,10 +12,9 @@ website = "https://github.com/BrendanParmer/NodeToPython"
 tags = ["Development", "Compositing", "Geometry Nodes", "Material", "Node"]
 
 blender_version_min = "4.2.0"
-blender_version_max = "4.5.0"
 
 license = [
-    "SPDX:MIT",
+    "SPDX:GPL-3.0-or-later",
 ]
 
 [permissions]
