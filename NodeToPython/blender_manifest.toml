@@ -18,4 +18,4 @@ license = [
 ]
 
 [permissions]
-files = "Creates and writes to files in a specified directory"
+files = "Creates and writes to files in a user-specified directory"
