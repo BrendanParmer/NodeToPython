@@ -96,19 +96,7 @@ class NTPOptions(bpy.types.PropertyGroup):
     license: bpy.props.EnumProperty(
         name="License",
         items = [
-            ('SPDX:GPL-2.0-or-later', "GNU General Public License v2.0 or later", ""),
             ('SPDX:GPL-3.0-or-later', "GNU General Public License v3.0 or later", ""),
-            ('SPDX:LGPL-2.1-or-later', "GNU Lesser General Public License v2.1 or later", ""),
-            ('SPDX:LGPL-3.0-or-later', "GNU Lesser General Public License v3.0 or later", ""),
-            ('SPDX:BSD-1-Clause', "BSD 1-Clause \"Simplified\" License", ""),
-            ('SPDX:BSD-2-Clause', "BSD 2-Clause \"Simplified\" License", ""),
-            ('SPDX:BSD-3-Clause', "BSD 3-Clause \"New\" or \"Revised\" License", ""),
-            ('SPDX:BSL-1.0', "Boost Software License 1.0", ""),
-            ('SPDX:MIT', "MIT License", ""),
-            ('SPDX:MIT-0', "MIT No Attribution", ""),
-            ('SPDX:MPL-2.0', "Mozilla Public License 2.0", ""),
-            ('SPDX:Pixar', "Pixar License", ""),
-            ('SPDX:Zlib', "Zlib License", ""),
             ('OTHER', "Other", "User is responsible for including the license "
                                "and adding it to the manifest.\n"
                                "Please note that by using the Blender Python "
