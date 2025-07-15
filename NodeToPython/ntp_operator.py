@@ -41,6 +41,8 @@ DONT_SET_DEFAULTS = {'NodeSocketGeometry',
                      'NodeSocketMatrix',
                      'NodeSocketVirtual'}
 
+MAX_BLENDER_VERSION = (5, 0, 0)
+
 class NTP_Operator(Operator):
     """
     "Abstract" base class for all NTP operators. Blender types and abstraction
@@ -124,6 +126,15 @@ class NTP_Operator(Operator):
         self._file.write(f"{indent_str}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> bool:
+        if bpy.app.version >= MAX_BLENDER_VERSION:
+            self.report({'WARNING'},
+                        f"Blender version {bpy.app.version} is not supported yet!\n"
+                        "NodeToPython is currently supported up to Blender 4.5.\n"
+                        "Some nodes, settings, and features may not work yet. See:")
+            self.report({'WARNING'},
+                        "\t\thttps://github.com/BrendanParmer/NodeToPython/blob/main/docs/README.md#supported-versions ")
+            self.report({'WARNING'}, "for more details")
+
         # General
         self._mode = options.mode
         self._include_group_socket_values = options.include_group_socket_values
