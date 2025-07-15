@@ -37,18 +37,40 @@ nodes_dict : dict[str, NodeInfo] = {}
 types_dict : dict[str, set[str]] = {}
 log_file = None
 
-NTP_MIN_VERSION = (3, 0)
+BLENDER_3_MAX_VERSION = 6
+BLENDER_4_MAX_VERSION = 5
+BLENDER_5_MAX_VERSION = 0
+
+NTP_MIN_VERSION = Version(3, 0)
+
+BLENDER_VERSIONS  = [Version(3, i) for i in range(0, BLENDER_3_MAX_VERSION + 1)]
+BLENDER_VERSIONS += [Version(4, i) for i in range(0, BLENDER_4_MAX_VERSION + 1)]
+BLENDER_VERSIONS += [Version(5, i) for i in range(0, BLENDER_5_MAX_VERSION + 1)]
+
+def log(message: str):
+    if log_file is None:
+        raise RuntimeError("Log file was null!")
+    with log_mutex:
+        log_file.write(message)
 
 def process_attr(attr, section, node: str, version: Version) -> None:
+    # Get name
     name_section = attr.find(["code", "span"], class_="sig-name descname")
-    
     if not name_section:
         raise ValueError(f"{version.tuple_str()} {node}: Couldn't find name section in\n\t{section}")
     name = name_section.text
+
+    # Check for deprecation
+    if "Deprecated" in str(attr):
+        log(f"WARNING: {version.tuple_str()} Attribute {node}.{name} "
+            f"was marked deprecated, returning\n")
+        return
     
+    # Get type
     type_section = attr.find("dd", class_="field-odd")
     if not type_section:
-        raise ValueError(f"{version.tuple_str()} {node}.{name}: Couldn't find type section in\n\t{section}")
+        raise ValueError(f"{version.tuple_str()} {node}.{name}: "
+                         f"Couldn't find type section in\n\t{section}")
     type_text = type_section.text
 
     with mutex:
@@ -61,8 +83,8 @@ def process_attr(attr, section, node: str, version: Version) -> None:
     ntp_type = types_utils.get_NTP_type(type_text)
     if ntp_type is None:
         # Read-only attribute, don't add to attribute list
-        with log_mutex:
-            log_file.write(f"WARNING: {version.tuple_str()} {node}.{name}'s type is being ignored:\n\t{type_text.strip()}\n")
+        log(f"WARNING: {version.tuple_str()} {node}.{name}'s "
+            f"type is being ignored:\n\t{type_text.strip()}\n")
         return
 
     ntp_setting = NTPNodeSetting(name, ntp_type)
@@ -114,7 +136,7 @@ def download_file(filepath: str, version: Version, local_path: str) -> bool:
 
 
 def get_subclasses(current: str, parent: str, root_path: str, 
-                   version: Version) -> list[str]:
+                   version: Version) -> None:
     relative_path = f"bpy.types.{current}.html"
     current_path = os.path.join(root_path, relative_path)
 
@@ -132,12 +154,14 @@ def get_subclasses(current: str, parent: str, root_path: str,
     main_id = f"{current.lower()}-{parent.lower()}"
     sections = soup.find_all(id=main_id)
     if not sections:
-        raise ValueError(f"{version.tuple_str()} {current}: Couldn't find main section with id {main_id}")
+        raise ValueError(f"{version.tuple_str()} {current}: "
+                         f"Couldn't find main section with id {main_id}")
 
     section = sections[0]
     paragraphs = section.find_all("p")
     if len(paragraphs) < 2:
-        raise ValueError(f"{version.tuple_str()} {current}: Couldn't find subclass section")
+        raise ValueError(f"{version.tuple_str()} {current}: "
+                         f"Couldn't find subclass section")
 
     subclasses_paragraph = paragraphs[1]
     if not subclasses_paragraph.text.strip().startswith("subclasses —"):
@@ -147,7 +171,8 @@ def get_subclasses(current: str, parent: str, root_path: str,
 
     subclass_anchors = subclasses_paragraph.find_all("a")
     if not subclass_anchors:
-        raise ValueError(f"{version.tuple_str()} {current} No anchors in subclasses paragraph")
+        raise ValueError(f"{version.tuple_str()} {current} "
+                         f"No anchors in subclasses paragraph")
 
     subclass_types = [anchor.get("title") for anchor in subclass_anchors]
     threads: list[Thread] = []
@@ -156,13 +181,15 @@ def get_subclasses(current: str, parent: str, root_path: str,
             raise ValueError(f"{version.tuple_str()} {current} Type was invalid")
         is_matching = re.match(r"bpy\.types\.(.*)", type)
         if not is_matching:
-            raise ValueError(f"{version.tuple_str()} {current}: Type {type} was not of the form \"bpy.types.x\"")
+            raise ValueError(f"{version.tuple_str()} {current}: "
+                             f"Type {type} was not of the form \"bpy.types.x\"")
         pure_type = is_matching.group(1)
         if (pure_type == "TextureNode"):
             # unsupported
             continue
 
-        thread = Thread(target=get_subclasses, args=(pure_type, current, root_path, version))
+        thread = Thread(target=get_subclasses, 
+                        args=(pure_type, current, root_path, version))
         threads.append(thread)
         thread.start()
 
@@ -180,14 +207,13 @@ def process_bpy_version(version: Version) -> None:
     get_subclasses(current, parent, root_path, version)
 
 def generate_versions(max_version_inc: Version) -> list[Version]:
-    BLENDER_3_MAX_VERSION = 6
+    versions = BLENDER_VERSIONS.copy()
 
-    versions = [Version(3, i) for i in range(0, BLENDER_3_MAX_VERSION + 1)]
-    versions += [Version(4, i) for i in range(0, max_version_inc[1] + 1)]
-    
-    #lazy max version check
+    # lazy version bounds check
     for version in versions[::-1]:
         if version > max_version_inc:
+            versions.remove(version)
+        if version < NTP_MIN_VERSION:
             versions.remove(version)
 
     return versions
@@ -195,7 +221,7 @@ def generate_versions(max_version_inc: Version) -> list[Version]:
 def subminor(version: Version) -> tuple:
     return (version[0], version[1], 0)
 
-def get_min_version(versions: list[Version]) -> Version:
+def get_min_version(versions: list[Version]) -> Version | None:
     min_version = min(versions)
 
     if min_version != NTP_MIN_VERSION:
@@ -204,7 +230,7 @@ def get_min_version(versions: list[Version]) -> Version:
         return None
 
 def get_max_version(versions: list[Version], blender_versions: list[Version]
-                   ) -> Version:
+                   ) -> Version | None:
     max_v_inclusive = max(versions)
     max_v_inclusive_index = blender_versions.index(max_v_inclusive)
     max_v_exclusive = blender_versions[max_v_inclusive_index + 1]
@@ -244,7 +270,8 @@ def write_node_info_class(file: TextIOWrapper):
     file.write("\n")
 
 def write_ntp_node_settings(node_info: NodeInfo, file: TextIOWrapper,
-                            node_min_v: Version, node_max_v: Version):
+                            node_min_v: Version | None, 
+                            node_max_v: Version | None) -> None:
     attr_dict = node_info.attributes_
     file.write("\n\t\t[")
     attrs_exist = len(attr_dict.items()) > 0
@@ -284,6 +311,14 @@ def write_node(name: str, node_info: NodeInfo, file: TextIOWrapper):
 
     file.write("\n\t),\n\n")
 
+def get_max_version_exc(max_version_inc : Version) -> Version:
+    idx = BLENDER_VERSIONS.index(max_version_inc)
+    exc_idx = idx + 1
+    if exc_idx < len(BLENDER_VERSIONS):
+        return BLENDER_VERSIONS[exc_idx]
+    else:
+        return Version(max_version_inc.major_, max_version_inc.minor_ + 1)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('max_major_version', type=int, 
@@ -310,7 +345,8 @@ if __name__ == "__main__":
     for version in versions:
         process_bpy_version(version)
 
-    NTP_MAX_VERSION_EXC = (NTP_MAX_VERSION_INC[0], NTP_MAX_VERSION_INC[1] + 1)
+    NTP_MAX_VERSION_EXC = get_max_version_exc(NTP_MAX_VERSION_INC)
+
     versions.append(NTP_MAX_VERSION_EXC)
 
     sorted_nodes = dict(sorted(nodes_dict.items()))
@@ -338,8 +374,8 @@ if __name__ == "__main__":
         print("Successfully finished")
 
     sorted_types = dict(sorted(types_dict.items()))
-    log_file.write("\nTypes encountered:\n")
+    log("\nTypes encountered:\n")
     for key, value in types_dict.items():
-        log_file.write(f"{key}\n")
+        log(f"{key}\n")
         for string in value:
-            log_file.write(f"\t{string}\n")
+            log(f"\t{string}\n")

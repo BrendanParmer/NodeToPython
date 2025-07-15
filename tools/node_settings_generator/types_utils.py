@@ -28,6 +28,7 @@ class ST(Enum):
     FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
     FOREACH_GEO_ELEMENT_INPUT_ITEMS      = auto()
     FOREACH_GEO_ELEMENT_MAIN_ITEMS       = auto()
+    FORMAT_STRING_ITEMS                  = auto()
     INDEX_SWITCH_ITEMS                   = auto()
     MENU_SWITCH_ITEMS                    = auto()
     NODE_TREE                            = auto()
@@ -66,6 +67,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
     ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
     ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS,
+    ST.FORMAT_STRING_ITEMS,
     ST.IMAGE_FORMAT_SETTINGS,
     ST.IMAGE_USER,
     ST.INDEX_SWITCH_ITEMS,
@@ -75,8 +77,8 @@ READ_ONLY_TYPES : set[ST] = {
     ST.SIM_OUTPUT_ITEMS,
 } 
 
-doc_to_NTP_type_dict : dict[str, ST] = {
-    "" : "",
+doc_to_NTP_type_dict : dict[str, ST | None] = {
+    "" : None,
     "bpy_prop_collection of CryptomatteEntry": ST.CRYPTOMATTE_ENTRIES,
     "boolean" : ST.BOOL,
     "Collection" : ST.COLLECTION,
@@ -106,6 +108,7 @@ doc_to_NTP_type_dict : dict[str, ST] = {
                    # output nodes exist. Handled separately from NTP attr system
     "NodeEnumDefinition" : ST.ENUM_DEFINITION,
     "NodeEnumItem" : ST.ENUM_ITEM,
+    "NodeFunctionFormatStringItems" : ST.FORMAT_STRING_ITEMS,
     "NodeGeometryBakeItems" : ST.BAKE_ITEMS,
     "NodeGeometryCaptureAttributeItems" : ST.CAPTURE_ATTRIBUTE_ITEMS,
     "NodeGeometryForeachGeometryElementGenerationItems": ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
@@ -129,7 +132,7 @@ doc_to_NTP_type_dict : dict[str, ST] = {
     "VectorFont" : ST.FONT
 }
 
-def get_NTP_type(type_str: str) -> str:
+def get_NTP_type(type_str: str) -> ST | None:
     """
     Time complexity isn't great, might be able to optimize with 
     a trie or similar data structure

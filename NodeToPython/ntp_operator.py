@@ -41,6 +41,8 @@ DONT_SET_DEFAULTS = {'NodeSocketGeometry',
                      'NodeSocketMatrix',
                      'NodeSocketVirtual'}
 
+MAX_BLENDER_VERSION = (5, 0, 0)
+
 class NTP_Operator(Operator):
     """
     "Abstract" base class for all NTP operators. Blender types and abstraction
@@ -124,6 +126,15 @@ class NTP_Operator(Operator):
         self._file.write(f"{indent_str}{string}\n")
 
     def _setup_options(self, options: NTPOptions) -> bool:
+        if bpy.app.version >= MAX_BLENDER_VERSION:
+            self.report({'WARNING'},
+                        f"Blender version {bpy.app.version} is not supported yet!\n"
+                        "NodeToPython is currently supported up to Blender 4.5.\n"
+                        "Some nodes, settings, and features may not work yet. See:")
+            self.report({'WARNING'},
+                        "\t\thttps://github.com/BrendanParmer/NodeToPython/blob/main/docs/README.md#supported-versions ")
+            self.report({'WARNING'}, "for more details")
+
         # General
         self._mode = options.mode
         self._include_group_socket_values = options.include_group_socket_values
@@ -372,14 +383,14 @@ class NTP_Operator(Operator):
             version_lt_max = bpy.app.version < min(attr_info.max_version_, node_info.max_version_)
             
             is_version_valid = version_gte_min and version_lt_max
-            if not hasattr(node, attr_name):
-                if is_version_valid:
-                    self.report({'WARNING'},
-                                f"NodeToPython: Couldn't find attribute "
-                                f"\"{attr_name}\" for node {node.name} of type "
-                                f"{node.bl_idname}")
+            if not is_version_valid:
                 continue
-            elif not is_version_valid:
+
+            if not hasattr(node, attr_name):
+                self.report({'WARNING'},
+                            f"NodeToPython: Couldn't find attribute "
+                            f"\"{attr_name}\" for node {node.name} of type "
+                            f"{node.bl_idname}")
                 continue
             
             attr = getattr(node, attr_name, None)
@@ -454,6 +465,8 @@ class NTP_Operator(Operator):
                 self._foreach_geo_element_input_items(attr, f"{node_var}.{attr_name}")
             elif st == ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS:
                 self._foreach_geo_element_main_items(attr, f"{node_var}.{attr_name}")
+            elif st == ST.FORMAT_STRING_ITEMS:
+                self._format_string_items(attr, f"{node_var}.{attr_name}")
 
     if bpy.app.version < (4, 0, 0):
         def _set_group_socket_defaults(self, socket_interface: NodeSocketInterface,
@@ -471,6 +484,11 @@ class NTP_Operator(Operator):
                 return
 
             if socket_interface.type not in self.default_sockets_v3:
+                return
+            
+            if not hasattr(socket_interface, "default_value"):
+                self.report({'WARNING'},
+                            f"Socket {socket_interface.type} had no default value")
                 return
 
             if socket_interface.type == 'RGBA':
@@ -690,6 +708,32 @@ class NTP_Operator(Operator):
                 description = str_to_py_str(socket.description)
                 self._write(f"{socket_var}.description = {description}")
 
+            # layer selection field
+            if socket.layer_selection_field:
+                self._write(f"{socket_var}.layer_selection_field = True")
+
+            if bpy.app.version >= (4, 2, 0):
+                # is inspect output
+                if socket.is_inspect_output:
+                    self._write(f"{socket_var}.is_inspect_output = True")
+
+            if bpy.app.version >= (4, 5, 0):
+                # default input
+                default_input = enum_to_py_str(socket.default_input)
+                self._write(f"{socket_var}.default_input = {default_input}")
+
+                # is panel toggle
+                if socket.is_panel_toggle:
+                    self._write(f"{socket_var}.is_panel_toggle = True")
+
+                # menu expanded
+                if socket.menu_expanded:
+                    self._write(f"{socket_var}.menu_expanded = True")
+
+                # structure type
+                structure_type = enum_to_py_str(socket.structure_type)
+                self._write(f"{socket_var}.structure_type = {structure_type}")
+
             self._write("", 0)
 
         def _create_panel(self, panel: NodeTreeInterfacePanel, 
@@ -773,7 +817,7 @@ class NTP_Operator(Operator):
                 
                 items_processed.add(item)
 
-                if item.item_type == 'SOCKET':
+                if item.item_type in {'SOCKET', 'PANEL_TOGGLE'}:
                     self._create_socket(item, parent, panel_dict, ntp_nt)
 
                 elif item.item_type == 'PANEL':
@@ -831,14 +875,19 @@ class NTP_Operator(Operator):
 
                 # vector types
                 elif "Vector" in input.bl_idname:
-                    default_val = vec3_to_py_str(input.default_value)
+                    if "2D" in input.bl_idname:
+                        default_val = vec2_to_py_str(input.default_value)
+                    elif "4D" in input.bl_idname:
+                        default_val = vec4_to_py_str(input.default_value)
+                    else:
+                        default_val = vec3_to_py_str(input.default_value)
 
                 # rotation types
                 elif input.bl_idname == 'NodeSocketRotation':
                     default_val = vec3_to_py_str(input.default_value)
 
                 # strings
-                elif input.bl_idname == 'NodeSocketString':
+                elif input.bl_idname in {'NodeSocketString', 'NodeSocketStringFilePath'}:
                     default_val = str_to_py_str(input.default_value)
 
                 #menu
@@ -1343,6 +1392,16 @@ class NTP_Operator(Operator):
                 socket_type = enum_to_py_str(item.socket_type)
                 name_str = str_to_py_str(item.name)
                 self._write(f"{main_items_str}.new({socket_type}, {name_str})")
+
+    if bpy.app.version >= (4, 5, 0):
+        def _format_string_items(self,
+                          format_items : bpy.types.NodeFunctionFormatStringItems,
+                          format_items_str: str) -> None:
+            self._write(f"{format_items_str}.clear()")
+            for i, item in enumerate(format_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write(f"{format_items_str}.new({socket_type}, {name_str})")
 
 
     def _set_parents(self, node_tree: NodeTree) -> None:
