@@ -191,7 +191,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         else:
             self._file = StringIO("")
             if self._include_imports:
-                self._file.write("import bpy, mathutils\n\n")
+                self._file.write("import bpy\nimport mathutils\n\n\n")
 
 
         node_trees_to_process = self._topological_sort(nt)
