@@ -39,12 +39,12 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"{BASE_NAME} = {str_to_py_str(self.compositor_name)}",
                     indent_level)
         self._write(f"{END_NAME} = {BASE_NAME}", indent_level)
-        self._write(f"if bpy.data.scenes.get({END_NAME}) != None:", indent_level)
+        self._write(f"if bpy.data.scenes.get({END_NAME}) is not None:", indent_level)
 
         self._write(f"{INDEX} = 1", indent_level + 1)
         self._write(f"{END_NAME} = {BASE_NAME} + f\".{{i:03d}}\"", 
                     indent_level + 1)
-        self._write(f"while bpy.data.scenes.get({END_NAME}) != None:",
+        self._write(f"while bpy.data.scenes.get({END_NAME}) is not None:",
                     indent_level + 1)
         
         self._write(f"{END_NAME} = {BASE_NAME} + f\".{{{INDEX}:03d}}\"", 
