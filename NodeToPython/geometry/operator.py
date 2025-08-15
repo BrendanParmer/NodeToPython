@@ -71,7 +71,7 @@ class NTPGeoNodesOperator(NTP_Operator):
                 zone_input_var = self._node_vars[zone_input]
                 zone_output_var = self._node_vars[zone_output]
 
-                self._write(f"#Process zone input {zone_input.name}")
+                self._write(f"# Process zone input {zone_input.name}")
                 self._write(f"{zone_input_var}.pair_with_output"
                             f"({zone_output_var})")
 
@@ -132,7 +132,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"#initialize {nt_var} nodes")
+        self._write(f"# Initialize {nt_var} nodes\n")
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 

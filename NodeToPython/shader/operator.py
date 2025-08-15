@@ -47,7 +47,7 @@ class NTPShaderOperator(NTP_Operator):
 
         if ntp_node_tree.node_tree == self._base_node_tree:
             self._write(f"{ntp_node_tree.var} = {MAT_VAR}.node_tree")
-            self._write(f"#start with a clean node tree")
+            self._write(f"# Start with a clean node tree")
             self._write(f"for {NODE} in {ntp_node_tree.var}.nodes:")
             self._write(f"{ntp_node_tree.var}.nodes.remove({NODE})", self._inner_indent_level + 1)
         else:
@@ -108,7 +108,7 @@ class NTPShaderOperator(NTP_Operator):
             self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"#initialize {nt_var} nodes")
+        self._write(f"# Initialize {nt_var} nodes")
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
