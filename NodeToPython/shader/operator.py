@@ -30,7 +30,7 @@ class NTPShaderOperator(NTP_Operator):
     def _create_material(self, indent_level: int):
         self._write(f"{MAT_VAR} = bpy.data.materials.new("
                     f"name = {str_to_py_str(self.material_name)})", indent_level)
-        self._write(f"{MAT_VAR}.use_nodes = True", indent_level)
+        self._write(f"{MAT_VAR}.use_nodes = True\n\n", indent_level)
 
     def _initialize_shader_node_tree(self, ntp_node_tree: NTP_NodeTree, 
                                     nt_name: str) -> None:
@@ -46,7 +46,7 @@ class NTPShaderOperator(NTP_Operator):
         self._write(f'"""Initialize {nt_name} node group"""')
 
         if ntp_node_tree.node_tree == self._base_node_tree:
-            self._write(f"{ntp_node_tree.var} = {MAT_VAR}.node_tree")
+            self._write(f"{ntp_node_tree.var} = {MAT_VAR}.node_tree\n")
             self._write(f"# Start with a clean node tree")
             self._write(f"for {NODE} in {ntp_node_tree.var}.nodes:")
             self._write(f"{ntp_node_tree.var}.nodes.remove({NODE})", self._inner_indent_level + 1)
@@ -108,7 +108,7 @@ class NTPShaderOperator(NTP_Operator):
             self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"# Initialize {nt_var} nodes")
+        self._write(f"# Initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
@@ -121,7 +121,7 @@ class NTPShaderOperator(NTP_Operator):
         #create connections
         self._init_links(node_tree)
         
-        self._write(f"return {nt_var}\n")
+        self._write(f"return {nt_var}\n\n")
 
         #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)

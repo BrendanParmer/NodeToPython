@@ -78,7 +78,9 @@ class NTPGeoNodesOperator(NTP_Operator):
                 #must set defaults after paired with output
                 self._set_socket_defaults(zone_input)
                 self._set_socket_defaults(zone_output)
-            self._write("", 0)
+
+            if zone_inputs:
+                self._write("", 0)
 
     if bpy.app.version >= (4, 0, 0):
         def _set_geo_tree_properties(self, node_tree: GeometryNodeTree) -> None:
@@ -119,8 +121,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._write(f"def {nt_var}_node_group():", self._outer_indent_level)
         self._write(f'"""Initialize {nt_var} node group"""')
         self._write(f"{nt_var} = bpy.data.node_groups.new("
-                    f"type = \'GeometryNodeTree\', "
-                    f"name = {str_to_py_str(node_tree.name)})\n")
+                    f"type=\'GeometryNodeTree\', "
+                    f"name={str_to_py_str(node_tree.name)})\n")
 
         self._set_node_tree_properties(node_tree)
         if bpy.app.version >= (4, 0, 0):
@@ -147,7 +149,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         #create connections
         self._init_links(node_tree)
         
-        self._write(f"return {nt_var}\n")
+        self._write(f"return {nt_var}\n\n")
 
         #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)

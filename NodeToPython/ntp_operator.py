@@ -669,8 +669,8 @@ class NTP_Operator(Operator):
 
             self._write(f"{socket_var} = "
                         f"{ntp_nt.var}.interface.new_socket("
-                        f"name = {name}, in_out={in_out_enum}, "
-                        f"socket_type = {socket_type}"
+                        f"name={name}, in_out={in_out_enum}, "
+                        f"socket_type={socket_type}"
                         f"{optional_parent_str})")
 
             self._set_tree_socket_defaults(socket, socket_var)
@@ -845,8 +845,6 @@ class NTP_Operator(Operator):
             items_processed: set[NodeTreeInterfaceItem] = set()
 
             self._process_items(None, panel_dict, items_processed, ntp_nt)
-
-            self._write("", 0)
 
     def _set_input_defaults(self, node: Node) -> None:
         """
@@ -1420,7 +1418,8 @@ class NTP_Operator(Operator):
                 node_var = self._node_vars[node]
                 parent_var = self._node_vars[node.parent]
                 self._write(f"{node_var}.parent = {parent_var}")
-        self._write("", 0)
+        if parent_comment:
+            self._write("", 0)
 
     def _set_locations(self, node_tree: NodeTree) -> None:
         """
@@ -1435,7 +1434,8 @@ class NTP_Operator(Operator):
             node_var = self._node_vars[node]
             self._write(f"{node_var}.location "
                         f"= ({node.location.x}, {node.location.y})")
-        self._write("", 0)
+        if node_tree.nodes:
+            self._write("", 0)
 
     def _set_dimensions(self, node_tree: NodeTree) -> None:
         """
@@ -1452,7 +1452,8 @@ class NTP_Operator(Operator):
             node_var = self._node_vars[node]
             self._write(f"{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}")
-        self._write("", 0)
+        if node_tree.nodes:
+            self._write("", 0)
 
     def _init_links(self, node_tree: NodeTree) -> None:
         """
@@ -1504,6 +1505,7 @@ class NTP_Operator(Operator):
         for _func in self._write_after_links:
             _func()
         self._write_after_links = []
+        self._write("", 0)
             
 
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
@@ -1517,7 +1519,6 @@ class NTP_Operator(Operator):
         if bpy.app.version >= (4, 3, 0):
             default_width = node_tree.default_group_node_width
             self._write(f"{nt_var}.default_group_node_width = {default_width}")
-        self._write("\n")
 
     def _hide_hidden_sockets(self, node: Node) -> None:
         """
