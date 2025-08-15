@@ -42,8 +42,8 @@ class NTPShaderOperator(NTP_Operator):
             variable to use
         nt_name (str): name to use for the node tree
         """
-        self._write(f"#initialize {nt_name} node group", self._outer_indent_level)
-        self._write(f"def {ntp_node_tree.var}_node_group():\n", self._outer_indent_level)
+        self._write(f"def {ntp_node_tree.var}_node_group():", self._outer_indent_level)
+        self._write(f'"""Initialize {nt_name} node group"""')
 
         if ntp_node_tree.node_tree == self._base_node_tree:
             self._write(f"{ntp_node_tree.var} = {MAT_VAR}.node_tree")

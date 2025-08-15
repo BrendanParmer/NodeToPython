@@ -58,8 +58,8 @@ class NTPCompositorOperator(NTP_Operator):
 
     def _initialize_compositor_node_tree(self, ntp_nt, nt_name):
         #initialize node group
-        self._write(f"#initialize {nt_name} node group", self._outer_indent_level)
         self._write(f"def {ntp_nt.var}_node_group():", self._outer_indent_level)
+        self._write(f'"""Initialize {nt_name} node group"""')
 
         if ntp_nt.node_tree == self._base_node_tree and self.is_scene:
             self._write(f"{ntp_nt.var} = {SCENE}.node_tree")

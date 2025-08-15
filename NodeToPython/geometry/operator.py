@@ -116,8 +116,8 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._node_tree_vars[node_tree] = nt_var
 
         #initialize node group
-        self._write(f"#initialize {nt_var} node group", self._outer_indent_level)
         self._write(f"def {nt_var}_node_group():", self._outer_indent_level)
+        self._write(f'"""Initialize {nt_var} node group"""')
         self._write(f"{nt_var} = bpy.data.node_groups.new("
                     f"type = \'GeometryNodeTree\', "
                     f"name = {str_to_py_str(node_tree.name)})\n")
