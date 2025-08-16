@@ -673,6 +673,14 @@ class NTP_Operator(Operator):
                         f"socket_type = {socket_type}"
                         f"{optional_parent_str})")
 
+            # vector dimensions
+            if hasattr(socket, "dimensions"):
+                dimensions = socket.dimensions
+                if socket.dimensions != 3:
+                    self._write(f"{socket_var}.dimensions = {dimensions}")
+                    self._write("# Get the socket again, as its default value could have been updated")
+                    self._write(f"{socket_var} = {ntp_nt.var}.interface.items_tree[{socket_var}.index]")
+
             self._set_tree_socket_defaults(socket, socket_var)
 
             # subtype
