@@ -15,7 +15,7 @@ Blender's node-based editors are powerful, yet accessible tools, and I wanted to
 * interfacing with other parts of the software or properties of an object
 
 ## Supported Versions
-NodeToPython v3.5.0 is supported for Blender 3.0 - 4.5 on Windows, macOS, and Linux
+NodeToPython v3.5.1 is supported for Blender 3.0 - 4.5 on Windows, macOS, and Linux
 * Some work is required to update NodeToPython for each Blender version, so experimental versions may not work properly and may even crash. 
 * New nodes, updated settings, and new node tree features require development to support. 
 * NodeToPython updates for new Blender versions usually doesn't start until the Beta phase of the release cycle
