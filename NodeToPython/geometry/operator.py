@@ -71,14 +71,16 @@ class NTPGeoNodesOperator(NTP_Operator):
                 zone_input_var = self._node_vars[zone_input]
                 zone_output_var = self._node_vars[zone_output]
 
-                self._write(f"#Process zone input {zone_input.name}")
+                self._write(f"# Process zone input {zone_input.name}")
                 self._write(f"{zone_input_var}.pair_with_output"
                             f"({zone_output_var})")
 
                 #must set defaults after paired with output
                 self._set_socket_defaults(zone_input)
                 self._set_socket_defaults(zone_output)
-            self._write("", 0)
+
+            if zone_inputs:
+                self._write("", 0)
 
     if bpy.app.version >= (4, 0, 0):
         def _set_geo_tree_properties(self, node_tree: GeometryNodeTree) -> None:
@@ -116,11 +118,11 @@ class NTPGeoNodesOperator(NTP_Operator):
         self._node_tree_vars[node_tree] = nt_var
 
         #initialize node group
-        self._write(f"#initialize {nt_var} node group", self._outer_indent_level)
         self._write(f"def {nt_var}_node_group():", self._outer_indent_level)
+        self._write(f'"""Initialize {nt_var} node group"""')
         self._write(f"{nt_var} = bpy.data.node_groups.new("
-                    f"type = \'GeometryNodeTree\', "
-                    f"name = {str_to_py_str(node_tree.name)})\n")
+                    f"type=\'GeometryNodeTree\', "
+                    f"name={str_to_py_str(node_tree.name)})\n")
 
         self._set_node_tree_properties(node_tree)
         if bpy.app.version >= (4, 0, 0):
@@ -132,7 +134,7 @@ class NTPGeoNodesOperator(NTP_Operator):
             self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"#initialize {nt_var} nodes")
+        self._write(f"# Initialize {nt_var} nodes\n")
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
 
@@ -147,7 +149,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         #create connections
         self._init_links(node_tree)
         
-        self._write(f"return {nt_var}\n")
+        self._write(f"return {nt_var}\n\n")
 
         #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)
@@ -191,7 +193,7 @@ class NTPGeoNodesOperator(NTP_Operator):
         else:
             self._file = StringIO("")
             if self._include_imports:
-                self._file.write("import bpy, mathutils\n\n")
+                self._file.write("import bpy\nimport mathutils\n\n\n")
 
 
         node_trees_to_process = self._topological_sort(nt)

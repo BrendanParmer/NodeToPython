@@ -323,7 +323,7 @@ class NTP_Operator(Operator):
         node_var (str): variable name for the node
         """
 
-        self._write(f"#node {node.name}")
+        self._write(f"# Node {node.name}")
 
         node_var = self._create_var(node.name)
         self._node_vars[node] = node_var
@@ -530,11 +530,11 @@ class NTP_Operator(Operator):
                 io_sockets = node.inputs
                 io_socket_interfaces = node_tree.outputs
 
-            self._write(f"#{node_tree_var} {io}s")
+            self._write(f"# {node_tree_var} {io}s")
             for i, inout in enumerate(io_sockets):
                 if inout.bl_idname == 'NodeSocketVirtual':
                     continue
-                self._write(f"#{io} {inout.name}")
+                self._write(f"# {io.capitalize()} {inout.name}")
                 idname = enum_to_py_str(inout.bl_idname)
                 name = str_to_py_str(inout.name)
                 self._write(f"{node_tree_var}.{io}s.new({idname}, {name})")
@@ -642,7 +642,7 @@ class NTP_Operator(Operator):
             ntp_nt (NTP_NodeTree): owner of the socket
             """
 
-            self._write(f"#Socket {socket.name}")
+            self._write(f"# Socket {socket.name}")
             # initialization
             socket_var = self._create_var(socket.name + "_socket") 
             name = str_to_py_str(socket.name)
@@ -669,8 +669,8 @@ class NTP_Operator(Operator):
 
             self._write(f"{socket_var} = "
                         f"{ntp_nt.var}.interface.new_socket("
-                        f"name = {name}, in_out={in_out_enum}, "
-                        f"socket_type = {socket_type}"
+                        f"name={name}, in_out={in_out_enum}, "
+                        f"socket_type={socket_type}"
                         f"{optional_parent_str})")
 
             # vector dimensions
@@ -763,7 +763,7 @@ class NTP_Operator(Operator):
             ntp_nt (NTP_NodeTree): owner of the socket
             """
 
-            self._write(f"#Panel {panel.name}")
+            self._write(f"# Panel {panel.name}")
 
             panel_var = self._create_var(panel.name + "_panel")
             panel_dict[panel] = panel_var
@@ -848,13 +848,11 @@ class NTP_Operator(Operator):
             ntp_nt (NTP_NodeTree): the node tree to set the interface for
             """
 
-            self._write(f"#{ntp_nt.var} interface")
+            self._write(f"# {ntp_nt.var} interface\n")
             panel_dict: dict[NodeTreeInterfacePanel, str] = {}
             items_processed: set[NodeTreeInterfaceItem] = set()
 
             self._process_items(None, panel_dict, items_processed, ntp_nt)
-
-            self._write("", 0)
 
     def _set_input_defaults(self, node: Node) -> None:
         """
@@ -938,7 +936,7 @@ class NTP_Operator(Operator):
                 else:
                     default_val = input.default_value
                 if default_val is not None:
-                    self._write(f"#{input.identifier}")
+                    self._write(f"# {input.identifier}")
                     self._write(f"{socket_var}.default_value = {default_val}")
         self._write("", 0)
 
@@ -1036,7 +1034,7 @@ class NTP_Operator(Operator):
         self._write("", 0)
 
         # key points
-        self._write(f"#initialize color ramp elements")
+        self._write(f"# Initialize color ramp elements")
         self._write((f"{ramp_str}.elements.remove"
                     f"({ramp_str}.elements[0])"))
         for i, element in enumerate(color_ramp.elements):
@@ -1070,7 +1068,7 @@ class NTP_Operator(Operator):
         node_var = self._node_vars[node]
 
         # mapping settings
-        self._write(f"#mapping settings")
+        self._write(f"# Mapping settings")
         mapping_var = f"{node_var}.{curve_mapping_name}"
 
         # extend
@@ -1106,7 +1104,7 @@ class NTP_Operator(Operator):
             self._create_curve_map(node, i, curve, curve_mapping_name)
 
         # update curve
-        self._write(f"#update curve after changes")
+        self._write(f"# Update curve after changes")
         self._write(f"{mapping_var}.update()")
 
     def _create_curve_map(self, node: Node, i: int, curve: bpy.types.CurveMap,
@@ -1122,7 +1120,7 @@ class NTP_Operator(Operator):
         """
         node_var = self._node_vars[node]
         
-        self._write(f"#curve {i}")
+        self._write(f"# Curve {i}")
         curve_i_var = self._create_var(f"{node_var}_curve_{i}")
         self._write(f"{curve_i_var} = "
                     f"{node_var}.{curve_mapping_name}.curves[{i}]")
@@ -1225,7 +1223,7 @@ class NTP_Operator(Operator):
         img_str = img_to_py_str(img)
 
         # TODO: convert to special variables
-        self._write(f"#load image {img_str}")
+        self._write(f"# Load image {img_str}")
         self._write(f"{BASE_DIR} = "
                     f"os.path.dirname(os.path.abspath(__file__))")
         self._write(f"{IMAGE_PATH} = "
@@ -1235,7 +1233,7 @@ class NTP_Operator(Operator):
                     f"({IMAGE_PATH}, check_existing = True)")
 
         # copy image settings
-        self._write(f"#set image settings")
+        self._write(f"# Set image settings")
 
         # source
         source = enum_to_py_str(img.source)
@@ -1423,12 +1421,13 @@ class NTP_Operator(Operator):
         for node in node_tree.nodes:
             if node is not None and node.parent is not None:
                 if not parent_comment:
-                    self._write(f"#Set parents")
+                    self._write(f"# Set parents")
                     parent_comment = True
                 node_var = self._node_vars[node]
                 parent_var = self._node_vars[node.parent]
                 self._write(f"{node_var}.parent = {parent_var}")
-        self._write("", 0)
+        if parent_comment:
+            self._write("", 0)
 
     def _set_locations(self, node_tree: NodeTree) -> None:
         """
@@ -1438,12 +1437,13 @@ class NTP_Operator(Operator):
         node_tree (NodeTree): node tree we're obtaining nodes from
         """
 
-        self._write(f"#Set locations")
+        self._write(f"# Set locations")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]
             self._write(f"{node_var}.location "
                         f"= ({node.location.x}, {node.location.y})")
-        self._write("", 0)
+        if node_tree.nodes:
+            self._write("", 0)
 
     def _set_dimensions(self, node_tree: NodeTree) -> None:
         """
@@ -1455,12 +1455,13 @@ class NTP_Operator(Operator):
         if not self._should_set_dimensions:
             return
 
-        self._write(f"#Set dimensions")
+        self._write(f"# Set dimensions")
         for node in node_tree.nodes:
             node_var = self._node_vars[node]
             self._write(f"{node_var}.width, {node_var}.height "
                         f"= {node.width}, {node.height}")
-        self._write("", 0)
+        if node_tree.nodes:
+            self._write("", 0)
 
     def _init_links(self, node_tree: NodeTree) -> None:
         """
@@ -1474,7 +1475,7 @@ class NTP_Operator(Operator):
 
         links = node_tree.links
         if links:
-            self._write(f"#initialize {nt_var} links")
+            self._write(f"# Initialize {nt_var} links\n")
             if hasattr(links[0], "multi_input_sort_id"):
                 # generate links in the correct order for multi input sockets
                 links = sorted(links, key=lambda link: link.multi_input_sort_id)
@@ -1503,7 +1504,7 @@ class NTP_Operator(Operator):
                     output_idx = i
                     break
 
-            self._write(f"#{in_node_var}.{input_socket.name} "
+            self._write(f"# {in_node_var}.{input_socket.name} "
                         f"-> {out_node_var}.{output_socket.name}")
             self._write(f"{nt_var}.links.new({in_node_var}"
                         f".outputs[{input_idx}], "
@@ -1512,6 +1513,7 @@ class NTP_Operator(Operator):
         for _func in self._write_after_links:
             _func()
         self._write_after_links = []
+        self._write("", 0)
             
 
     def _set_node_tree_properties(self, node_tree: NodeTree) -> None:
@@ -1525,7 +1527,6 @@ class NTP_Operator(Operator):
         if bpy.app.version >= (4, 3, 0):
             default_width = node_tree.default_group_node_width
             self._write(f"{nt_var}.default_group_node_width = {default_width}")
-        self._write("\n")
 
     def _hide_hidden_sockets(self, node: Node) -> None:
         """

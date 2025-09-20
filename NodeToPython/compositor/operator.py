@@ -39,12 +39,12 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"{BASE_NAME} = {str_to_py_str(self.compositor_name)}",
                     indent_level)
         self._write(f"{END_NAME} = {BASE_NAME}", indent_level)
-        self._write(f"if bpy.data.scenes.get({END_NAME}) != None:", indent_level)
+        self._write(f"if bpy.data.scenes.get({END_NAME}) is not None:", indent_level)
 
         self._write(f"{INDEX} = 1", indent_level + 1)
         self._write(f"{END_NAME} = {BASE_NAME} + f\".{{i:03d}}\"", 
                     indent_level + 1)
-        self._write(f"while bpy.data.scenes.get({END_NAME}) != None:",
+        self._write(f"while bpy.data.scenes.get({END_NAME}) is not None:",
                     indent_level + 1)
         
         self._write(f"{END_NAME} = {BASE_NAME} + f\".{{{INDEX}:03d}}\"", 
@@ -55,15 +55,17 @@ class NTPCompositorOperator(NTP_Operator):
         self._write(f"{SCENE}.name = {END_NAME}", indent_level)
         self._write(f"{SCENE}.use_fake_user = True", indent_level)
         self._write(f"bpy.context.window.scene = {SCENE}", indent_level)
+        self._write("", 0)
 
     def _initialize_compositor_node_tree(self, ntp_nt, nt_name):
         #initialize node group
-        self._write(f"#initialize {nt_name} node group", self._outer_indent_level)
         self._write(f"def {ntp_nt.var}_node_group():", self._outer_indent_level)
+        self._write(f'"""Initialize {nt_name} node group"""')
 
         if ntp_nt.node_tree == self._base_node_tree and self.is_scene:
             self._write(f"{ntp_nt.var} = {SCENE}.node_tree")
-            self._write(f"#start with a clean node tree")
+            self._write("", 0)
+            self._write(f"# Start with a clean node tree")
             self._write(f"for {NODE} in {ntp_nt.var}.nodes:")
             self._write(f"{ntp_nt.var}.nodes.remove({NODE})", self._inner_indent_level + 1)
         else:
@@ -187,7 +189,7 @@ class NTPCompositorOperator(NTP_Operator):
             self._tree_interface_settings(ntp_nt)
 
         #initialize nodes
-        self._write(f"#initialize {nt_var} nodes")
+        self._write(f"# Initialize {nt_var} nodes\n")
 
         for node in node_tree.nodes:
             self._process_node(node, ntp_nt)
@@ -201,6 +203,8 @@ class NTPCompositorOperator(NTP_Operator):
         self._init_links(node_tree)
         
         self._write(f"return {nt_var}\n")
+        if self._mode == 'SCRIPT':
+            self._write("", 0)
 
         #create node group
         self._write(f"{nt_var} = {nt_var}_node_group()\n", self._outer_indent_level)
@@ -242,13 +246,14 @@ class NTPCompositorOperator(NTP_Operator):
         else:
             self._file = StringIO("")
             if self._include_imports:
-                self._file.write("import bpy, mathutils\n\n")
+                self._file.write("import bpy\nimport mathutils\n\n\n")
 
         if self.is_scene:
             if self._mode == 'ADDON':
                 self._create_scene(2)
             elif self._mode == 'SCRIPT':
                 self._create_scene(0)
+                self._write("", 0)
 
         node_trees_to_process = self._topological_sort(self._base_node_tree)
 
