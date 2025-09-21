@@ -36,16 +36,11 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout.operator_context = 'INVOKE_DEFAULT'
 
 
-classes = [
+classes: list[type] = [
     NodeToPythonMenu,
     #options
     options.NTPOptions,
     options.NTPOptionsPanel,
-    #compositor
-    compositor.operator.NTPCompositorOperator,
-    compositor.ui.NTPCompositorScenesMenu,
-    compositor.ui.NTPCompositorGroupsMenu,
-    compositor.ui.NTPCompositorPanel,
     #geometry
     geometry.operator.NTPGeoNodesOperator,
     geometry.ui.NTPGeoNodesMenu,
@@ -55,17 +50,20 @@ classes = [
     shader.ui.NTPShaderMenu,
     shader.ui.NTPShaderPanel,
 ]
+classes += compositor.classes
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     scene = bpy.types.Scene
     scene.ntp_options = bpy.props.PointerProperty(type=options.NTPOptions)
+    compositor.register_props()
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
     del bpy.types.Scene.ntp_options
+    compositor.unregister_props()
 
 if __name__ == "__main__":
     register()

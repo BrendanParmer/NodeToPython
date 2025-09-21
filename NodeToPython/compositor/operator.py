@@ -281,3 +281,5 @@ class NTPCompositorOperator(NTP_Operator):
         self._report_finished("compositor nodes")
 
         return {'FINISHED'}
+    
+classes: list[type] = [NTPCompositorOperator]
