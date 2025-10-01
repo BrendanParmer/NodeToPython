@@ -8,4 +8,7 @@ else:
 
 import bpy
 
-modules = []
+modules = [
+    operator
+]
+modules += ui.modules

@@ -48,11 +48,7 @@ classes: list[type] = [
     NodeToPythonMenu,
     #options
     options.NTPOptions,
-    options.NTPOptionsPanel,
-    #shader
-    shader.operator.NTPShaderOperator,
-    shader.ui.NTPShaderMenu,
-    shader.ui.NTPShaderPanel,
+    options.NTPOptionsPanel
 ]
 
 modules = []
