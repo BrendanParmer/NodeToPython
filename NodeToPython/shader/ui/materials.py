@@ -3,14 +3,14 @@ import bpy
 from . import panel
 
 def register_props():
-    bpy.types.Scene.material_slots = bpy.props.CollectionProperty(
+    bpy.types.Scene.ntp_material_slots = bpy.props.CollectionProperty(
         type=Slot
     )
-    bpy.types.Scene.material_slots_index = bpy.props.IntProperty()
+    bpy.types.Scene.ntp_material_slots_index = bpy.props.IntProperty()
 
 def unregister_props():
-    del bpy.types.Scene.material_slots
-    del bpy.types.Scene.material_slots_index
+    del bpy.types.Scene.ntp_material_slots
+    del bpy.types.Scene.ntp_material_slots_index
     
 class Slot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
@@ -19,7 +19,7 @@ class Slot(bpy.types.PropertyGroup):
     )
 
     def poll_material(self, material: bpy.types.Material) -> bool:
-        for slot in bpy.context.scene.material_slots:
+        for slot in bpy.context.scene.ntp_material_slots:
             if slot is not self and slot.material == material:
                 return False
         return material.use_nodes
@@ -43,9 +43,9 @@ class AddSlotOperator(bpy.types.Operator):
     bl_description = "Add Material Slot"
 
     def execute(self, context):
-        slots = context.scene.material_slots
+        slots = context.scene.ntp_material_slots
         slot = slots.add()
-        context.scene.material_slots_index = len(slots) - 1
+        context.scene.ntp_material_slots_index = len(slots) - 1
         return {'FINISHED'}
     
 class RemoveSlotOperator(bpy.types.Operator):
@@ -54,12 +54,12 @@ class RemoveSlotOperator(bpy.types.Operator):
     bl_description = "Remove Material Slot"
 
     def execute(self, context):
-        slots = context.scene.material_slots
-        idx = context.scene.material_slots_index
+        slots = context.scene.ntp_material_slots
+        idx = context.scene.ntp_material_slots_index
 
         if idx >= 0 and idx < len(slots):
             slots.remove(idx)
-            context.scene.material_slots_index = min(
+            context.scene.ntp_material_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
             return {'FINISHED'}
@@ -91,8 +91,8 @@ class Material_Panel(bpy.types.Panel):
         row = layout.row()
         row.template_list(
             "Material_UIList", "", 
-            context.scene, "material_slots", 
-            context.scene, "material_slots_index"
+            context.scene, "ntp_material_slots", 
+            context.scene, "ntp_material_slots_index"
         )
 
         col = row.column(align=True)

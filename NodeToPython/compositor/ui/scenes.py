@@ -3,15 +3,15 @@ import bpy
 from . import panel
 
 def register_props():
-    bpy.types.Scene.scene_slots = bpy.props.CollectionProperty(
+    bpy.types.Scene.ntp_scene_slots = bpy.props.CollectionProperty(
         type=Slot
     )
-    bpy.types.Scene.scene_slots_index = bpy.props.IntProperty()
+    bpy.types.Scene.ntp_scene_slots_index = bpy.props.IntProperty()
 
 def unregister_props():
-    del bpy.types.Scene.scene_slots
-    del bpy.types.Scene.scene_slots_index
-    
+    del bpy.types.Scene.ntp_scene_slots
+    del bpy.types.Scene.ntp_scene_slots_index
+
 class Slot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="Scene Name",
@@ -19,7 +19,7 @@ class Slot(bpy.types.PropertyGroup):
     )
 
     def poll_scene(self, scene: bpy.types.Scene) -> bool:
-        for slot in bpy.context.scene.scene_slots:
+        for slot in bpy.context.scene.ntp_scene_slots:
             if slot is not self and slot.scene == scene:
                 return False
         return scene.use_nodes
@@ -43,9 +43,9 @@ class AddSlotOperator(bpy.types.Operator):
     bl_description = "Add Scene Slot"
 
     def execute(self, context):
-        slots = context.scene.scene_slots
+        slots = context.scene.ntp_scene_slots
         slot = slots.add()
-        context.scene.scene_slots_index = len(slots) - 1
+        context.scene.ntp_scene_slots_index = len(slots) - 1
         return {'FINISHED'}
     
 class RemoveSlotOperator(bpy.types.Operator):
@@ -54,12 +54,12 @@ class RemoveSlotOperator(bpy.types.Operator):
     bl_description = "Remove Scene Slot"
 
     def execute(self, context):
-        slots = context.scene.scene_slots
-        idx = context.scene.scene_slots_index
+        slots = context.scene.ntp_scene_slots
+        idx = context.scene.ntp_scene_slots_index
 
         if idx >= 0 and idx < len(slots):
             slots.remove(idx)
-            context.scene.scene_slots_index = min(
+            context.scene.ntp_scene_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
             return {'FINISHED'}
@@ -91,8 +91,8 @@ class Scene_Panel(bpy.types.Panel):
         row = layout.row()
         row.template_list(
             "Scene_UIList", "", 
-            context.scene, "scene_slots", 
-            context.scene, "scene_slots_index"
+            context.scene, "ntp_scene_slots", 
+            context.scene, "ntp_scene_slots_index"
         )
 
         col = row.column(align=True)
