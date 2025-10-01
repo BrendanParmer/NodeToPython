@@ -35,35 +35,57 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
 
+def register_props():
+    bpy.types.Scene.ntp_options = bpy.props.PointerProperty(
+        type=options.NTPOptions
+    )
 
+def unregister_props():
+    del bpy.types.Scene.ntp_options
+
+# TODO: do away with this, separate out into more appropriate modules
 classes: list[type] = [
     NodeToPythonMenu,
     #options
     options.NTPOptions,
     options.NTPOptionsPanel,
-    #geometry
-    geometry.operator.NTPGeoNodesOperator,
-    geometry.ui.NTPGeoNodesMenu,
-    geometry.ui.NTPGeoNodesPanel,
-    #material
+    #shader
     shader.operator.NTPShaderOperator,
     shader.ui.NTPShaderMenu,
     shader.ui.NTPShaderPanel,
 ]
-classes += compositor.classes
+
+modules = []
+for parent_module in [compositor, geometry, shader]:
+    if hasattr(parent_module, "modules"):
+        modules += parent_module.modules
+    else:
+        raise Exception(f"Module {parent_module} does not have list of modules")
+
 
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    scene = bpy.types.Scene
-    scene.ntp_options = bpy.props.PointerProperty(type=options.NTPOptions)
-    compositor.register_props()
+    register_props()
+
+    for module in modules:
+        if hasattr(module, "classes"):
+            for cls in getattr(module, "classes"):
+                bpy.utils.register_class(cls)
+        if hasattr(module, "register_props"):
+            getattr(module, "register_props")()
 
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    del bpy.types.Scene.ntp_options
-    compositor.unregister_props()
+    unregister_props()
+
+    for module in modules:
+        if hasattr(module, "classes"):
+            for cls in getattr(module, "classes"):
+                bpy.utils.unregister_class(cls)
+        if hasattr(module, "unregister_props"):
+            getattr(module, "unregister_props")()
 
 if __name__ == "__main__":
     register()

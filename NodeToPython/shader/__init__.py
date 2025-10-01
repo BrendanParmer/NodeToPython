@@ -7,3 +7,5 @@ else:
     from . import ui
 
 import bpy
+
+modules = []

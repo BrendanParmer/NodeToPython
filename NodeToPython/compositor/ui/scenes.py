@@ -2,6 +2,16 @@ import bpy
 
 from . import panel
 
+def register_props():
+    bpy.types.Scene.scene_slots = bpy.props.CollectionProperty(
+        type=Slot
+    )
+    bpy.types.Scene.scene_slots_index = bpy.props.IntProperty()
+
+def unregister_props():
+    del bpy.types.Scene.scene_slots
+    del bpy.types.Scene.scene_slots_index
+    
 class Slot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="Scene Name",
@@ -26,16 +36,6 @@ class Slot(bpy.types.PropertyGroup):
         poll=poll_scene,
         update=update_scene
     )
-
-def register_props():
-    bpy.types.Scene.scene_slots = bpy.props.CollectionProperty(
-        type=Slot
-    )
-    bpy.types.Scene.scene_slots_index = bpy.props.IntProperty()
-
-def unregister_props():
-    del bpy.types.Scene.scene_slots
-    del bpy.types.Scene.scene_slots_index
 
 class AddSlotOperator(bpy.types.Operator):
     bl_idname = "node.ntp_scene_slot_add"

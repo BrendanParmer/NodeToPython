@@ -9,3 +9,9 @@ else:
     from . import ui
 
 import bpy
+
+modules = [
+    node_tree,
+    operator
+]
+modules += ui.modules

@@ -282,4 +282,6 @@ class NTPCompositorOperator(NTP_Operator):
 
         return {'FINISHED'}
     
-classes: list[type] = [NTPCompositorOperator]
+classes: list[type] = [
+    NTPCompositorOperator
+]

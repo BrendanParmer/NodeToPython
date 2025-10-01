@@ -8,12 +8,7 @@ else:
 
 import bpy
 
-classes: list[type] = []
-classes += operator.classes
-classes += ui.classes
-
-def register_props():
-    ui.register_props()
-
-def unregister_props():
-    ui.unregister_props()
+modules = [
+    operator
+]
+modules += ui.modules

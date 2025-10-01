@@ -1,8 +1,8 @@
 import bpy
 
-class NTPCompositorPanel(bpy.types.Panel):
-    bl_label = "Compositor to Python"
-    bl_idname = "NODE_PT_ntp_compositor"
+class NTPGeoNodesPanel(bpy.types.Panel):
+    bl_label = "Geometry Nodes to Python"
+    bl_idname = "NODE_PT_ntp_geonodes"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
@@ -22,5 +22,5 @@ class NTPCompositorPanel(bpy.types.Panel):
         layout = self.layout
 
 classes: list[type] = [
-    NTPCompositorPanel
+    NTPGeoNodesPanel
 ]
