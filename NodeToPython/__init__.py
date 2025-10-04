@@ -35,34 +35,21 @@ class NodeToPythonMenu(bpy.types.Menu):
         layout = self.layout.column_flow(columns=1)
         layout.operator_context = 'INVOKE_DEFAULT'
 
-def register_props():
-    bpy.types.Scene.ntp_options = bpy.props.PointerProperty(
-        type=options.NTPOptions
-    )
-
-def unregister_props():
-    del bpy.types.Scene.ntp_options
-
 # TODO: do away with this, separate out into more appropriate modules
 classes: list[type] = [
-    NodeToPythonMenu,
-    #options
-    options.NTPOptions,
-    options.NTPOptionsPanel
+    NodeToPythonMenu
 ]
 
-modules = []
+modules = [options]
 for parent_module in [compositor, geometry, shader]:
     if hasattr(parent_module, "modules"):
         modules += parent_module.modules
     else:
         raise Exception(f"Module {parent_module} does not have list of modules")
 
-
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-    register_props()
 
     for module in modules:
         if hasattr(module, "classes"):
@@ -74,7 +61,6 @@ def register():
 def unregister():
     for cls in classes:
         bpy.utils.unregister_class(cls)
-    unregister_props()
 
     for module in modules:
         if hasattr(module, "classes"):

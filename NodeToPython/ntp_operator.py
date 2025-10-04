@@ -17,7 +17,7 @@ from typing import TextIO, Callable
 
 from .license_templates import license_templates
 from .ntp_node_tree import NTP_NodeTree
-from .options import NTPOptions
+from .options import NTP_PG_Options
 from .node_settings import NodeInfo, ST
 from .utils import *
 
@@ -125,7 +125,7 @@ class NTP_Operator(Operator):
         indent_str = indent_level * self._indentation
         self._file.write(f"{indent_str}{string}\n")
 
-    def _setup_options(self, options: NTPOptions) -> bool:
+    def _setup_options(self, options: NTP_PG_Options) -> bool:
         if bpy.app.version >= MAX_BLENDER_VERSION:
             self.report({'WARNING'},
                         f"Blender version {bpy.app.version} is not supported yet!\n"
@@ -137,8 +137,8 @@ class NTP_Operator(Operator):
 
         # General
         self._mode = options.mode
-        self._include_group_socket_values = options.include_group_socket_values
-        self._should_set_dimensions = options.set_dimensions
+        self._include_group_socket_values = options.set_group_defaults
+        self._should_set_dimensions = options.set_node_sizes
 
         if options.indentation_type == 'SPACES_2':
             self._indentation = "  "

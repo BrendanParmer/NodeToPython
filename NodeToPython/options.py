@@ -1,6 +1,14 @@
 import bpy
 
-class NTPOptions(bpy.types.PropertyGroup):
+def register_props():
+    bpy.types.Scene.ntp_options = bpy.props.PointerProperty(
+        type=NTP_PG_Options
+    )
+
+def unregister_props():
+    del bpy.types.Scene.ntp_options
+
+class NTP_PG_Options(bpy.types.PropertyGroup):
     """
     Property group used during conversion of node group to python
     """
@@ -16,13 +24,13 @@ class NTPOptions(bpy.types.PropertyGroup):
             ('ADDON', "Addon", "Create a full add-on")
         ]
     )
-    include_group_socket_values : bpy.props.BoolProperty(
-        name = "Include group socket values",
+    set_group_defaults : bpy.props.BoolProperty(
+        name = "Set Group Defaults",
         description = "Generate group socket default, min, and max values",
         default = True
     )
-    set_dimensions : bpy.props.BoolProperty(
-        name = "Set dimensions",
+    set_node_sizes : bpy.props.BoolProperty(
+        name = "Set Node Sizes",
         description = "Set dimensions of generated nodes",
         default = True
     )
@@ -48,8 +56,8 @@ class NTPOptions(bpy.types.PropertyGroup):
 
     #Script properties
     include_imports : bpy.props.BoolProperty(
-        name = "Include imports",
-        description="Generate necessary import statements",
+        name = "Include Imports",
+        description="Generate necessary import statements (i.e. bpy, mathutils, etc)",
         default = True
     )
     
@@ -71,7 +79,7 @@ class NTPOptions(bpy.types.PropertyGroup):
         default=""
     )
     author_name : bpy.props.StringProperty(
-        name = "Author",
+        name = "Author Name",
         description = "Name used for the author/maintainer of the add-on",
         default = "Node To Python"
     )
@@ -82,13 +90,13 @@ class NTPOptions(bpy.types.PropertyGroup):
     )
     location: bpy.props.StringProperty(
         name = "Location",
-        description="Location of the addon",
+        description="Location property of the addon",
         default="Node"
     )
     menu_id: bpy.props.StringProperty(
         name = "Menu ID",
         description = "Python ID of the menu you'd like to register the add-on "
-                      "to. You can find this by enabling Python tooltips "
+                      "to. You can find these by enabling Python tooltips "
                       "(Preferences > Interface > Python tooltips) and "
                       "hovering over the desired menu",
         default="NODE_MT_add"
@@ -100,7 +108,7 @@ class NTPOptions(bpy.types.PropertyGroup):
             ('OTHER', "Other", "User is responsible for including the license "
                                "and adding it to the manifest.\n"
                                "Please note that by using the Blender Python "
-                               "API your add-on must comply with the GNU GPL. "
+                               "API, your add-on must comply with the GNU GPL. "
                                "See https://www.blender.org/about/license/ for "
                                "more details")
         ],
@@ -108,53 +116,53 @@ class NTPOptions(bpy.types.PropertyGroup):
     )
     should_create_license: bpy.props.BoolProperty(
         name="Create License",
-        description="Should NodeToPython include a license file",
+        description="Should NodeToPython include a license file for your add-on",
         default=True
     )
     category: bpy.props.EnumProperty(
         name = "Category",
         items = [
-            ('Custom',          "Custom",           "Use an unofficial category"),
-            ('3D View',         "3D View",          ""),
-            ('Add Curve',       "Add Curve",        ""),
-            ('Add Mesh',        "Add Mesh",         ""),
-            ('Animation',       "Animation",        ""),
-            ('Bake',            "Bake",             ""),
-            ('Compositing',     "Compositing",      ""),
-            ('Development',     "Development",      ""),
-            ('Game Engine',     "Game Engine",      ""),
-            ('Geometry Nodes',  "Geometry Nodes",   ""),
-            ("Grease Pencil",   "Grease Pencil",    ""),
-            ('Import-Export',   "Import-Export",    ""),
-            ('Lighting',        "Lighting",         ""),
-            ('Material',        "Material",         ""),
-            ('Mesh',            "Mesh",             ""),
-            ('Modeling',        "Modeling",         ""),
-            ('Node',            "Node",             ""),
-            ('Object',          "Object",           ""),
-            ('Paint',           "Paint",            ""),
-            ('Pipeline',        "Pipeline",         ""),
-            ('Physics',         "Physics",          ""),
-            ('Render',          "Render",           ""),
-            ('Rigging',         "Rigging",          ""),
-            ('Scene',           "Scene",            ""),
-            ('Sculpt',          "Sculpt",           ""),
-            ('Sequencer',       "Sequencer",        ""),
-            ('System',          "System",           ""),
-            ('Text Editor',     "Text Editor",      ""),
-            ('Tracking',        "Tracking",         ""),
-            ('UV',              "UV",               ""),
-            ('User Interface',  "User Interface",   ""),
+            ('Custom',         "Custom",         "Use an unofficial category"),
+            ('3D View',        "3D View",        ""),
+            ('Add Curve',      "Add Curve",      ""),
+            ('Add Mesh',       "Add Mesh",       ""),
+            ('Animation',      "Animation",      ""),
+            ('Bake',           "Bake",           ""),
+            ('Compositing',    "Compositing",    ""),
+            ('Development',    "Development",    ""),
+            ('Game Engine',    "Game Engine",    ""),
+            ('Geometry Nodes', "Geometry Nodes", ""),
+            ("Grease Pencil",  "Grease Pencil",  ""),
+            ('Import-Export',  "Import-Export",  ""),
+            ('Lighting',       "Lighting",       ""),
+            ('Material',       "Material",       ""),
+            ('Mesh',           "Mesh",           ""),
+            ('Modeling',       "Modeling",       ""),
+            ('Node',           "Node",           ""),
+            ('Object',         "Object",         ""),
+            ('Paint',          "Paint",          ""),
+            ('Pipeline',       "Pipeline",       ""),
+            ('Physics',        "Physics",        ""),
+            ('Render',         "Render",         ""),
+            ('Rigging',        "Rigging",        ""),
+            ('Scene',          "Scene",          ""),
+            ('Sculpt',         "Sculpt",         ""),
+            ('Sequencer',      "Sequencer",      ""),
+            ('System',         "System",         ""),
+            ('Text Editor',    "Text Editor",    ""),
+            ('Tracking',       "Tracking",       ""),
+            ('UV',             "UV",             ""),
+            ('User Interface', "User Interface", ""),
         ],
         default = 'Node'
     )
     custom_category: bpy.props.StringProperty(
         name="Custom Category",
-        description="Custom category",
+        description="Set the custom category property for your add-on",
         default = ""
     )
 
-class NTPOptionsPanel(bpy.types.Panel):
+class NTP_PT_Options(bpy.types.Panel):
     bl_label = "Options"
     bl_idname = "NODE_PT_ntp_options"
     bl_space_type = 'NODE_EDITOR'
@@ -201,8 +209,13 @@ class NTPOptionsPanel(bpy.types.Panel):
                 "category"
             ]
             option_list += addon_options
-            if ntp_options.category == 'CUSTOM':
+            if ntp_options.category == 'Custom':
                 option_list.append("custom_category")
 
         for option in option_list:
             layout.prop(ntp_options, option)
+
+classes = [
+    NTP_PG_Options,
+    NTP_PT_Options
+]
