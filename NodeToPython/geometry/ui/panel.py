@@ -1,12 +1,13 @@
 import bpy
 
-class NTPGeoNodesPanel(bpy.types.Panel):
+class NTP_PT_GeometryNodes(bpy.types.Panel):
     bl_label = "Geometry Nodes to Python"
-    bl_idname = "NODE_PT_ntp_geonodes"
+    bl_idname = "NTP_PT_geometry_nodes"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
+    bl_options = {'DEFAULT_CLOSED'} 
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,5 +23,5 @@ class NTPGeoNodesPanel(bpy.types.Panel):
         layout = self.layout
 
 classes: list[type] = [
-    NTPGeoNodesPanel
+    NTP_PT_GeometryNodes
 ]

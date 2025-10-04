@@ -1,12 +1,13 @@
 import bpy
 
-class NTPCompositorPanel(bpy.types.Panel):
+class NTP_PT_Compositor(bpy.types.Panel):
     bl_label = "Compositor to Python"
-    bl_idname = "NODE_PT_ntp_compositor"
+    bl_idname = "NTP_PT_compositor"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,5 +23,5 @@ class NTPCompositorPanel(bpy.types.Panel):
         layout = self.layout
 
 classes: list[type] = [
-    NTPCompositorPanel
+    NTP_PT_Compositor
 ]

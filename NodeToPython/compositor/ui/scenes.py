@@ -4,7 +4,7 @@ from . import panel
 
 def register_props():
     bpy.types.Scene.ntp_scene_slots = bpy.props.CollectionProperty(
-        type=Slot
+        type=NTP_PG_SceneSlot
     )
     bpy.types.Scene.ntp_scene_slots_index = bpy.props.IntProperty()
 
@@ -12,7 +12,7 @@ def unregister_props():
     del bpy.types.Scene.ntp_scene_slots
     del bpy.types.Scene.ntp_scene_slots_index
 
-class Slot(bpy.types.PropertyGroup):
+class NTP_PG_SceneSlot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="Scene Name",
         default=""
@@ -37,8 +37,8 @@ class Slot(bpy.types.PropertyGroup):
         update=update_scene
     )
 
-class AddSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_scene_slot_add"
+class NTP_OT_AddSceneSlot(bpy.types.Operator):
+    bl_idname = "ntp.add_scene_slot"
     bl_label = "Add Scene Slot"
     bl_description = "Add Scene Slot"
 
@@ -48,8 +48,8 @@ class AddSlotOperator(bpy.types.Operator):
         context.scene.ntp_scene_slots_index = len(slots) - 1
         return {'FINISHED'}
     
-class RemoveSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_scene_slot_remove"
+class NTP_OT_RemoveSceneSlot(bpy.types.Operator):
+    bl_idname = "ntp.remove_scene_slot"
     bl_label = "Remove Scene Slot"
     bl_description = "Remove Scene Slot"
 
@@ -62,22 +62,25 @@ class RemoveSlotOperator(bpy.types.Operator):
             context.scene.ntp_scene_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
-            return {'FINISHED'}
+        return {'FINISHED'}
         
-class Scene_UIList(bpy.types.UIList):
+class NTP_UL_Scene(bpy.types.UIList):
+    bl_idname = "NTP_UL_scene"
+
     def draw_item(self, context, layout, data, item, icon, active_data, active):
         if item:
             layout.prop_search(item, "scene", bpy.data, "scenes", text="")
 
-class Scene_Panel(bpy.types.Panel):
-    bl_idname = "node.ntp_scene_panel"
+class NTP_PT_Scene(bpy.types.Panel):
+    bl_idname = "NTP_PT_scene"
     bl_label = "Scenes"
-    bl_parent_id = panel.NTPCompositorPanel.bl_idname
+    bl_parent_id = panel.NTP_PT_Compositor.bl_idname
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
     bl_description = "List of bpy.types.Scene objects to replicate"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,19 +93,19 @@ class Scene_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         row.template_list(
-            "Scene_UIList", "", 
+            NTP_UL_Scene.bl_idname, "", 
             context.scene, "ntp_scene_slots", 
             context.scene, "ntp_scene_slots_index"
         )
 
         col = row.column(align=True)
-        col.operator(AddSlotOperator.bl_idname, icon="ADD", text="")
-        col.operator(RemoveSlotOperator.bl_idname, icon="REMOVE", text="")
+        col.operator(NTP_OT_AddSceneSlot.bl_idname, icon="ADD", text="")
+        col.operator(NTP_OT_RemoveSceneSlot.bl_idname, icon="REMOVE", text="")
 
 classes: list[type] = [
-    Slot,
-    AddSlotOperator,
-    RemoveSlotOperator,
-    Scene_UIList,
-    Scene_Panel
+    NTP_PG_SceneSlot,
+    NTP_OT_AddSceneSlot,
+    NTP_OT_RemoveSceneSlot,
+    NTP_UL_Scene,
+    NTP_PT_Scene
 ]

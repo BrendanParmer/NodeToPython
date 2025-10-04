@@ -16,9 +16,9 @@ GEO_OP_RESERVED_NAMES = {OBJECT_NAME,
                          OBJECT,
                          MODIFIER}
 
-class NTPGeoNodesOperator(NTP_Operator):
-    bl_idname = "node.ntp_geo_nodes"
-    bl_label = "Geo Nodes to Python"
+class NTP_OT_GeometryNodes(NTP_Operator):
+    bl_idname = "ntp.geometry_nodes"
+    bl_label = "Geometry Nodes to Python"
     bl_options = {'REGISTER', 'UNDO'}
 
     geo_nodes_group_name: bpy.props.StringProperty(name="Node Group")

@@ -4,7 +4,7 @@ from . import panel
 
 def register_props():
     bpy.types.Scene.ntp_light_slots = bpy.props.CollectionProperty(
-        type=Slot
+        type=NTP_PG_LightSlot
     )
     bpy.types.Scene.ntp_light_slots_index = bpy.props.IntProperty()
 
@@ -12,7 +12,7 @@ def unregister_props():
     del bpy.types.Scene.ntp_light_slots
     del bpy.types.Scene.ntp_light_slots_index
     
-class Slot(bpy.types.PropertyGroup):
+class NTP_PG_LightSlot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="Light Name",
         default=""
@@ -37,8 +37,8 @@ class Slot(bpy.types.PropertyGroup):
         update=update_light
     )
 
-class AddSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_light_slot_add"
+class NTP_OT_AddLightSlot(bpy.types.Operator):
+    bl_idname = "ntp.add_light_slot"
     bl_label = "Add Light Slot"
     bl_description = "Add Light Slot"
 
@@ -48,8 +48,8 @@ class AddSlotOperator(bpy.types.Operator):
         context.scene.ntp_light_slots_index = len(slots) - 1
         return {'FINISHED'}
     
-class RemoveSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_light_slot_remove"
+class NTP_OT_RemoveLightSlot(bpy.types.Operator):
+    bl_idname = "ntp.remove_light_slot"
     bl_label = "Remove Light Slot"
     bl_description = "Remove Light Slot"
 
@@ -62,22 +62,25 @@ class RemoveSlotOperator(bpy.types.Operator):
             context.scene.ntp_light_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
-            return {'FINISHED'}
+        return {'FINISHED'}
         
-class Light_UIList(bpy.types.UIList):
+class NTP_UL_Light(bpy.types.UIList):
+    bl_idname = "NTP_UL_light"
+
     def draw_item(self, context, layout, data, item, icon, active_data, active):
         if item:
             layout.prop_search(item, "light", bpy.data, "lights", text="")
 
-class Light_Panel(bpy.types.Panel):
-    bl_idname = "node.ntp_light_panel"
+class NTP_PT_Light(bpy.types.Panel):
+    bl_idname = "NTP_PT_light"
     bl_label = "Lights"
-    bl_parent_id = panel.NTPShaderPanel.bl_idname
+    bl_parent_id = panel.NTP_PT_Shader.bl_idname
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
     bl_description = "List of bpy.types.Light objects to replicate"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,19 +93,19 @@ class Light_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         row.template_list(
-            "Light_UIList", "", 
+            NTP_UL_Light.bl_idname, "", 
             context.scene, "ntp_light_slots", 
             context.scene, "ntp_light_slots_index"
         )
 
         col = row.column(align=True)
-        col.operator(AddSlotOperator.bl_idname, icon="ADD", text="")
-        col.operator(RemoveSlotOperator.bl_idname, icon="REMOVE", text="")
+        col.operator(NTP_OT_AddLightSlot.bl_idname, icon="ADD", text="")
+        col.operator(NTP_OT_RemoveLightSlot.bl_idname, icon="REMOVE", text="")
 
 classes: list[type] = [
-    Slot,
-    AddSlotOperator,
-    RemoveSlotOperator,
-    Light_UIList,
-    Light_Panel
+    NTP_PG_LightSlot,
+    NTP_OT_AddLightSlot,
+    NTP_OT_RemoveLightSlot,
+    NTP_UL_Light,
+    NTP_PT_Light
 ]

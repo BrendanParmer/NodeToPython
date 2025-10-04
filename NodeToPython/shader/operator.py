@@ -13,9 +13,9 @@ MAT_VAR = "mat"
 NODE = "node"
 SHADER_OP_RESERVED_NAMES = {MAT_VAR, NODE}
 
-class NTPShaderOperator(NTP_Operator):
-    bl_idname = "node.ntp_material"
-    bl_label =  "Material to Python"
+class NTP_OT_Shader(NTP_Operator):
+    bl_idname = "ntp.shader"
+    bl_label =  "Shader to Python"
     bl_options = {'REGISTER', 'UNDO'}
     
     #TODO: add option for general shader node groups

@@ -4,7 +4,7 @@ from . import panel
 
 def register_props():
     bpy.types.Scene.ntp_world_slots = bpy.props.CollectionProperty(
-        type=Slot
+        type=NTP_PG_WorldSlot
     )
     bpy.types.Scene.ntp_world_slots_index = bpy.props.IntProperty()
 
@@ -12,7 +12,7 @@ def unregister_props():
     del bpy.types.Scene.ntp_world_slots
     del bpy.types.Scene.ntp_world_slots_index
     
-class Slot(bpy.types.PropertyGroup):
+class NTP_PG_WorldSlot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="World Name",
         default=""
@@ -37,8 +37,8 @@ class Slot(bpy.types.PropertyGroup):
         update=update_world
     )
 
-class AddSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_world_slot_add"
+class NTP_OT_AddWorldSlot(bpy.types.Operator):
+    bl_idname = "ntp.add_world_slot"
     bl_label = "Add World Slot"
     bl_description = "Add World Slot"
 
@@ -48,8 +48,8 @@ class AddSlotOperator(bpy.types.Operator):
         context.scene.ntp_world_slots_index = len(slots) - 1
         return {'FINISHED'}
     
-class RemoveSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_world_slot_remove"
+class NTP_OT_RemoveWorldSlot(bpy.types.Operator):
+    bl_idname = "ntp.remove_world_slot"
     bl_label = "Remove World Slot"
     bl_description = "Remove World Slot"
 
@@ -62,22 +62,25 @@ class RemoveSlotOperator(bpy.types.Operator):
             context.scene.ntp_world_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
-            return {'FINISHED'}
+        return {'FINISHED'}
         
-class World_UIList(bpy.types.UIList):
+class NTP_UL_World(bpy.types.UIList):
+    bl_idname = "NTP_UL_world"
+
     def draw_item(self, context, layout, data, item, icon, active_data, active):
         if item:
             layout.prop_search(item, "world", bpy.data, "worlds", text="")
 
-class World_Panel(bpy.types.Panel):
-    bl_idname = "node.ntp_world_panel"
+class NTP_PT_World(bpy.types.Panel):
+    bl_idname = "NTP_PT_world"
     bl_label = "Worlds"
-    bl_parent_id = panel.NTPShaderPanel.bl_idname
+    bl_parent_id = panel.NTP_PT_Shader.bl_idname
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
     bl_description = "List of bpy.types.World objects to replicate"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,19 +93,19 @@ class World_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         row.template_list(
-            "World_UIList", "", 
+            NTP_UL_World.bl_idname, "", 
             context.scene, "ntp_world_slots", 
             context.scene, "ntp_world_slots_index"
         )
 
         col = row.column(align=True)
-        col.operator(AddSlotOperator.bl_idname, icon="ADD", text="")
-        col.operator(RemoveSlotOperator.bl_idname, icon="REMOVE", text="")
+        col.operator(NTP_OT_AddWorldSlot.bl_idname, icon="ADD", text="")
+        col.operator(NTP_OT_RemoveWorldSlot.bl_idname, icon="REMOVE", text="")
 
 classes: list[type] = [
-    Slot,
-    AddSlotOperator,
-    RemoveSlotOperator,
-    World_UIList,
-    World_Panel
+    NTP_PG_WorldSlot,
+    NTP_OT_AddWorldSlot,
+    NTP_OT_RemoveWorldSlot,
+    NTP_UL_World,
+    NTP_PT_World
 ]

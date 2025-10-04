@@ -1,13 +1,14 @@
 import bpy
 
-class NTPShaderPanel(bpy.types.Panel):
+class NTP_PT_Shader(bpy.types.Panel):
     bl_label = "Shader to Python"
-    bl_idname = "NODE_PT_ntp_shader"
+    bl_idname = "NTP_PT_shader"
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
-
+    bl_options = {'DEFAULT_CLOSED'}
+    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
@@ -22,5 +23,5 @@ class NTPShaderPanel(bpy.types.Panel):
         layout = self.layout
 
 classes: list[type] = [
-    NTPShaderPanel
+    NTP_PT_Shader
 ]

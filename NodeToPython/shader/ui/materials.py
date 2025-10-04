@@ -4,7 +4,7 @@ from . import panel
 
 def register_props():
     bpy.types.Scene.ntp_material_slots = bpy.props.CollectionProperty(
-        type=Slot
+        type=NTP_PG_MaterialSlot
     )
     bpy.types.Scene.ntp_material_slots_index = bpy.props.IntProperty()
 
@@ -12,7 +12,7 @@ def unregister_props():
     del bpy.types.Scene.ntp_material_slots
     del bpy.types.Scene.ntp_material_slots_index
     
-class Slot(bpy.types.PropertyGroup):
+class NTP_PG_MaterialSlot(bpy.types.PropertyGroup):
     name: bpy.props.StringProperty(
         name="Material Name",
         default=""
@@ -37,8 +37,8 @@ class Slot(bpy.types.PropertyGroup):
         update=update_material
     )
 
-class AddSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_material_slot_add"
+class NTP_OT_AddMaterialSlot(bpy.types.Operator):
+    bl_idname = "ntp.add_material_slot"
     bl_label = "Add Material Slot"
     bl_description = "Add Material Slot"
 
@@ -48,8 +48,8 @@ class AddSlotOperator(bpy.types.Operator):
         context.scene.ntp_material_slots_index = len(slots) - 1
         return {'FINISHED'}
     
-class RemoveSlotOperator(bpy.types.Operator):
-    bl_idname = "node.ntp_material_slot_remove"
+class NTP_OT_RemoveMaterialSlot(bpy.types.Operator):
+    bl_idname = "ntp.remove_material_slot"
     bl_label = "Remove Material Slot"
     bl_description = "Remove Material Slot"
 
@@ -62,22 +62,25 @@ class RemoveSlotOperator(bpy.types.Operator):
             context.scene.ntp_material_slots_index = min(
                 max(0, idx - 1), len(slots) - 1
             )
-            return {'FINISHED'}
+        return {'FINISHED'}
         
-class Material_UIList(bpy.types.UIList):
+class NTP_UL_Material(bpy.types.UIList):
+    bl_idname = "NTP_UL_material"
+
     def draw_item(self, context, layout, data, item, icon, active_data, active):
         if item:
             layout.prop_search(item, "material", bpy.data, "materials", text="")
 
-class Material_Panel(bpy.types.Panel):
-    bl_idname = "node.ntp_material_panel"
+class NTP_PT_Material(bpy.types.Panel):
+    bl_idname = "NTP_PT_material"
     bl_label = "Materials"
-    bl_parent_id = panel.NTPShaderPanel.bl_idname
+    bl_parent_id = panel.NTP_PT_Shader.bl_idname
     bl_space_type = 'NODE_EDITOR'
     bl_region_type = 'UI'
     bl_context = ''
     bl_category = "NodeToPython"
     bl_description = "List of bpy.types.Material objects to replicate"
+    bl_options = {'DEFAULT_CLOSED'}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,19 +93,19 @@ class Material_Panel(bpy.types.Panel):
         layout = self.layout
         row = layout.row()
         row.template_list(
-            "Material_UIList", "", 
+            NTP_UL_Material.bl_idname, "", 
             context.scene, "ntp_material_slots", 
             context.scene, "ntp_material_slots_index"
         )
 
         col = row.column(align=True)
-        col.operator(AddSlotOperator.bl_idname, icon="ADD", text="")
-        col.operator(RemoveSlotOperator.bl_idname, icon="REMOVE", text="")
+        col.operator(NTP_OT_AddMaterialSlot.bl_idname, icon="ADD", text="")
+        col.operator(NTP_OT_RemoveMaterialSlot.bl_idname, icon="REMOVE", text="")
 
 classes: list[type] = [
-    Slot,
-    AddSlotOperator,
-    RemoveSlotOperator,
-    Material_UIList,
-    Material_Panel
+    NTP_PG_MaterialSlot,
+    NTP_OT_AddMaterialSlot,
+    NTP_OT_RemoveMaterialSlot,
+    NTP_UL_Material,
+    NTP_PT_Material
 ]
