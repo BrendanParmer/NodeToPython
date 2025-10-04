@@ -183,8 +183,8 @@ class NTP_PT_Options(bpy.types.Panel):
 
         option_list = [
             "mode",
-            "include_group_socket_values",
-            "set_dimensions", 
+            "set_group_defaults",
+            "set_node_sizes", 
             "indentation_type"
         ]
         if bpy.app.version >= (3, 4, 0):
