@@ -46,12 +46,15 @@ NO_DEFAULT_SOCKETS = {
     bpy.types.NodeTreeInterfaceSocketMatrix,
     bpy.types.NodeTreeInterfaceSocketObject,
     bpy.types.NodeTreeInterfaceSocketShader,
-    bpy.types.NodeTreeInterfaceSocketTexture
+    bpy.types.NodeTreeInterfaceSocketTexture,
 }
 
 if bpy.app.version >= (5, 0, 0):
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketBundle)
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketClosure)
+
+if bpy.app.version >= (5, 1, 0):
+    NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketFont)
 
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {
@@ -1507,6 +1510,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 # textures
                 elif input.bl_idname == 'NodeSocketTexture':
                     self._in_file_inputs(input, socket_var, "textures")
+                    default_val = None
+
+                elif input.bl_idname == 'NodeSocketFont':
+                    self._in_file_inputs(input, socket_var, "fonts")
                     default_val = None
 
                 else:
