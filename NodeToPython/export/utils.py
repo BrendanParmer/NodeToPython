@@ -111,6 +111,27 @@ def vec4_to_py_str(vec4) -> str:
     """
     return f"({vec4[0]}, {vec4[1]}, {vec4[2]}, {vec4[3]})"
 
+def vec_to_py_str(vec, dimensions: int) -> str:
+    """
+    Converts a {dimensions}-D vector to a string usable aby the add-on
+
+    Parameters:
+    vec: a {dimensions}-D vector
+    dimensions: number of dimensions
+
+    Returns:
+    (str): string version
+    """
+    if dimensions == 1:
+        return vec1_to_py_str(vec)
+    elif dimensions == 2:
+        return vec2_to_py_str(vec)
+    elif dimensions == 3:
+        return vec3_to_py_str(vec)
+    elif dimensions == 4:
+        return vec4_to_py_str(vec)
+    return ""
+
 def array_to_py_str(array: bpy_prop_array) -> str:
     """
     Converts a bpy_prop_array into a string

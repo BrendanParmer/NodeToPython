@@ -576,16 +576,39 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         elif type(dv) == mathutils.Euler:
             dv = vec3_to_py_str(dv)
         elif type(dv) == bpy_prop_array:
-            dv = array_to_py_str(dv)
+            dimensions = getattr(socket_interface, "dimensions")
+            if dimensions != len(dv):
+                self._operator.report(
+                    {'WARNING'},
+                    f"Mismatched dimensions ({dimensions}) and "
+                    f"default value ({len(dv)}) for socket {socket_var}"
+                )
+                if dimensions < len(dv):
+                    dv = vec_to_py_str(dv, dimensions)
+                else:
+                    return
+            else:
+                dv = array_to_py_str(dv)
         elif type(dv) == str:
             dv = str_to_py_str(dv)
         elif type(dv) == mathutils.Vector:
-            if len(dv) == 2:
-                dv = vec2_to_py_str(dv)
-            elif len(dv) == 3:
-                dv = vec3_to_py_str(dv)
-            elif len(dv) == 4:
-                dv = vec4_to_py_str(dv)
+            dimensions = getattr(socket_interface, "dimensions")
+            if dimensions != len(dv):
+                self._operator.report(
+                    {'WARNING'},
+                    f"Mismatched dimensions ({dimensions}) and "
+                    f"default value ({len(dv)}) for socket {socket_var}"
+                )
+                return
+            if dimensions in {2, 3, 4}:
+                dv = vec_to_py_str(dv, dimensions)
+            else:
+                self._operator.report(
+                    {'WARNING'},
+                    f"Incorrect number of dimensions {dimensions} "
+                    f"found for socket {socket_var}"
+                )
+                return
         self._write(f"{socket_var}.default_value = {dv}")
 
         # min value
