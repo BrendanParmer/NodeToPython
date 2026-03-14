@@ -64,12 +64,12 @@ class NTPNodeSetting(NamedTuple):
 	name_: str
 	st_: ST
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 1, 0)
+	max_version_: tuple = (5, 2, 0)
 
 class NodeInfo(NamedTuple):
 	attributes_: list[NTPNodeSetting]
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 1, 0)
+	max_version_: tuple = (5, 2, 0)
 
 node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeAlphaOver' : NodeInfo(
@@ -647,6 +647,11 @@ node_settings : dict[str, NodeInfo] = {
 		]
 	),
 
+	'CompositorNodeMaskToSDF' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
+	),
+
 	'CompositorNodeMath' : NodeInfo(
 		[
 			NTPNodeSetting("operation", ST.ENUM),
@@ -802,6 +807,11 @@ node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeSeparateXYZ' : NodeInfo(
 		[],
 		max_version_ = (5, 0, 0)
+	),
+
+	'CompositorNodeSequencerStripInfo' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
 	),
 
 	'CompositorNodeSetAlpha' : NodeInfo(
@@ -1093,6 +1103,11 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'FunctionNodeMatrixSVD' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
+	),
+
 	'FunctionNodeProjectPoint' : NodeInfo(
 		[]
 	),
@@ -1220,6 +1235,13 @@ node_settings : dict[str, NodeInfo] = {
 		]
 	),
 
+	'GeometryNodeBoneInfo' : NodeInfo(
+		[
+			NTPNodeSetting("transform_space", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
 	'GeometryNodeBoundBox' : NodeInfo(
 		[]
 	),
@@ -1280,6 +1302,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeCornersOfVertex' : NodeInfo(
 		[]
+	),
+
+	'GeometryNodeCubeGridTopology' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
 	),
 
 	'GeometryNodeCurveArc' : NodeInfo(
@@ -1495,6 +1522,13 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 0, 0)
 	),
 
+	'GeometryNodeFieldToList' : NodeInfo(
+		[
+			NTPNodeSetting("active_index", ST.INT),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
 	'GeometryNodeFieldVariance' : NodeInfo(
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
@@ -1540,6 +1574,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeGeometryToInstance' : NodeInfo(
 		[]
+	),
+
+	'GeometryNodeGetGeometryBundle' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
 	),
 
 	'GeometryNodeGetNamedGrid' : NodeInfo(
@@ -1590,9 +1629,23 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 0, 0)
 	),
 
+	'GeometryNodeGridClip' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
 	'GeometryNodeGridCurl' : NodeInfo(
 		[],
 		min_version_ = (5, 0, 0)
+	),
+
+	'GeometryNodeGridDilateAndErode' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
 	),
 
 	'GeometryNodeGridDivergence' : NodeInfo(
@@ -1617,6 +1670,20 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 0, 0)
 	),
 
+	'GeometryNodeGridMean' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
+	'GeometryNodeGridMedian' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
 	'GeometryNodeGridPrune' : NodeInfo(
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
@@ -1626,6 +1693,13 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeGridToMesh' : NodeInfo(
 		[]
+	),
+
+	'GeometryNodeGridToPoints' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
 	),
 
 	'GeometryNodeGridVoxelize' : NodeInfo(
@@ -1873,12 +1947,15 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
 		],
-		min_version_ = (5, 0, 0)
+		min_version_ = (5, 0, 0),
+		max_version_ = (5, 1, 0)
 	),
 
 	'GeometryNodeListGetItem' : NodeInfo(
 		[
-			NTPNodeSetting("data_type", ST.ENUM),
+			NTPNodeSetting("data_type", ST.ENUM, max_version_=(5, 1, 0)),
+			NTPNodeSetting("socket_type", ST.ENUM, min_version_=(5, 1, 0)),
+			NTPNodeSetting("structure_type", ST.ENUM, min_version_=(5, 1, 0)),
 		],
 		min_version_ = (5, 0, 0)
 	),
@@ -2048,7 +2125,9 @@ node_settings : dict[str, NodeInfo] = {
 	),
 
 	'GeometryNodeRealizeInstances' : NodeInfo(
-		[]
+		[
+			NTPNodeSetting("realize_to_point_domain", ST.BOOL, min_version_=(5, 1, 0)),
+		]
 	),
 
 	'GeometryNodeRemoveAttribute' : NodeInfo(
@@ -2224,6 +2303,11 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'GeometryNodeSetGeometryBundle' : NodeInfo(
+		[],
+		min_version_ = (5, 1, 0)
+	),
+
 	'GeometryNodeSetGeometryName' : NodeInfo(
 		[],
 		min_version_ = (4, 3, 0)
@@ -2362,11 +2446,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeStringToCurves' : NodeInfo(
 		[
-			NTPNodeSetting("align_x", ST.ENUM),
-			NTPNodeSetting("align_y", ST.ENUM),
-			NTPNodeSetting("font", ST.FONT),
-			NTPNodeSetting("overflow", ST.ENUM),
-			NTPNodeSetting("pivot_mode", ST.ENUM),
+			NTPNodeSetting("align_x", ST.ENUM, max_version_=(5, 1, 0)),
+			NTPNodeSetting("align_y", ST.ENUM, max_version_=(5, 1, 0)),
+			NTPNodeSetting("font", ST.FONT, max_version_=(5, 1, 0)),
+			NTPNodeSetting("overflow", ST.ENUM, max_version_=(5, 1, 0)),
+			NTPNodeSetting("pivot_mode", ST.ENUM, max_version_=(5, 1, 0)),
 		]
 	),
 
@@ -2548,6 +2632,14 @@ node_settings : dict[str, NodeInfo] = {
 		]
 	),
 
+	'NodeGetBundleItem' : NodeInfo(
+		[
+			NTPNodeSetting("socket_type", ST.ENUM),
+			NTPNodeSetting("structure_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
+	),
+
 	'NodeGroup' : NodeInfo(
 		[
 			NTPNodeSetting("node_tree", ST.NODE_TREE),
@@ -2582,6 +2674,14 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("define_signature", ST.BOOL),
 		],
 		min_version_ = (5, 0, 0)
+	),
+
+	'NodeStoreBundleItem' : NodeInfo(
+		[
+			NTPNodeSetting("socket_type", ST.ENUM),
+			NTPNodeSetting("structure_type", ST.ENUM),
+		],
+		min_version_ = (5, 1, 0)
 	),
 
 	'ShaderNodeAddShader' : NodeInfo(
@@ -2852,6 +2952,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'ShaderNodeNormalMap' : NodeInfo(
 		[
+			NTPNodeSetting("convention", ST.ENUM, min_version_=(5, 1, 0)),
 			NTPNodeSetting("space", ST.ENUM),
 			NTPNodeSetting("uv_map", ST.STRING),
 		]
@@ -2925,6 +3026,13 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("normalize", ST.BOOL),
 		],
 		min_version_ = (5, 0, 0)
+	),
+
+	'ShaderNodeRaycast' : NodeInfo(
+		[
+			NTPNodeSetting("only_local", ST.BOOL),
+		],
+		min_version_ = (5, 1, 0)
 	),
 
 	'ShaderNodeScript' : NodeInfo(

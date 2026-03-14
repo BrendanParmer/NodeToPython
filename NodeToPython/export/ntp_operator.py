@@ -27,7 +27,7 @@ RESERVED_NAMES = {
 }
 
 MIN_BLENDER_VERSION = (4, 2, 0)
-MAX_BLENDER_VERSION = (5, 1, 0)
+MAX_BLENDER_VERSION = (5, 2, 0)
 
 class NodeTreeInfo():
     def __init__(self):
@@ -414,7 +414,22 @@ class NTP_OT_Export(bpy.types.Operator):
                     node_info._lib_dependencies[relative_path].append(nt)
                     return
                 else:
-                    print(f"Library {lib_path} didn't seem essential, copying node groups")
+                    # Try to link to current Blender version
+                    # TODO: this fails when the tree interface changes
+                    #for parent in lib_path.parents:
+                    #    if parent.name == "datafiles":
+                    #        relative_path = lib_path.relative_to(parent)
+                    #        if relative_path not in node_info._lib_dependencies:
+                    #            node_info._lib_dependencies[relative_path] = []
+                    #        node_info._lib_dependencies[relative_path].append(nt)
+                    #        return
+                    self.report(
+                        {'WARNING'},
+                        f"Performing deep copy of node group \"{nt.name}\". "
+                        f"Library {lib_path} was not included with current "
+                        f"Blender version. If this node group came with Blender, "
+                        f"please upgrade your node group to the current version"
+                    )
 
             if nt not in self._visited:
                 self._visited.add(nt)

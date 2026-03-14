@@ -12,7 +12,7 @@ Node To Python automatically handles node layout, default values, subgroups, nam
 Blender's node-based editors are powerful, yet accessible tools, and I wanted to make scripting them easier for add-on creators. Combining Python with node based setups allows you to do things that would otherwise be tedious or impossible.
 
 ## Supported Versions
-NodeToPython v4.0.1 is supported for Blender 4.2 - 5.0 on Windows, macOS, and Linux
+NodeToPython v4.1.0 is supported for Blender 4.2 - 5.1 on Windows, macOS, and Linux
 * Some work is required to update NodeToPython for each Blender version, so experimental versions may not work properly and may even crash. 
 * New nodes, updated settings, and new node tree features require development to support. 
 * NodeToPython updates for new Blender versions usually doesn't start until the Beta phase of the release cycle
@@ -38,12 +38,14 @@ In the options panel, select either **Script** or **Add-on**.
 * **Script** mode creates a function that generates the node tree and copies it to your Blender clipboard.
 * **Add-on** mode generates a zip file for you in the save directory specified in the NodeToPython menu. From here, you can install it like a regular add-on. The generated add-on comes complete with operator registration and creating a modifier/material/scene for the node tree to be used in.
 
+* Be sure to check the Info window for any warnings that may affect the export of your node tree!
+
 ## Bug Reports and Suggestions
 
 When submitting an issue, please include 
 
-* Your version of Blender (4.2 - 5.0)
-* Your operating system
+* Your version of Blender (4.2 - 5.1)
+* Your operating system (Windows, MacOS, or Linux)
 * Steps to reproduce the issue or a description of what you were trying to accomplish. Providing a test blend file is especially helpful
 
 Got suggestions? Please create an [issue](https://github.com/BrendanParmer/NodeToPython/issues)! I'm happy to hear what features people want

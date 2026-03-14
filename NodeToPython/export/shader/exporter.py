@@ -160,7 +160,8 @@ class ShaderExporter(NodeTreeExporter):
             f"type = {enum_to_py_str(light_type)})",
             indent_level
         )
-        self._write(f"{self._obj_var}.use_nodes = True\n\n", indent_level)
+        if bpy.app.version < (5, 1, 0):
+            self._write(f"{self._obj_var}.use_nodes = True\n\n", indent_level)
         self._write(
             f"{LIGHT_OBJ} = bpy.data.objects.new("
             f"name = {str_to_py_str(light.name)}, "
