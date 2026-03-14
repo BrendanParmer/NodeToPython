@@ -617,7 +617,7 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
             min_val = getattr(socket_interface, "min_value")
             self._write(f"{socket_var}.min_value = {min_val}")
         # max value
-        if hasattr(socket_interface, "min_value"):
+        if hasattr(socket_interface, "max_value"):
             max_val = getattr(socket_interface, "max_value")
             self._write(f"{socket_var}.max_value = {max_val}")
 
