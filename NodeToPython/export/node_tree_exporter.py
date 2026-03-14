@@ -576,14 +576,15 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         elif type(dv) == mathutils.Euler:
             dv = vec3_to_py_str(dv)
         elif type(dv) == bpy_prop_array:
-            dimensions = getattr(socket_interface, "dimensions")
-            if dimensions != len(dv):
-                self._operator.report(
-                    {'WARNING'},
-                    f"Mismatched dimensions ({dimensions}) and "
-                    f"default value ({len(dv)}) for socket {socket_var}"
-                )
-                if dimensions < len(dv):
+            if hasattr(socket_interface, "dimensions"):
+                dimensions = getattr(socket_interface, "dimensions")
+                if dimensions != len(dv):
+                    self._operator.report(
+                        {'WARNING'},
+                        f"Mismatched dimensions ({dimensions}) and "
+                        f"default value ({len(dv)}) for socket {socket_var}"
+                    )
+                if dimensions <= len(dv):
                     dv = vec_to_py_str(dv, dimensions)
                 else:
                     return
