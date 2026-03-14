@@ -414,15 +414,6 @@ class NTP_OT_Export(bpy.types.Operator):
                     node_info._lib_dependencies[relative_path].append(nt)
                     return
                 else:
-                    # Try to link to current Blender version
-                    # TODO: this fails when the tree interface changes
-                    #for parent in lib_path.parents:
-                    #    if parent.name == "datafiles":
-                    #        relative_path = lib_path.relative_to(parent)
-                    #        if relative_path not in node_info._lib_dependencies:
-                    #            node_info._lib_dependencies[relative_path] = []
-                    #        node_info._lib_dependencies[relative_path].append(nt)
-                    #        return
                     self.report(
                         {'WARNING'},
                         f"Performing deep copy of node group \"{nt.name}\". "
