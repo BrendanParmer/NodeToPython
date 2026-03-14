@@ -60,5 +60,12 @@ In particular, this tool generates code that requires the Blender Python API, wh
 
 **Disclaimer**: The authors of this tool are not legal professionals. This notice is provided for informational purposes only and should not be construed as legal advice. For specific legal advice related to the use of this tool and compliance with the GPL or other legal matters, please consult a qualified attorney.
 
-# Credits
+## Other Cool Projects
+* Instead of using the raw `bpy` API, these projects allow you to script node trees at a higher level of abstraction:
+    * [nodebpy](https://github.com/BradyAJohnston/nodebpy) by Brady Johnston - Build node trees in Blender more elegantly with code
+    * [geonodes](https://github.com/al1brn/geonodes) by al1brn - Create Blender geometry nodes with python script
+    * [Geometry Script](https://github.com/carson-katri/geometry-script) by Carson Katri - A scripting API for Blender's Geometry Nodes
+* [Tree Clipper](https://github.com/Algebraic-UG/tree_clipper) by Algebraic UG - Add-on and library for exporting and importing Blender node trees as JSON
+
+## Credits
 See [CONTRIBUTORS.md](./CONTRIBUTORS.md) for all the people who've made this project possible
