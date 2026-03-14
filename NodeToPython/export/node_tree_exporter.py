@@ -46,12 +46,15 @@ NO_DEFAULT_SOCKETS = {
     bpy.types.NodeTreeInterfaceSocketMatrix,
     bpy.types.NodeTreeInterfaceSocketObject,
     bpy.types.NodeTreeInterfaceSocketShader,
-    bpy.types.NodeTreeInterfaceSocketTexture
+    bpy.types.NodeTreeInterfaceSocketTexture,
 }
 
 if bpy.app.version >= (5, 0, 0):
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketBundle)
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketClosure)
+
+if bpy.app.version >= (5, 1, 0):
+    NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketFont)
 
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {
@@ -573,16 +576,40 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         elif type(dv) == mathutils.Euler:
             dv = vec3_to_py_str(dv)
         elif type(dv) == bpy_prop_array:
-            dv = array_to_py_str(dv)
+            if hasattr(socket_interface, "dimensions"):
+                dimensions = getattr(socket_interface, "dimensions")
+                if dimensions != len(dv):
+                    self._operator.report(
+                        {'WARNING'},
+                        f"Mismatched dimensions ({dimensions}) and "
+                        f"default value ({len(dv)}) for socket {socket_var}"
+                    )
+                if dimensions <= len(dv):
+                    dv = vec_to_py_str(dv, dimensions)
+                else:
+                    return
+            else:
+                dv = array_to_py_str(dv)
         elif type(dv) == str:
             dv = str_to_py_str(dv)
         elif type(dv) == mathutils.Vector:
-            if len(dv) == 2:
-                dv = vec2_to_py_str(dv)
-            elif len(dv) == 3:
-                dv = vec3_to_py_str(dv)
-            elif len(dv) == 4:
-                dv = vec4_to_py_str(dv)
+            dimensions = getattr(socket_interface, "dimensions")
+            if dimensions != len(dv):
+                self._operator.report(
+                    {'WARNING'},
+                    f"Mismatched dimensions ({dimensions}) and "
+                    f"default value ({len(dv)}) for socket {socket_var}"
+                )
+                return
+            if dimensions in {2, 3, 4}:
+                dv = vec_to_py_str(dv, dimensions)
+            else:
+                self._operator.report(
+                    {'WARNING'},
+                    f"Incorrect number of dimensions {dimensions} "
+                    f"found for socket {socket_var}"
+                )
+                return
         self._write(f"{socket_var}.default_value = {dv}")
 
         # min value
@@ -590,7 +617,7 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
             min_val = getattr(socket_interface, "min_value")
             self._write(f"{socket_var}.min_value = {min_val}")
         # max value
-        if hasattr(socket_interface, "min_value"):
+        if hasattr(socket_interface, "max_value"):
             max_val = getattr(socket_interface, "max_value")
             self._write(f"{socket_var}.max_value = {max_val}")
 
@@ -1507,6 +1534,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 # textures
                 elif input.bl_idname == 'NodeSocketTexture':
                     self._in_file_inputs(input, socket_var, "textures")
+                    default_val = None
+
+                elif input.bl_idname == 'NodeSocketFont':
+                    self._in_file_inputs(input, socket_var, "fonts")
                     default_val = None
 
                 else:
