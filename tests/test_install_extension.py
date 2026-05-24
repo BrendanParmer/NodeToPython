@@ -1,8 +1,7 @@
-from pathlib import Path
-import sys
-import unittest
+from ntp_test import NTPTest
 
-class TestExtension(unittest.TestCase):
+class TestExtension(NTPTest):
+    """
     @classmethod
     def setUpClass(cls):
         repo = str(Path(__file__).parent.parent)
@@ -19,7 +18,7 @@ class TestExtension(unittest.TestCase):
         )
         cls.module_path = f"bl_ext.{repo_module}.NodeToPython"
         bpy.ops.preferences.addon_enable(module=cls.module_path)
-
+    """
     def test_disable_enable(self):
         try:
             import bpy
@@ -40,8 +39,9 @@ class TestExtension(unittest.TestCase):
         self.assertTrue(hasattr(bpy.context.scene, "ntp_material_slots"))
         self.assertTrue(hasattr(bpy.context.scene, "ntp_shader_node_group_slots"))
         self.assertTrue(hasattr(bpy.context.scene, "ntp_world_slots"))
-
+    """
     @classmethod
     def tearDownClass(cls):
         import bpy
         bpy.ops.preferences.addon_disable(module=cls.module_path)
+    """
