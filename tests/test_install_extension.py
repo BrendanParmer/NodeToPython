@@ -12,12 +12,17 @@ class TestExtension(NTPTest):
     def test_has_ntp_props(self):
         import bpy
 
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_options"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_compositor_node_group_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_scene_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_geometry_node_group_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_light_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_line_style_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_material_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_shader_node_group_slots"))
-        self.assertTrue(hasattr(bpy.context.scene, "ntp_world_slots"))
+        ntp_props = [
+            "ntp_options",
+            "ntp_compositor_node_group_slots",
+            "ntp_scene_slots",
+            "ntp_geometry_node_group_slots",
+            "ntp_light_slots",
+            "ntp_line_style_slots",
+            "ntp_material_slots",
+            "ntp_shader_node_group_slots",
+            "ntp_world_slots"
+        ]
+
+        for prop in ntp_props:
+            self.assertTrue(hasattr(bpy.context.scene, prop))

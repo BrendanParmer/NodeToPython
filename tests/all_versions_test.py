@@ -17,7 +17,8 @@ tests_dir = pathlib.Path(__file__).parent
 for version in blender_versions:
     subprocess.run(
         [
-            f"{blender_location}/{version}/blender --background --factory-startup --python {tests_dir}/__init__.py"
+            f"{blender_location}/{version}/blender --background "
+            f"--factory-startup --python {tests_dir}/__init__.py"
         ],
         shell=True, check=True
     )

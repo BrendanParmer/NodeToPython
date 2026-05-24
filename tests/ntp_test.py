@@ -1,10 +1,13 @@
 import pathlib
+import sys
 import unittest
 
 class NTPTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         repo = str(pathlib.Path(__file__).parent.parent)
+        # Allows for relative imports of NodeToPython from tests module
+        sys.path.insert(0, repo)
 
         import bpy
         bpy.ops.wm.read_factory_settings(
