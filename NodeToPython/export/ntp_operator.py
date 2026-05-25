@@ -353,7 +353,7 @@ class NTP_OT_Export(bpy.types.Operator):
                     dependency_info = self._node_trees[dependency]
                     base_dependents = dependency_info._base_dependents
                     base_dependents.add(base_tree)
-                    if len(base_dependents) > 1:
+                    if len(base_dependents) > 1 and not dependency_info._is_base:
                         dependency_info._module = common_module
                         if common_module not in self._used_vars:
                             self._used_vars[common_module] = 0

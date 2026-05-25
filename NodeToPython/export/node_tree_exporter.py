@@ -671,13 +671,13 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
             self._write(f"{node_var}.use_custom_color = True")
             self._write(f"{node_var}.color = {vec3_to_py_str(node.color)}")
 
-        # mute
-        if node.mute:
-            self._write(f"{node_var}.mute = True")
+        bool_flags = [
+            "mute", "hide", "show_options", "show_preview","show_texture"
+        ]
 
-        # hide
-        if node.hide:
-            self._write(f"{node_var}.hide = True")
+        for flag in bool_flags:
+            if getattr(node, flag, False):
+                self._write(f"{node_var}.{flag} = True")
 
         # Warning propagation
         if bpy.app.version >= (4, 3, 0):
