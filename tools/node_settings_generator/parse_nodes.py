@@ -1,5 +1,5 @@
 import argparse
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, SoupStrainer
 from threading import Thread, Lock
 from io import TextIOWrapper
 import os
@@ -39,7 +39,7 @@ log_file = None
 
 BLENDER_3_MAX_VERSION = 6
 BLENDER_4_MAX_VERSION = 5
-BLENDER_5_MAX_VERSION = 1
+BLENDER_5_MAX_VERSION = 2
 
 NTP_MIN_VERSION = Version(4, 2)
 
@@ -134,6 +134,58 @@ def download_file(filepath: str, version: Version, local_path: str) -> bool:
     print(f"Downloaded {file_url} to {local_path}")
     return True
 
+def get_subclass_links(
+    current: str, 
+    parent: str, 
+    version: Version, 
+    soup: BeautifulSoup
+) -> list:
+    main_id = f"{current.lower()}-{parent.lower()}"
+    sections = soup.find_all(id=main_id)
+    if not sections:
+        raise ValueError(f"{version.tuple_str()} {current}: "
+                            f"Couldn't find main section with id {main_id}")
+
+    section = sections[0]
+
+    if version < (5, 2):
+        paragraphs = section.find_all("p")
+        if len(paragraphs) < 2:
+            raise ValueError(f"{version.tuple_str()} {current}: "
+                         f"Couldn't find subclass section")
+
+        subclasses_paragraph = paragraphs[1]
+        if not subclasses_paragraph.text.strip().startswith("subclasses —"):
+            # No subclasses for this type
+            process_node(current, section, version)
+            return []
+
+        subclass_anchors = subclasses_paragraph.find_all("a")
+        if not subclass_anchors:
+            raise ValueError(f"{version.tuple_str()} {current} "
+                             f"No anchors in subclasses paragraph")
+
+        subclass_types = [anchor.get("title") for anchor in subclass_anchors]
+        return subclass_types
+    else:
+        subclass_section_divs = soup.find_all("div", class_="toctree-wrapper compound")
+        if not subclass_section_divs or len(subclass_section_divs) < 1:
+            process_node(current, section, version)
+            return []
+        subclass_section = subclass_section_divs[0]
+        all_links = subclass_section.find_all("ul")
+        if not all_links or len(all_links) < 1:
+            raise ValueError(f"{version.tuple_str()} {current}: "
+                             f"Expected one subclass list")
+        links = all_links[0]
+        subclass_anchors = links.find_all("a")
+        if not subclass_anchors:
+            raise ValueError(f"{version.tuple_str()} {current} "
+                             f"No anchors in subclasses list")
+
+        subclass_types = [f"bpy.types.{anchor.contents[0].split('(')[0]}" 
+                          for anchor in subclass_anchors]
+        return subclass_types
 
 def get_subclasses(current: str, parent: str, root_path: str, 
                    version: Version) -> None:
@@ -149,32 +201,13 @@ def get_subclasses(current: str, parent: str, root_path: str,
     with open(current_path, "r") as current_file:
         current_html = current_file.read()
 
-    soup = BeautifulSoup(current_html, "html.parser")
-
     main_id = f"{current.lower()}-{parent.lower()}"
-    sections = soup.find_all(id=main_id)
-    if not sections:
-        raise ValueError(f"{version.tuple_str()} {current}: "
-                         f"Couldn't find main section with id {main_id}")
+    only_main = SoupStrainer(id=main_id)
 
-    section = sections[0]
-    paragraphs = section.find_all("p")
-    if len(paragraphs) < 2:
-        raise ValueError(f"{version.tuple_str()} {current}: "
-                         f"Couldn't find subclass section")
+    soup = BeautifulSoup(current_html, "html.parser", parse_only=only_main)
 
-    subclasses_paragraph = paragraphs[1]
-    if not subclasses_paragraph.text.strip().startswith("subclasses —"):
-        # No subclasses for this type
-        process_node(current, section, version)
-        return
+    subclass_types = get_subclass_links(current, parent, version, soup)
 
-    subclass_anchors = subclasses_paragraph.find_all("a")
-    if not subclass_anchors:
-        raise ValueError(f"{version.tuple_str()} {current} "
-                         f"No anchors in subclasses paragraph")
-
-    subclass_types = [anchor.get("title") for anchor in subclass_anchors]
     threads: list[Thread] = []
     for type in subclass_types:
         if not type:
