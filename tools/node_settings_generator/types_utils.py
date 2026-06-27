@@ -32,11 +32,9 @@ class ST(Enum):
     COMPOSITOR_FILE_OUTPUT_ITEMS         = auto()
     CURVE_MAPPING                        = auto()
     ENUM_DEFINITION                      = auto()
-    ENUM_ITEM                            = auto()
     EVALUATE_CLOSURE_INPUT_ITEMS         = auto()
     EVALUATE_CLOSURE_OUTPUT_ITEMS        = auto()
     FIELD_TO_GRID_ITEMS                  = auto()
-    FIELD_TO_LIST_ITEM                   = auto()
     FIELD_TO_LIST_ITEMS                  = auto()
     FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
     FOREACH_GEO_ELEMENT_INPUT_ITEMS      = auto()
@@ -129,7 +127,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "float array of 4" : ST.VEC4,
     "GeometryNodeClosureToListItems" : ST.CLOSURE_TO_LIST_ITEMS,
     "GeometryNodeFieldToGridItems" : ST.FIELD_TO_GRID_ITEMS,
-    "GeometryNodeFieldToListItem" : ST.FIELD_TO_LIST_ITEM,
+    "GeometryNodeFieldToListItem" : None, # Always read-only
     "GeometryNodeFieldToListItems" : ST.FIELD_TO_LIST_ITEMS,
     "Image" : ST.IMAGE,
     "ImageFormatSettings" : ST.IMAGE_FORMAT_SETTINGS,
@@ -150,7 +148,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeCombineBundleItems" : ST.COMBINE_BUNDLE_ITEMS,
     "NodeCompositorFileOutputItems" : ST.COMPOSITOR_FILE_OUTPUT_ITEMS,
     "NodeEnumDefinition" : ST.ENUM_DEFINITION,
-    "NodeEnumItem" : ST.ENUM_ITEM,
+    "NodeEnumItem" : None, #Always read-only
     "NodeEvaluateClosureInputItems" : ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     "NodeEvaluateClosureOutputItems" : ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     "NodeFunctionFormatStringItems" : ST.FORMAT_STRING_ITEMS,

@@ -30,11 +30,9 @@ class ST(Enum):
 	COMPOSITOR_FILE_OUTPUT_ITEMS = auto()
 	CURVE_MAPPING = auto()
 	ENUM_DEFINITION = auto()
-	ENUM_ITEM = auto()
 	EVALUATE_CLOSURE_INPUT_ITEMS = auto()
 	EVALUATE_CLOSURE_OUTPUT_ITEMS = auto()
 	FIELD_TO_GRID_ITEMS = auto()
-	FIELD_TO_LIST_ITEM = auto()
 	FIELD_TO_LIST_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_INPUT_ITEMS = auto()
@@ -1610,8 +1608,6 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeFieldToList' : NodeInfo(
 		[
-			NTPNodeSetting("active_index", ST.INT),
-			NTPNodeSetting("active_item", ST.FIELD_TO_LIST_ITEM),
 			NTPNodeSetting("list_items", ST.FIELD_TO_LIST_ITEMS),
 		],
 		min_version_ = (5, 1, 0)
@@ -2090,8 +2086,6 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeMenuSwitch' : NodeInfo(
 		[
-			NTPNodeSetting("active_index", ST.INT),
-			NTPNodeSetting("active_item", ST.ENUM_ITEM),
 			NTPNodeSetting("data_type", ST.ENUM),
 			NTPNodeSetting("enum_items", ST.MENU_SWITCH_ITEMS),
 		]
