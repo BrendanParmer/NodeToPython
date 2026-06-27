@@ -13,6 +13,7 @@ class ST(Enum):
     FLOAT       = auto()
     INT         = auto()
     STRING      = auto()
+    VEC         = auto()
     VEC1        = auto()
     VEC2        = auto()
     VEC3        = auto()
@@ -23,6 +24,7 @@ class ST(Enum):
     CAPTURE_ATTRIBUTE_ITEMS              = auto()
     CLOSURE_INPUT_ITEMS                  = auto()
     CLOSURE_OUTPUT_ITEMS                 = auto()
+    CLOSURE_TO_LIST_ITEMS                = auto()
     COLOR_MANAGED_DISPLAY_SETTINGS       = auto()
     COLOR_MANAGED_VIEW_SETTINGS          = auto()
     COLOR_RAMP                           = auto()
@@ -34,6 +36,8 @@ class ST(Enum):
     EVALUATE_CLOSURE_INPUT_ITEMS         = auto()
     EVALUATE_CLOSURE_OUTPUT_ITEMS        = auto()
     FIELD_TO_GRID_ITEMS                  = auto()
+    FIELD_TO_LIST_ITEM                   = auto()
+    FIELD_TO_LIST_ITEMS                  = auto()
     FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
     FOREACH_GEO_ELEMENT_INPUT_ITEMS      = auto()
     FOREACH_GEO_ELEMENT_MAIN_ITEMS       = auto()
@@ -83,6 +87,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.EVALUATE_CLOSURE_INPUT_ITEMS,
     ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     ST.FIELD_TO_GRID_ITEMS,
+    ST.FIELD_TO_LIST_ITEMS,
     ST.FILE_SLOTS,
     ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
     ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
@@ -101,7 +106,11 @@ READ_ONLY_TYPES : set[ST] = {
 
 doc_to_NTP_type_dict : dict[str, ST | None] = {
     "" : None,
+    "bpy_prop_array[int]" : ST.VEC,
+    "bpy_prop_array[float]" : ST.VEC,
     "bpy_prop_collection of CryptomatteEntry": ST.CRYPTOMATTE_ENTRIES,
+    "bpy_prop_collection[CryptomatteEntry]" : ST.CRYPTOMATTE_ENTRIES,
+    "bool" : ST.BOOL,
     "boolean" : ST.BOOL,
     "Collection" : ST.COLLECTION,
     "ColorManagedDisplaySettings" : ST.COLOR_MANAGED_DISPLAY_SETTINGS,
@@ -118,15 +127,20 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "float array of 2" : ST.VEC2,
     "float array of 3" : ST.VEC3,
     "float array of 4" : ST.VEC4,
+    "GeometryNodeClosureToListItems" : ST.CLOSURE_TO_LIST_ITEMS,
     "GeometryNodeFieldToGridItems" : ST.FIELD_TO_GRID_ITEMS,
+    "GeometryNodeFieldToListItem" : ST.FIELD_TO_LIST_ITEM,
+    "GeometryNodeFieldToListItems" : ST.FIELD_TO_LIST_ITEMS,
     "Image" : ST.IMAGE,
     "ImageFormatSettings" : ST.IMAGE_FORMAT_SETTINGS,
     "ImageUser" : ST.IMAGE_USER,
     "int" : ST.INT,
+    "Literal" : ST.ENUM,
     "Mask" : ST.MASK,
     "Material" : ST.MATERIAL,
     "mathutils.Color" : ST.COLOR,
-    "mathutils.Euler" : ST.EULER, #TODO
+    "mathutils.Euler" : ST.EULER,
+    "mathutils.Vector" : ST.VEC,
     "mathutils.Vector of 3" : ST.VEC3,
     "MovieClip" : ST.MOVIE_CLIP,
     "Node" : None, # (<4.2) Always used with zone inputs, need to make sure 
@@ -157,7 +171,9 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "PropertyGroup" : None, #Always read-only
     "RepeatItem" : None, #Always set with index
     "Scene" : ST.SCENE,
+    "set[Literal" : ST.ENUM_SET,
     "SimulationStateItem" : None, #Always set with index
+    "str" : ST.STRING,
     "string" : ST.STRING,
     "TexMapping" : None, #Always read-only
     "Text" : ST.TEXT,
