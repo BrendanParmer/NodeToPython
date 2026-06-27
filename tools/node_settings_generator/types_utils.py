@@ -66,6 +66,7 @@ class ST(Enum):
     PARTICLE_SYSTEM             = auto()
     SCENE                       = auto()
     TEXT                        = auto()
+    TEXTBOX_STATE               = auto()
     TEXTURE                     = auto()
 
 #types expected to be marked as read-only
@@ -74,6 +75,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.CAPTURE_ATTRIBUTE_ITEMS,
     ST.CLOSURE_INPUT_ITEMS,
     ST.CLOSURE_OUTPUT_ITEMS,
+    ST.CLOSURE_TO_LIST_ITEMS,
     ST.COLOR_MANAGED_DISPLAY_SETTINGS,
     ST.COLOR_MANAGED_VIEW_SETTINGS,
     ST.COLOR_RAMP,
@@ -99,7 +101,8 @@ READ_ONLY_TYPES : set[ST] = {
     ST.MENU_SWITCH_ITEMS,
     ST.REPEAT_OUTPUT_ITEMS,
     ST.SEPARATE_BUNDLE_ITEMS,
-    ST.SIM_OUTPUT_ITEMS
+    ST.SIM_OUTPUT_ITEMS,
+    ST.TEXTBOX_STATE
 } 
 
 doc_to_NTP_type_dict : dict[str, ST | None] = {
@@ -175,11 +178,12 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "string" : ST.STRING,
     "TexMapping" : None, #Always read-only
     "Text" : ST.TEXT,
+    "TextboxState" : ST.TEXTBOX_STATE,
     "Texture" : ST.TEXTURE,
     "VectorFont" : ST.FONT
 }
 
-def get_NTP_type(type_str: str) -> ST | None:
+def get_NTP_type(type_str: str, readonly: bool) -> ST | None:
     """
     Time complexity isn't great, might be able to optimize with 
     a trie or similar data structure
@@ -194,7 +198,7 @@ def get_NTP_type(type_str: str) -> ST | None:
 
     result = doc_to_NTP_type_dict[longest_prefix]
     
-    is_readonly = "read" in type_str
+    is_readonly = ("read" in type_str) or readonly
     if is_readonly and result not in READ_ONLY_TYPES:
         return None
     else:

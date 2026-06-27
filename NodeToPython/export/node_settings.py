@@ -60,6 +60,7 @@ class ST(Enum):
 	PARTICLE_SYSTEM = auto()
 	SCENE = auto()
 	TEXT = auto()
+	TEXTBOX_STATE = auto()
 	TEXTURE = auto()
 
 class NTPNodeSetting(NamedTuple):
@@ -342,8 +343,6 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("frame_duration", ST.INT),
 			NTPNodeSetting("frame_offset", ST.INT),
 			NTPNodeSetting("frame_start", ST.INT),
-			NTPNodeSetting("has_layers", ST.BOOL, min_version_=(5, 2, 0)),
-			NTPNodeSetting("has_views", ST.BOOL, min_version_=(5, 2, 0)),
 			NTPNodeSetting("image", ST.IMAGE),
 			NTPNodeSetting("layer", ST.ENUM),
 			NTPNodeSetting("layer_name", ST.ENUM),
@@ -528,8 +527,6 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("frame_duration", ST.INT),
 			NTPNodeSetting("frame_offset", ST.INT),
 			NTPNodeSetting("frame_start", ST.INT),
-			NTPNodeSetting("has_layers", ST.BOOL, min_version_=(5, 2, 0)),
-			NTPNodeSetting("has_views", ST.BOOL, min_version_=(5, 2, 0)),
 			NTPNodeSetting("image", ST.IMAGE),
 			NTPNodeSetting("layer", ST.ENUM),
 			NTPNodeSetting("use_auto_refresh", ST.BOOL),
@@ -1096,7 +1093,7 @@ node_settings : dict[str, NodeInfo] = {
 	'FunctionNodeInputString' : NodeInfo(
 		[
 			NTPNodeSetting("string", ST.STRING),
-			NTPNodeSetting("textbox_state", ST.TEXT, min_version_=(5, 2, 0)),
+			NTPNodeSetting("textbox_state", ST.TEXTBOX_STATE, min_version_=(5, 2, 0)),
 		]
 	),
 
@@ -1608,6 +1605,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeFieldToList' : NodeInfo(
 		[
+			NTPNodeSetting("active_index", ST.INT),
 			NTPNodeSetting("list_items", ST.FIELD_TO_LIST_ITEMS),
 		],
 		min_version_ = (5, 1, 0)
@@ -2086,6 +2084,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeMenuSwitch' : NodeInfo(
 		[
+			NTPNodeSetting("active_index", ST.INT),
 			NTPNodeSetting("data_type", ST.ENUM),
 			NTPNodeSetting("enum_items", ST.MENU_SWITCH_ITEMS),
 		]

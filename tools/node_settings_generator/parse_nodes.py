@@ -66,6 +66,8 @@ def process_attr(attr, section, node: str, version: Version) -> None:
             f"was marked deprecated, returning\n")
         return
     
+    readonly = "readonly" in str(attr)
+
     # Get type
     type_section = attr.find("dd", class_="field-odd")
     if not type_section:
@@ -80,7 +82,7 @@ def process_attr(attr, section, node: str, version: Version) -> None:
         else:
             types_dict[first_word].add(type_text)
 
-    ntp_type = types_utils.get_NTP_type(type_text)
+    ntp_type = types_utils.get_NTP_type(type_text, readonly)
     if ntp_type is None:
         # Read-only attribute, don't add to attribute list
         log(f"WARNING: {version.tuple_str()} {node}.{name}'s "
