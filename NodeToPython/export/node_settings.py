@@ -1099,8 +1099,10 @@ node_settings : dict[str, NodeInfo] = {
 	'FunctionNodeInputVector' : NodeInfo(
 		[
 			NTPNodeSetting("vector", ST.VEC3, max_version_=(5, 2, 0)),
-			NTPNodeSetting("vector", ST.VEC, min_version_=(5, 2, 0)),
+			# NOTE: in order to export correctly, the dimensions
+			#       must be set before the vector.
 			NTPNodeSetting("vector_dimensions", ST.INT, min_version_=(5, 2, 0)),
+			NTPNodeSetting("vector", ST.VEC, min_version_=(5, 2, 0)),
 		]
 	),
 
