@@ -742,6 +742,8 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._write(f"{setting_str} = {str_to_py_str(attr)}")
             elif st == ST.BOOL or st == ST.INT or st == ST.FLOAT:
                 self._write(f"{setting_str} = {attr}")
+            elif st == ST.VEC:
+                self._write(f"{setting_str} = {vec_to_py_str(attr, len(attr))}")
             elif st == ST.VEC1:
                 self._write(f"{setting_str} = {vec1_to_py_str(attr)}")
             elif st == ST.VEC2:
