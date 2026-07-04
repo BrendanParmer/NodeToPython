@@ -44,6 +44,7 @@ class ST(Enum):
     INDEX_SWITCH_ITEMS                   = auto()
     MENU_SWITCH_ITEMS                    = auto()
     NODE_TREE                            = auto()
+    RAYCAST_ATTR_ITEMS                   = auto()
     REPEAT_OUTPUT_ITEMS                  = auto()
     SEPARATE_BUNDLE_ITEMS                = auto()
     SIM_OUTPUT_ITEMS                     = auto()
@@ -98,6 +99,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.INDEX_SWITCH_ITEMS,
     ST.LAYER_SLOTS,
     ST.MENU_SWITCH_ITEMS,
+    ST.RAYCAST_ATTR_ITEMS,
     ST.REPEAT_OUTPUT_ITEMS,
     ST.SEPARATE_BUNDLE_ITEMS,
     ST.SIM_OUTPUT_ITEMS
@@ -163,6 +165,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeGeometryViewerItems" : ST.GEOMETRY_VIEWER_ITEMS,
     "NodeIndexSwitchItems" : ST.INDEX_SWITCH_ITEMS,
     "NodeMenuSwitchItems" : ST.MENU_SWITCH_ITEMS,
+    "NodeRaycastSampleAttributeItems" : ST.RAYCAST_ATTR_ITEMS,
     "NodeSeparateBundleItems" : ST.SEPARATE_BUNDLE_ITEMS,
     "NodeTree" : ST.NODE_TREE,
     "Object" : ST.OBJECT,

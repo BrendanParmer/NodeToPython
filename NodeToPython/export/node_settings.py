@@ -42,6 +42,7 @@ class ST(Enum):
 	INDEX_SWITCH_ITEMS = auto()
 	MENU_SWITCH_ITEMS = auto()
 	NODE_TREE = auto()
+	RAYCAST_ATTR_ITEMS = auto()
 	REPEAT_OUTPUT_ITEMS = auto()
 	SEPARATE_BUNDLE_ITEMS = auto()
 	SIM_OUTPUT_ITEMS = auto()
@@ -3206,6 +3207,7 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("active_index", ST.INT, min_version_=(5, 2, 0)),
 			NTPNodeSetting("only_local", ST.BOOL),
+			NTPNodeSetting("sample_attribute_items", ST.RAYCAST_ATTR_ITEMS, min_version_=(5, 2, 0)),
 		],
 		min_version_ = (5, 1, 0)
 	),

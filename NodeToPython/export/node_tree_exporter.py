@@ -831,6 +831,8 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._closure_to_list_items(attr, setting_str)
             elif st == ST.FIELD_TO_LIST_ITEMS:
                 self._field_to_list_items(attr, setting_str)
+            elif st == ST.RAYCAST_ATTR_ITEMS:
+                self._raycast_attr_items(attr, setting_str)
 
     def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
                               ) -> None:
@@ -1468,6 +1470,29 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 name_str = str_to_py_str(item.name)
                 self._write((f"{field_to_list_items_str}.new("
                              f"{socket_type}, {name_str})"))
+                
+        def _raycast_attr_items(self,
+            raycast_attr_items: bpy.types.NodeRaycastSampleAttributeItems,
+            raycast_attr_items_str: str
+        ) -> None:
+            if raycast_attr_items is None:
+                return
+            
+            self._write(f"{raycast_attr_items_str}.clear()")
+            for i, item in enumerate(raycast_attr_items):
+                socket_type = enum_to_py_str(
+                    data_type_to_socket_type[item.data_type]
+                )
+                name_str = str_to_py_str(item.name)
+                self._write((f"{raycast_attr_items_str}.new("
+                             f"{socket_type}, {name_str})"))
+                
+                item_str = f"{raycast_attr_items_str}[{i}]"
+
+                data_type = enum_to_py_str(item.data_type)
+                self._write(f"{item_str}.data_type = {data_type}")
+                
+
 
     def _hide_hidden_sockets(self, node: bpy.types.Node) -> None:
         """
