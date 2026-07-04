@@ -824,6 +824,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._combine_bundle_items(attr, setting_str)
             elif st == ST.SEPARATE_BUNDLE_ITEMS:
                 self._separate_bundle_items(attr, setting_str)
+            elif st == ST.CLOSURE_TO_LIST_ITEMS:
+                self._closure_to_list_items(attr, setting_str)
+            elif st == ST.FIELD_TO_LIST_ITEMS:
+                self._field_to_list_items(attr, setting_str)
 
     def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
                               ) -> None:
@@ -1433,6 +1437,34 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
 
             look_str = enum_to_py_str(view_settings.look)
             self._write(f"{view_settings_str}.look = {look_str}")
+
+    if bpy.app.version >= (5, 2, 0):
+        def _closure_to_list_items(self,
+            closure_to_list_items: bpy.types.GeometryNodeClosureToListItems,
+            closure_to_list_items_str: str
+        ) -> None:
+            self._write(f"{closure_to_list_items_str}.clear()")
+            for i, item in enumerate(closure_to_list_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write((f"{closure_to_list_items_str}.new("
+                             f"{socket_type}, {name_str})"))
+                
+                item_str = f"{closure_to_list_items_str}[{i}]"
+
+                structure_type = enum_to_py_str(item.structure_type)
+                self._write(f"{item_str}.structure_type = {structure_type}")
+
+        def _field_to_list_items(self,
+            field_to_list_items: bpy.types.GeometryNodeFieldToListItems,
+            field_to_list_items_str: str
+        ) -> None:
+            self._write(f"{field_to_list_items_str}.clear()")
+            for i, item in enumerate(field_to_list_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write((f"{field_to_list_items_str}.new("
+                             f"{socket_type}, {name_str})"))
 
     def _hide_hidden_sockets(self, node: bpy.types.Node) -> None:
         """
