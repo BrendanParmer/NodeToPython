@@ -56,6 +56,9 @@ if bpy.app.version >= (5, 0, 0):
 if bpy.app.version >= (5, 1, 0):
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketFont)
 
+if bpy.app.version >= (5, 2, 0):
+    NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketSound)
+
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {
     'NodeSocketGeometry',
@@ -1538,6 +1541,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
 
                 elif input.bl_idname == 'NodeSocketFont':
                     self._in_file_inputs(input, socket_var, "fonts")
+                    default_val = None
+
+                elif input.bl_idname == 'NodeSocketSound':
+                    self._in_file_inputs(input, socket_var, "sounds")
                     default_val = None
 
                 else:
