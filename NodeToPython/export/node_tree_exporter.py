@@ -635,6 +635,9 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         node_var: str = self._create_node(node, ntp_nt._var)
         self._set_settings_defaults(node)
 
+        if bpy.app.version >= (5, 2, 0):
+            self._set_panel_states(node)
+
         if node.bl_idname in ntp_nt._zone_inputs:
             ntp_nt._zone_inputs[node.bl_idname].append(node)
         
@@ -1636,6 +1639,14 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         self._write(f"{socket_var}.default_value = bpy.data.{type}[{name}]",
                     self._operator._inner_indent_level + 1)
 
+    if bpy.app.version >= (5, 2, 0):
+        def _set_panel_states(self, node: bpy.types.Node):
+            node_var = self._node_vars[node]
+            for i, panel_state in enumerate(node.panel_states):
+                pstate_var = f"{node_var}.panel_states[{i}]"
+                self._write(f"{pstate_var}.is_collapsed = "
+                            f"{panel_state.is_collapsed}")
+
     def _process_zones(self, zone_input_list: list[bpy.types.Node]) -> None:
         """
         Recreates a zone
@@ -1666,7 +1677,7 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
     ) -> str:
         nt_var = self._node_tree_vars[node_tree]
         return f"{nt_var}.nodes[{str_to_py_str(node.name)}]"
-    
+
     def _set_parents(self, node_tree: bpy.types.NodeTree) -> None:
         """
         Sets parents for all nodes, mostly used to put nodes in frames
