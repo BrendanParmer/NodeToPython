@@ -60,7 +60,6 @@ class ST(Enum):
 	PARTICLE_SYSTEM = auto()
 	SCENE = auto()
 	TEXT = auto()
-	TEXTBOX_STATE = auto()
 	TEXTURE = auto()
 
 class NTPNodeSetting(NamedTuple):
@@ -1093,7 +1092,6 @@ node_settings : dict[str, NodeInfo] = {
 	'FunctionNodeInputString' : NodeInfo(
 		[
 			NTPNodeSetting("string", ST.STRING),
-			NTPNodeSetting("textbox_state", ST.TEXTBOX_STATE, min_version_=(5, 2, 0)),
 		]
 	),
 

@@ -66,7 +66,6 @@ class ST(Enum):
     PARTICLE_SYSTEM             = auto()
     SCENE                       = auto()
     TEXT                        = auto()
-    TEXTBOX_STATE               = auto()
     TEXTURE                     = auto()
 
 #types expected to be marked as read-only
@@ -101,8 +100,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.MENU_SWITCH_ITEMS,
     ST.REPEAT_OUTPUT_ITEMS,
     ST.SEPARATE_BUNDLE_ITEMS,
-    ST.SIM_OUTPUT_ITEMS,
-    ST.TEXTBOX_STATE
+    ST.SIM_OUTPUT_ITEMS
 } 
 
 doc_to_NTP_type_dict : dict[str, ST | None] = {
@@ -178,7 +176,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "string" : ST.STRING,
     "TexMapping" : None, #Always read-only
     "Text" : ST.TEXT,
-    "TextboxState" : ST.TEXTBOX_STATE,
+    "TextboxState" : None, # Always read-only
     "Texture" : ST.TEXTURE,
     "VectorFont" : ST.FONT
 }
