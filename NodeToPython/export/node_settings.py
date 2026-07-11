@@ -13,6 +13,7 @@ class ST(Enum):
 	FLOAT = auto()
 	INT = auto()
 	STRING = auto()
+	VEC = auto()
 	VEC1 = auto()
 	VEC2 = auto()
 	VEC3 = auto()
@@ -21,6 +22,7 @@ class ST(Enum):
 	CAPTURE_ATTRIBUTE_ITEMS = auto()
 	CLOSURE_INPUT_ITEMS = auto()
 	CLOSURE_OUTPUT_ITEMS = auto()
+	CLOSURE_TO_LIST_ITEMS = auto()
 	COLOR_MANAGED_DISPLAY_SETTINGS = auto()
 	COLOR_MANAGED_VIEW_SETTINGS = auto()
 	COLOR_RAMP = auto()
@@ -28,18 +30,20 @@ class ST(Enum):
 	COMPOSITOR_FILE_OUTPUT_ITEMS = auto()
 	CURVE_MAPPING = auto()
 	ENUM_DEFINITION = auto()
-	ENUM_ITEM = auto()
 	EVALUATE_CLOSURE_INPUT_ITEMS = auto()
 	EVALUATE_CLOSURE_OUTPUT_ITEMS = auto()
 	FIELD_TO_GRID_ITEMS = auto()
+	FIELD_TO_LIST_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_INPUT_ITEMS = auto()
 	FOREACH_GEO_ELEMENT_MAIN_ITEMS = auto()
 	FORMAT_STRING_ITEMS = auto()
 	GEOMETRY_VIEWER_ITEMS = auto()
 	INDEX_SWITCH_ITEMS = auto()
+	MENU_INPUT = auto()
 	MENU_SWITCH_ITEMS = auto()
 	NODE_TREE = auto()
+	RAYCAST_ATTR_ITEMS = auto()
 	REPEAT_OUTPUT_ITEMS = auto()
 	SEPARATE_BUNDLE_ITEMS = auto()
 	SIM_OUTPUT_ITEMS = auto()
@@ -64,12 +68,12 @@ class NTPNodeSetting(NamedTuple):
 	name_: str
 	st_: ST
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 2, 0)
+	max_version_: tuple = (5, 3, 0)
 
 class NodeInfo(NamedTuple):
 	attributes_: list[NTPNodeSetting]
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 2, 0)
+	max_version_: tuple = (5, 3, 0)
 
 node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeAlphaOver' : NodeInfo(
@@ -93,6 +97,11 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("sigma_color", ST.FLOAT, max_version_=(4, 5, 0)),
 			NTPNodeSetting("sigma_space", ST.FLOAT, max_version_=(4, 5, 0)),
 		]
+	),
+
+	'CompositorNodeBlankImage' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'CompositorNodeBlur' : NodeInfo(
@@ -702,6 +711,7 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("format", ST.IMAGE_FORMAT_SETTINGS),
 			NTPNodeSetting("layer_slots", ST.LAYER_SLOTS, max_version_=(5, 0, 0)),
 			NTPNodeSetting("save_as_render", ST.BOOL, min_version_=(4, 3, 0)),
+			NTPNodeSetting("use_file_extension", ST.BOOL, min_version_=(5, 2, 0)),
 		]
 	),
 
@@ -833,6 +843,11 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("filter_type", ST.ENUM, max_version_=(5, 0, 0)),
 			NTPNodeSetting("invert", ST.BOOL, max_version_=(4, 5, 0)),
 		]
+	),
+
+	'CompositorNodeStringToImage' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'CompositorNodeSunBeams' : NodeInfo(
@@ -1040,7 +1055,8 @@ node_settings : dict[str, NodeInfo] = {
 
 	'FunctionNodeInputColor' : NodeInfo(
 		[
-			NTPNodeSetting("value", ST.VEC4),
+			NTPNodeSetting("value", ST.VEC4, max_version_=(5, 2, 0)),
+			NTPNodeSetting("value", ST.VEC, min_version_=(5, 2, 0)),
 		]
 	),
 
@@ -1048,6 +1064,23 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("integer", ST.INT),
 		]
+	),
+
+	'FunctionNodeInputIntVector' : NodeInfo(
+		[
+			# NOTE: in order to export correctly, the dimensions
+			#       must be set before the vector.
+			NTPNodeSetting("vector_dimensions", ST.INT),
+			NTPNodeSetting("vector", ST.VEC),
+		],
+		min_version_ = (5, 2, 0)
+	),
+
+	'FunctionNodeInputMenu' : NodeInfo(
+		[
+			NTPNodeSetting("value", ST.MENU_INPUT),
+		],
+		min_version_ = (5, 2, 0)
 	),
 
 	'FunctionNodeInputRotation' : NodeInfo(
@@ -1068,7 +1101,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'FunctionNodeInputVector' : NodeInfo(
 		[
-			NTPNodeSetting("vector", ST.VEC3),
+			NTPNodeSetting("vector", ST.VEC3, max_version_=(5, 2, 0)),
+			# NOTE: in order to export correctly, the dimensions
+			#       must be set before the vector.
+			NTPNodeSetting("vector_dimensions", ST.INT, min_version_=(5, 2, 0)),
+			NTPNodeSetting("vector", ST.VEC, min_version_=(5, 2, 0)),
 		]
 	),
 
@@ -1126,6 +1163,11 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'FunctionNodeReverseString' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'FunctionNodeRotateEuler' : NodeInfo(
 		[
 			NTPNodeSetting("rotation_type", ST.ENUM),
@@ -1169,8 +1211,18 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'FunctionNodeSetStringCase' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'FunctionNodeSliceString' : NodeInfo(
 		[]
+	),
+
+	'FunctionNodeSplitString' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'FunctionNodeStringLength' : NodeInfo(
@@ -1196,6 +1248,11 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'FunctionNodeTrimString' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'FunctionNodeValueToString' : NodeInfo(
 		[
 			NTPNodeSetting("data_type", ST.ENUM, min_version_=(4, 3, 0)),
@@ -1207,6 +1264,11 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("data_type", ST.ENUM),
 			NTPNodeSetting("domain", ST.ENUM),
 		]
+	),
+
+	'GeometryNodeApplySimulatedData' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeAttributeDomainSize' : NodeInfo(
@@ -1272,6 +1334,29 @@ node_settings : dict[str, NodeInfo] = {
 		],
 		min_version_ = (4, 5, 0),
 		max_version_ = (5, 0, 0)
+	),
+
+	'GeometryNodeClosureToList' : NodeInfo(
+		[
+			NTPNodeSetting("active_index", ST.INT),
+			NTPNodeSetting("list_items", ST.CLOSURE_TO_LIST_ITEMS),
+		],
+		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeClusterByConnected' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeClusterByDistance' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeCollectionChildren' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeCollectionInfo' : NodeInfo(
@@ -1525,6 +1610,7 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeFieldToList' : NodeInfo(
 		[
 			NTPNodeSetting("active_index", ST.INT),
+			NTPNodeSetting("list_items", ST.FIELD_TO_LIST_ITEMS),
 		],
 		min_version_ = (5, 1, 0)
 	),
@@ -1547,6 +1633,13 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("mode", ST.ENUM, max_version_=(5, 0, 0)),
 		]
+	),
+
+	'GeometryNodeFilterList' : NodeInfo(
+		[
+			NTPNodeSetting("socket_type", ST.ENUM),
+		],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeFlipFaces' : NodeInfo(
@@ -1576,9 +1669,19 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'GeometryNodeGetAttributeNames' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'GeometryNodeGetGeometryBundle' : NodeInfo(
 		[],
 		min_version_ = (5, 1, 0)
+	),
+
+	'GeometryNodeGetGeometryComponent' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeGetNamedGrid' : NodeInfo(
@@ -1790,6 +1893,13 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'GeometryNodeInputFont' : NodeInfo(
+		[
+			NTPNodeSetting("font", ST.FONT),
+		],
+		min_version_ = (5, 2, 0)
+	),
+
 	'GeometryNodeInputID' : NodeInfo(
 		[]
 	),
@@ -1807,6 +1917,11 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeInputInstanceBounds' : NodeInfo(
 		[],
 		min_version_ = (4, 5, 0)
+	),
+
+	'GeometryNodeInputInstanceReference' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeInputInstanceRotation' : NodeInfo(
@@ -1974,7 +2089,6 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeMenuSwitch' : NodeInfo(
 		[
 			NTPNodeSetting("active_index", ST.INT),
-			NTPNodeSetting("active_item", ST.ENUM_ITEM),
 			NTPNodeSetting("data_type", ST.ENUM),
 			NTPNodeSetting("enum_items", ST.MENU_SWITCH_ITEMS),
 		]
@@ -1991,6 +2105,16 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("mode", ST.ENUM),
 		],
 		min_version_ = (4, 3, 0)
+	),
+
+	'GeometryNodeMergePoints' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeMeshBevel' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeMeshBoolean' : NodeInfo(
@@ -2136,6 +2260,11 @@ node_settings : dict[str, NodeInfo] = {
 		]
 	),
 
+	'GeometryNodeRenameAttribute' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'GeometryNodeRepeatInput' : NodeInfo(
 		[]
 	),
@@ -2242,6 +2371,11 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
 		]
+	),
+
+	'GeometryNodeSampleSoundFrequencies' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeSampleUVSurface' : NodeInfo(
@@ -2370,6 +2504,16 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 5, 0)
 	),
 
+	'GeometryNodeSetNURBSOrder' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeSetNURBSWeight' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'GeometryNodeSetPointRadius' : NodeInfo(
 		[]
 	),
@@ -2407,6 +2551,13 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("domain", ST.ENUM),
 		]
+	),
+
+	'GeometryNodeSortList' : NodeInfo(
+		[
+			NTPNodeSetting("socket_type", ST.ENUM),
+		],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeSplineLength' : NodeInfo(
@@ -2475,6 +2626,11 @@ node_settings : dict[str, NodeInfo] = {
 		]
 	),
 
+	'GeometryNodeTagFilter' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'GeometryNodeTool3DCursor' : NodeInfo(
 		[]
 	),
@@ -2506,6 +2662,11 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("domain", ST.ENUM),
 			NTPNodeSetting("selection_type", ST.ENUM, min_version_=(4, 3, 0)),
 		]
+	),
+
+	'GeometryNodeTransferAttributes' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
 	),
 
 	'GeometryNodeTransform' : NodeInfo(
@@ -2581,6 +2742,11 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 3, 0)
 	),
 
+	'GeometryNodeXPBDSolver' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'NodeClosureInput' : NodeInfo(
 		[],
 		min_version_ = (5, 0, 0)
@@ -2640,6 +2806,11 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 1, 0)
 	),
 
+	'NodeGetNestedBundlePaths' : NodeInfo(
+		[],
+		min_version_ = (5, 2, 0)
+	),
+
 	'NodeGroup' : NodeInfo(
 		[
 			NTPNodeSetting("node_tree", ST.NODE_TREE),
@@ -2654,6 +2825,14 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("is_active_output", ST.BOOL),
 		]
+	),
+
+	'NodeImplicitConversion' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+			NTPNodeSetting("socket_idname", ST.STRING),
+		],
+		min_version_ = (5, 2, 0)
 	),
 
 	'NodeJoinBundle' : NodeInfo(
@@ -2952,6 +3131,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'ShaderNodeNormalMap' : NodeInfo(
 		[
+			NTPNodeSetting("base", ST.ENUM, min_version_=(5, 2, 0)),
 			NTPNodeSetting("convention", ST.ENUM, min_version_=(5, 1, 0)),
 			NTPNodeSetting("space", ST.ENUM),
 			NTPNodeSetting("uv_map", ST.STRING),
@@ -3030,7 +3210,9 @@ node_settings : dict[str, NodeInfo] = {
 
 	'ShaderNodeRaycast' : NodeInfo(
 		[
+			NTPNodeSetting("active_index", ST.INT, min_version_=(5, 2, 0)),
 			NTPNodeSetting("only_local", ST.BOOL),
+			NTPNodeSetting("sample_attribute_items", ST.RAYCAST_ATTR_ITEMS, min_version_=(5, 2, 0)),
 		],
 		min_version_ = (5, 1, 0)
 	),
@@ -3188,7 +3370,8 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("ground_albedo", ST.FLOAT),
 			NTPNodeSetting("ozone_density", ST.FLOAT),
 			NTPNodeSetting("sky_type", ST.ENUM),
-			NTPNodeSetting("sun_direction", ST.VEC3),
+			NTPNodeSetting("sun_direction", ST.VEC3, max_version_=(5, 2, 0)),
+			NTPNodeSetting("sun_direction", ST.VEC, min_version_=(5, 2, 0)),
 			NTPNodeSetting("sun_disc", ST.BOOL),
 			NTPNodeSetting("sun_elevation", ST.FLOAT),
 			NTPNodeSetting("sun_intensity", ST.FLOAT),

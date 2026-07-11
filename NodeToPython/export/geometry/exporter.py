@@ -7,13 +7,7 @@ from ..utils import *
 
 from .node_tree import NTP_GeoNodeTree, NTP_NodeTree
 
-OBJECT_NAME = "name"
-OBJECT = "obj"
-MODIFIER = "mod"
 GEO_OP_RESERVED_NAMES = {
-    OBJECT_NAME, 
-    OBJECT,
-    MODIFIER
 }
 
 class GeometryNodesExporter(NodeTreeExporter):

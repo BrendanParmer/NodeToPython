@@ -175,3 +175,20 @@ def img_to_py_str(img : bpy.types.Image) -> str:
     name = img.name.split('.', 1)[0]
     format = img.file_format.lower()
     return f"{name}.{format}"
+
+data_type_to_socket_type : dict[str, str] = {
+    'FLOAT' : 'FLOAT',
+    'INT' : 'INT',
+    'BOOLEAN' : 'BOOLEAN',
+    'FLOAT_VECTOR' : 'VECTOR',
+    'FLOAT_COLOR' : 'RGBA',
+    'QUATERNION' : 'ROTATION',
+    'FLOAT4X4' : 'MATRIX',
+    'STRING' : 'STRING',
+    'INT8' : 'INT',
+    'INT16_2D' : 'INT_VECTOR',
+    'INT32_2D' : 'INT_VECTOR',
+    'FLOAT2' : 'VECTOR',
+    'FLOAT4' : 'VECTOR',
+    'BYTE_COLOR' : 'COLOR'
+}

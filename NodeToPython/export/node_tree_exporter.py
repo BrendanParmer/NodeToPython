@@ -56,6 +56,9 @@ if bpy.app.version >= (5, 0, 0):
 if bpy.app.version >= (5, 1, 0):
     NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketFont)
 
+if bpy.app.version >= (5, 2, 0):
+    NO_DEFAULT_SOCKETS.add(bpy.types.NodeTreeInterfaceSocketSound)
+
 #node input sockets that are messy to set default values for
 DONT_SET_DEFAULTS = {
     'NodeSocketGeometry',
@@ -632,6 +635,9 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         node_var: str = self._create_node(node, ntp_nt._var)
         self._set_settings_defaults(node)
 
+        if bpy.app.version >= (5, 2, 0):
+            self._set_panel_states(node)
+
         if node.bl_idname in ntp_nt._zone_inputs:
             ntp_nt._zone_inputs[node.bl_idname].append(node)
         
@@ -739,6 +745,8 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._write(f"{setting_str} = {str_to_py_str(attr)}")
             elif st == ST.BOOL or st == ST.INT or st == ST.FLOAT:
                 self._write(f"{setting_str} = {attr}")
+            elif st == ST.VEC:
+                self._write(f"{setting_str} = {vec_to_py_str(attr, len(attr))}")
             elif st == ST.VEC1:
                 self._write(f"{setting_str} = {vec1_to_py_str(attr)}")
             elif st == ST.VEC2:
@@ -819,6 +827,14 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._combine_bundle_items(attr, setting_str)
             elif st == ST.SEPARATE_BUNDLE_ITEMS:
                 self._separate_bundle_items(attr, setting_str)
+            elif st == ST.CLOSURE_TO_LIST_ITEMS:
+                self._closure_to_list_items(attr, setting_str)
+            elif st == ST.FIELD_TO_LIST_ITEMS:
+                self._field_to_list_items(attr, setting_str)
+            elif st == ST.RAYCAST_ATTR_ITEMS:
+                self._raycast_attr_items(attr, setting_str)
+            elif st == ST.MENU_INPUT:
+                self._menu_input(attr, setting_str)
 
     def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
                               ) -> None:
@@ -1429,6 +1445,67 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
             look_str = enum_to_py_str(view_settings.look)
             self._write(f"{view_settings_str}.look = {look_str}")
 
+    if bpy.app.version >= (5, 2, 0):
+        def _closure_to_list_items(self,
+            closure_to_list_items: bpy.types.GeometryNodeClosureToListItems,
+            closure_to_list_items_str: str
+        ) -> None:
+            self._write(f"{closure_to_list_items_str}.clear()")
+            for i, item in enumerate(closure_to_list_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write((f"{closure_to_list_items_str}.new("
+                             f"{socket_type}, {name_str})"))
+                
+                item_str = f"{closure_to_list_items_str}[{i}]"
+
+                structure_type = enum_to_py_str(item.structure_type)
+                self._write(f"{item_str}.structure_type = {structure_type}")
+
+        def _field_to_list_items(self,
+            field_to_list_items: bpy.types.GeometryNodeFieldToListItems,
+            field_to_list_items_str: str
+        ) -> None:
+            self._write(f"{field_to_list_items_str}.clear()")
+            for i, item in enumerate(field_to_list_items):
+                socket_type = enum_to_py_str(item.socket_type)
+                name_str = str_to_py_str(item.name)
+                self._write((f"{field_to_list_items_str}.new("
+                             f"{socket_type}, {name_str})"))
+                
+        def _raycast_attr_items(self,
+            raycast_attr_items: bpy.types.NodeRaycastSampleAttributeItems,
+            raycast_attr_items_str: str
+        ) -> None:
+            if raycast_attr_items is None:
+                return
+            
+            self._write(f"{raycast_attr_items_str}.clear()")
+            for i, item in enumerate(raycast_attr_items):
+                socket_type = enum_to_py_str(
+                    data_type_to_socket_type[item.data_type]
+                )
+                name_str = str_to_py_str(item.name)
+                self._write((f"{raycast_attr_items_str}.new("
+                             f"{socket_type}, {name_str})"))
+                
+                item_str = f"{raycast_attr_items_str}[{i}]"
+
+                data_type = enum_to_py_str(item.data_type)
+                self._write(f"{item_str}.data_type = {data_type}")
+
+        def _menu_input(self,
+            menu_input: str,
+            menu_input_str: str
+        ) -> None:
+            if menu_input != "":
+                self._write_after_links.append(
+                    lambda _menu_input_str=menu_input_str, 
+                    _menu_input_value = str_to_py_str(menu_input):
+                        self._write(f"{_menu_input_str} = {_menu_input_value}")
+                )
+
+
     def _hide_hidden_sockets(self, node: bpy.types.Node) -> None:
         """
         Hide hidden sockets
@@ -1540,6 +1617,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                     self._in_file_inputs(input, socket_var, "fonts")
                     default_val = None
 
+                elif input.bl_idname == 'NodeSocketSound':
+                    self._in_file_inputs(input, socket_var, "sounds")
+                    default_val = None
+
                 else:
                     default_val = getattr(input, "default_value")
 
@@ -1595,6 +1676,14 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
         self._write(f"{socket_var}.default_value = bpy.data.{type}[{name}]",
                     self._operator._inner_indent_level + 1)
 
+    if bpy.app.version >= (5, 2, 0):
+        def _set_panel_states(self, node: bpy.types.Node):
+            node_var = self._node_vars[node]
+            for i, panel_state in enumerate(node.panel_states):
+                pstate_var = f"{node_var}.panel_states[{i}]"
+                self._write(f"{pstate_var}.is_collapsed = "
+                            f"{panel_state.is_collapsed}")
+
     def _process_zones(self, zone_input_list: list[bpy.types.Node]) -> None:
         """
         Recreates a zone
@@ -1625,7 +1714,7 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
     ) -> str:
         nt_var = self._node_tree_vars[node_tree]
         return f"{nt_var}.nodes[{str_to_py_str(node.name)}]"
-    
+
     def _set_parents(self, node_tree: bpy.types.NodeTree) -> None:
         """
         Sets parents for all nodes, mostly used to put nodes in frames

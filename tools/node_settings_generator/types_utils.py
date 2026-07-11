@@ -13,6 +13,7 @@ class ST(Enum):
     FLOAT       = auto()
     INT         = auto()
     STRING      = auto()
+    VEC         = auto()
     VEC1        = auto()
     VEC2        = auto()
     VEC3        = auto()
@@ -23,6 +24,7 @@ class ST(Enum):
     CAPTURE_ATTRIBUTE_ITEMS              = auto()
     CLOSURE_INPUT_ITEMS                  = auto()
     CLOSURE_OUTPUT_ITEMS                 = auto()
+    CLOSURE_TO_LIST_ITEMS                = auto()
     COLOR_MANAGED_DISPLAY_SETTINGS       = auto()
     COLOR_MANAGED_VIEW_SETTINGS          = auto()
     COLOR_RAMP                           = auto()
@@ -30,18 +32,20 @@ class ST(Enum):
     COMPOSITOR_FILE_OUTPUT_ITEMS         = auto()
     CURVE_MAPPING                        = auto()
     ENUM_DEFINITION                      = auto()
-    ENUM_ITEM                            = auto()
     EVALUATE_CLOSURE_INPUT_ITEMS         = auto()
     EVALUATE_CLOSURE_OUTPUT_ITEMS        = auto()
     FIELD_TO_GRID_ITEMS                  = auto()
+    FIELD_TO_LIST_ITEMS                  = auto()
     FOREACH_GEO_ELEMENT_GENERATION_ITEMS = auto()
     FOREACH_GEO_ELEMENT_INPUT_ITEMS      = auto()
     FOREACH_GEO_ELEMENT_MAIN_ITEMS       = auto()
     FORMAT_STRING_ITEMS                  = auto()
     GEOMETRY_VIEWER_ITEMS                = auto()
     INDEX_SWITCH_ITEMS                   = auto()
+    MENU_INPUT                           = auto()
     MENU_SWITCH_ITEMS                    = auto()
     NODE_TREE                            = auto()
+    RAYCAST_ATTR_ITEMS                   = auto()
     REPEAT_OUTPUT_ITEMS                  = auto()
     SEPARATE_BUNDLE_ITEMS                = auto()
     SIM_OUTPUT_ITEMS                     = auto()
@@ -72,6 +76,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.CAPTURE_ATTRIBUTE_ITEMS,
     ST.CLOSURE_INPUT_ITEMS,
     ST.CLOSURE_OUTPUT_ITEMS,
+    ST.CLOSURE_TO_LIST_ITEMS,
     ST.COLOR_MANAGED_DISPLAY_SETTINGS,
     ST.COLOR_MANAGED_VIEW_SETTINGS,
     ST.COLOR_RAMP,
@@ -83,6 +88,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.EVALUATE_CLOSURE_INPUT_ITEMS,
     ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     ST.FIELD_TO_GRID_ITEMS,
+    ST.FIELD_TO_LIST_ITEMS,
     ST.FILE_SLOTS,
     ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
     ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
@@ -94,6 +100,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.INDEX_SWITCH_ITEMS,
     ST.LAYER_SLOTS,
     ST.MENU_SWITCH_ITEMS,
+    ST.RAYCAST_ATTR_ITEMS,
     ST.REPEAT_OUTPUT_ITEMS,
     ST.SEPARATE_BUNDLE_ITEMS,
     ST.SIM_OUTPUT_ITEMS
@@ -101,7 +108,11 @@ READ_ONLY_TYPES : set[ST] = {
 
 doc_to_NTP_type_dict : dict[str, ST | None] = {
     "" : None,
+    "bpy_prop_array[int]" : ST.VEC,
+    "bpy_prop_array[float]" : ST.VEC,
     "bpy_prop_collection of CryptomatteEntry": ST.CRYPTOMATTE_ENTRIES,
+    "bpy_prop_collection[CryptomatteEntry]" : ST.CRYPTOMATTE_ENTRIES,
+    "bool" : ST.BOOL,
     "boolean" : ST.BOOL,
     "Collection" : ST.COLLECTION,
     "ColorManagedDisplaySettings" : ST.COLOR_MANAGED_DISPLAY_SETTINGS,
@@ -118,15 +129,20 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "float array of 2" : ST.VEC2,
     "float array of 3" : ST.VEC3,
     "float array of 4" : ST.VEC4,
+    "GeometryNodeClosureToListItems" : ST.CLOSURE_TO_LIST_ITEMS,
     "GeometryNodeFieldToGridItems" : ST.FIELD_TO_GRID_ITEMS,
+    "GeometryNodeFieldToListItem" : None, # Always read-only
+    "GeometryNodeFieldToListItems" : ST.FIELD_TO_LIST_ITEMS,
     "Image" : ST.IMAGE,
     "ImageFormatSettings" : ST.IMAGE_FORMAT_SETTINGS,
     "ImageUser" : ST.IMAGE_USER,
     "int" : ST.INT,
+    "Literal" : ST.ENUM,
     "Mask" : ST.MASK,
     "Material" : ST.MATERIAL,
     "mathutils.Color" : ST.COLOR,
-    "mathutils.Euler" : ST.EULER, #TODO
+    "mathutils.Euler" : ST.EULER,
+    "mathutils.Vector" : ST.VEC,
     "mathutils.Vector of 3" : ST.VEC3,
     "MovieClip" : ST.MOVIE_CLIP,
     "Node" : None, # (<4.2) Always used with zone inputs, need to make sure 
@@ -136,7 +152,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeCombineBundleItems" : ST.COMBINE_BUNDLE_ITEMS,
     "NodeCompositorFileOutputItems" : ST.COMPOSITOR_FILE_OUTPUT_ITEMS,
     "NodeEnumDefinition" : ST.ENUM_DEFINITION,
-    "NodeEnumItem" : ST.ENUM_ITEM,
+    "NodeEnumItem" : None, #Always read-only
     "NodeEvaluateClosureInputItems" : ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     "NodeEvaluateClosureOutputItems" : ST.EVALUATE_CLOSURE_OUTPUT_ITEMS,
     "NodeFunctionFormatStringItems" : ST.FORMAT_STRING_ITEMS,
@@ -150,6 +166,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeGeometryViewerItems" : ST.GEOMETRY_VIEWER_ITEMS,
     "NodeIndexSwitchItems" : ST.INDEX_SWITCH_ITEMS,
     "NodeMenuSwitchItems" : ST.MENU_SWITCH_ITEMS,
+    "NodeRaycastSampleAttributeItems" : ST.RAYCAST_ATTR_ITEMS,
     "NodeSeparateBundleItems" : ST.SEPARATE_BUNDLE_ITEMS,
     "NodeTree" : ST.NODE_TREE,
     "Object" : ST.OBJECT,
@@ -157,15 +174,18 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "PropertyGroup" : None, #Always read-only
     "RepeatItem" : None, #Always set with index
     "Scene" : ST.SCENE,
+    "set[Literal" : ST.ENUM_SET,
     "SimulationStateItem" : None, #Always set with index
+    "str" : ST.STRING,
     "string" : ST.STRING,
     "TexMapping" : None, #Always read-only
     "Text" : ST.TEXT,
+    "TextboxState" : None, # Always read-only
     "Texture" : ST.TEXTURE,
     "VectorFont" : ST.FONT
 }
 
-def get_NTP_type(type_str: str) -> ST | None:
+def get_NTP_type(type_str: str, readonly: bool) -> ST | None:
     """
     Time complexity isn't great, might be able to optimize with 
     a trie or similar data structure
@@ -180,7 +200,7 @@ def get_NTP_type(type_str: str) -> ST | None:
 
     result = doc_to_NTP_type_dict[longest_prefix]
     
-    is_readonly = "read" in type_str
+    is_readonly = ("read" in type_str) or readonly
     if is_readonly and result not in READ_ONLY_TYPES:
         return None
     else:
