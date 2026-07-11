@@ -42,6 +42,7 @@ class ST(Enum):
     FORMAT_STRING_ITEMS                  = auto()
     GEOMETRY_VIEWER_ITEMS                = auto()
     INDEX_SWITCH_ITEMS                   = auto()
+    MENU_INPUT                           = auto()
     MENU_SWITCH_ITEMS                    = auto()
     NODE_TREE                            = auto()
     RAYCAST_ATTR_ITEMS                   = auto()

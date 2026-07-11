@@ -833,6 +833,8 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._field_to_list_items(attr, setting_str)
             elif st == ST.RAYCAST_ATTR_ITEMS:
                 self._raycast_attr_items(attr, setting_str)
+            elif st == ST.MENU_INPUT:
+                self._menu_input(attr, setting_str)
 
     def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
                               ) -> None:
@@ -1491,7 +1493,17 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
 
                 data_type = enum_to_py_str(item.data_type)
                 self._write(f"{item_str}.data_type = {data_type}")
-                
+
+        def _menu_input(self,
+            menu_input: str,
+            menu_input_str: str
+        ) -> None:
+            if menu_input != "":
+                self._write_after_links.append(
+                    lambda _menu_input_str=menu_input_str, 
+                    _menu_input_value = str_to_py_str(menu_input):
+                        self._write(f"{_menu_input_str} = {_menu_input_value}")
+                )
 
 
     def _hide_hidden_sockets(self, node: bpy.types.Node) -> None:

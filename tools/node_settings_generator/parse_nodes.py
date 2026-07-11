@@ -88,8 +88,14 @@ def process_attr(attr, section, node: str, version: Version) -> None:
         log(f"WARNING: {version.tuple_str()} {node}.{name}'s "
             f"type is being ignored:\n\t{type_text.strip()}\n")
         return
+    
+    # Unfortunately needs handled spearately,
+    # node tree creation fails unless value is written after linking
+    if node == 'FunctionNodeInputMenu' and name == "value":
+        ntp_type = types_utils.ST.MENU_INPUT
 
     ntp_setting = NTPNodeSetting(name, ntp_type)
+
     with mutex:
         if ntp_setting not in nodes_dict[node].attributes_:
             nodes_dict[node].attributes_[ntp_setting] = []
