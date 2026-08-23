@@ -9,7 +9,8 @@ blender_versions = [
     "4.4.3",
     "4.5.9",
     "5.0.1",
-    "5.1.1"
+    "5.1.1",
+    "5.2.0"
 ]
 
 tests_dir = pathlib.Path(__file__).parent

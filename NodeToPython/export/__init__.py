@@ -7,9 +7,6 @@ if "bpy" in locals():
     importlib.reload(ntp_operator)
     importlib.reload(ntp_options)
     importlib.reload(utils)
-    importlib.reload(compositor)
-    importlib.reload(geometry)
-    importlib.reload(shader)
 else:
     from . import license_templates
     from . import node_group_gatherer
@@ -18,9 +15,6 @@ else:
     from . import ntp_operator
     from . import ntp_options
     from . import utils
-    from . import compositor
-    from . import geometry
-    from . import shader
 
 import bpy
 
