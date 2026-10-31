@@ -29,6 +29,7 @@ class ST(Enum):
     COLOR_MANAGED_VIEW_SETTINGS          = auto()
     COLOR_RAMP                           = auto()
     COMBINE_BUNDLE_ITEMS                 = auto()
+    COMBINE_LIST_ITEMS                   = auto()
     COMPOSITOR_FILE_OUTPUT_ITEMS         = auto()
     CURVE_MAPPING                        = auto()
     ENUM_DEFINITION                      = auto()
@@ -45,6 +46,7 @@ class ST(Enum):
     MENU_INPUT                           = auto()
     MENU_SWITCH_ITEMS                    = auto()
     NODE_TREE                            = auto()
+    RASTERIZE_POINTS_ITEMS               = auto()
     RAYCAST_ATTR_ITEMS                   = auto()
     REPEAT_OUTPUT_ITEMS                  = auto()
     SEPARATE_BUNDLE_ITEMS                = auto()
@@ -81,6 +83,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.COLOR_MANAGED_VIEW_SETTINGS,
     ST.COLOR_RAMP,
     ST.COMBINE_BUNDLE_ITEMS,
+    ST.COMBINE_LIST_ITEMS,
     ST.COMPOSITOR_FILE_OUTPUT_ITEMS,
     ST.CRYPTOMATTE_ENTRIES,
     ST.CURVE_MAPPING,
@@ -100,6 +103,7 @@ READ_ONLY_TYPES : set[ST] = {
     ST.INDEX_SWITCH_ITEMS,
     ST.LAYER_SLOTS,
     ST.MENU_SWITCH_ITEMS,
+    ST.RASTERIZE_POINTS_ITEMS,
     ST.RAYCAST_ATTR_ITEMS,
     ST.REPEAT_OUTPUT_ITEMS,
     ST.SEPARATE_BUNDLE_ITEMS,
@@ -150,6 +154,7 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeClosureInputItems" : ST.CLOSURE_INPUT_ITEMS,
     "NodeClosureOutputItems" : ST.CLOSURE_OUTPUT_ITEMS,
     "NodeCombineBundleItems" : ST.COMBINE_BUNDLE_ITEMS,
+    "NodeCombineListItems" : ST.COMBINE_LIST_ITEMS,
     "NodeCompositorFileOutputItems" : ST.COMPOSITOR_FILE_OUTPUT_ITEMS,
     "NodeEnumDefinition" : ST.ENUM_DEFINITION,
     "NodeEnumItem" : None, #Always read-only
@@ -161,6 +166,8 @@ doc_to_NTP_type_dict : dict[str, ST | None] = {
     "NodeGeometryForeachGeometryElementGenerationItems": ST.FOREACH_GEO_ELEMENT_GENERATION_ITEMS,
     "NodeGeometryForeachGeometryElementInputItems" : ST.FOREACH_GEO_ELEMENT_INPUT_ITEMS,
     "NodeGeometryForeachGeometryElementMainItems": ST.FOREACH_GEO_ELEMENT_MAIN_ITEMS,
+    "NodeGeometryRasterizePointsItem" : None,
+    "NodeGeometryRasterizePointsItems" : ST.RASTERIZE_POINTS_ITEMS,
     "NodeGeometryRepeatOutputItems" : ST.REPEAT_OUTPUT_ITEMS,
     "NodeGeometrySimulationOutputItems" : ST.SIM_OUTPUT_ITEMS,
     "NodeGeometryViewerItems" : ST.GEOMETRY_VIEWER_ITEMS,
