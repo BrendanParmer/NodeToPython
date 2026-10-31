@@ -27,7 +27,7 @@ RESERVED_NAMES = {
 }
 
 MIN_BLENDER_VERSION = (4, 2, 0)
-MAX_BLENDER_VERSION = (5, 3, 0)
+MAX_BLENDER_VERSION = (5, 4, 0)
 
 class NodeTreeInfo():
     def __init__(self):
