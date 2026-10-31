@@ -27,6 +27,7 @@ class ST(Enum):
 	COLOR_MANAGED_VIEW_SETTINGS = auto()
 	COLOR_RAMP = auto()
 	COMBINE_BUNDLE_ITEMS = auto()
+	COMBINE_LIST_ITEMS = auto()
 	COMPOSITOR_FILE_OUTPUT_ITEMS = auto()
 	CURVE_MAPPING = auto()
 	ENUM_DEFINITION = auto()
@@ -43,6 +44,7 @@ class ST(Enum):
 	MENU_INPUT = auto()
 	MENU_SWITCH_ITEMS = auto()
 	NODE_TREE = auto()
+	RASTERIZE_POINTS_ITEMS = auto()
 	RAYCAST_ATTR_ITEMS = auto()
 	REPEAT_OUTPUT_ITEMS = auto()
 	SEPARATE_BUNDLE_ITEMS = auto()
@@ -68,12 +70,12 @@ class NTPNodeSetting(NamedTuple):
 	name_: str
 	st_: ST
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 3, 0)
+	max_version_: tuple = (5, 4, 0)
 
 class NodeInfo(NamedTuple):
 	attributes_: list[NTPNodeSetting]
 	min_version_: tuple = (4, 2, 0)
-	max_version_: tuple = (5, 3, 0)
+	max_version_: tuple = (5, 4, 0)
 
 node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeAlphaOver' : NodeInfo(
@@ -291,7 +293,9 @@ node_settings : dict[str, NodeInfo] = {
 	'CompositorNodeConvertColorSpace' : NodeInfo(
 		[
 			NTPNodeSetting("from_color_space", ST.ENUM),
+			NTPNodeSetting("from_interop_id", ST.ENUM, min_version_=(5, 3, 0)),
 			NTPNodeSetting("to_color_space", ST.ENUM),
+			NTPNodeSetting("to_interop_id", ST.ENUM, min_version_=(5, 3, 0)),
 		]
 	),
 
@@ -1040,6 +1044,11 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 5, 0)
 	),
 
+	'FunctionNodeGetVectorComponent' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'FunctionNodeHashValue' : NodeInfo(
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
@@ -1373,6 +1382,19 @@ node_settings : dict[str, NodeInfo] = {
 		max_version_ = (5, 0, 0)
 	),
 
+	'GeometryNodeCombineList' : NodeInfo(
+		[
+			NTPNodeSetting("combine_list_items", ST.COMBINE_LIST_ITEMS),
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeConstructCurves' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'GeometryNodeConvexHull' : NodeInfo(
 		[]
 	),
@@ -1665,6 +1687,11 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 3, 0)
 	),
 
+	'GeometryNodeGeometryMaterials' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'GeometryNodeGeometryToInstance' : NodeInfo(
 		[]
 	),
@@ -1682,6 +1709,11 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeGetGeometryComponent' : NodeInfo(
 		[],
 		min_version_ = (5, 2, 0)
+	),
+
+	'GeometryNodeGetGridNames' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodeGetNamedGrid' : NodeInfo(
@@ -1720,6 +1752,36 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (4, 3, 0)
 	),
 
+	'GeometryNodeGreasePencilColor' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeGreasePencilDrawTime' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeGreasePencilFillID' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeGreasePencilOpacity' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeGreasePencilStrokeSoftness' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeGreasePencilStrokeVisibility' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'GeometryNodeGreasePencilToCurves' : NodeInfo(
 		[],
 		min_version_ = (4, 3, 0)
@@ -1742,6 +1804,13 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeGridCurl' : NodeInfo(
 		[],
 		min_version_ = (5, 0, 0)
+	),
+
+	'GeometryNodeGridDeactivateVoxels' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodeGridDilateAndErode' : NodeInfo(
@@ -1794,6 +1863,11 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 0, 0)
 	),
 
+	'GeometryNodeGridSolvePoisson' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'GeometryNodeGridToMesh' : NodeInfo(
 		[]
 	),
@@ -1803,6 +1877,13 @@ node_settings : dict[str, NodeInfo] = {
 			NTPNodeSetting("data_type", ST.ENUM),
 		],
 		min_version_ = (5, 1, 0)
+	),
+
+	'GeometryNodeGridTopologyBoolean' : NodeInfo(
+		[
+			NTPNodeSetting("data_type", ST.ENUM),
+		],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodeGridVoxelize' : NodeInfo(
@@ -1842,6 +1923,11 @@ node_settings : dict[str, NodeInfo] = {
 	'GeometryNodeImportPLY' : NodeInfo(
 		[],
 		min_version_ = (4, 3, 0)
+	),
+
+	'GeometryNodeImportSPZ' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodeImportSTL' : NodeInfo(
@@ -2102,7 +2188,7 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeMergeLayers' : NodeInfo(
 		[
-			NTPNodeSetting("mode", ST.ENUM),
+			NTPNodeSetting("mode", ST.ENUM, max_version_=(5, 3, 0)),
 		],
 		min_version_ = (4, 3, 0)
 	),
@@ -2195,6 +2281,16 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'GeometryNodeNURBSOrder' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'GeometryNodeNURBSWeight' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
 	'GeometryNodeObjectInfo' : NodeInfo(
 		[
 			NTPNodeSetting("transform_space", ST.ENUM),
@@ -2215,6 +2311,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodePointsOfCurve' : NodeInfo(
 		[]
+	),
+
+	'GeometryNodePointsSetType' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodePointsToCurves' : NodeInfo(
@@ -2239,6 +2340,14 @@ node_settings : dict[str, NodeInfo] = {
 		[
 			NTPNodeSetting("target_element", ST.ENUM),
 		]
+	),
+
+	'GeometryNodeRasterizePoints' : NodeInfo(
+		[
+			NTPNodeSetting("active_index", ST.INT),
+			NTPNodeSetting("rasterize_items", ST.RASTERIZE_POINTS_ITEMS),
+		],
+		min_version_ = (5, 3, 0)
 	),
 
 	'GeometryNodeRaycast' : NodeInfo(
@@ -2449,14 +2558,14 @@ node_settings : dict[str, NodeInfo] = {
 
 	'GeometryNodeSetGreasePencilColor' : NodeInfo(
 		[
-			NTPNodeSetting("mode", ST.ENUM),
+			NTPNodeSetting("mode", ST.ENUM, max_version_=(5, 3, 0)),
 		],
 		min_version_ = (4, 5, 0)
 	),
 
 	'GeometryNodeSetGreasePencilDepth' : NodeInfo(
 		[
-			NTPNodeSetting("depth_order", ST.ENUM),
+			NTPNodeSetting("depth_order", ST.ENUM, max_version_=(5, 3, 0)),
 		],
 		min_version_ = (4, 5, 0)
 	),
@@ -2772,6 +2881,13 @@ node_settings : dict[str, NodeInfo] = {
 		min_version_ = (5, 0, 0)
 	),
 
+	'NodeComment' : NodeInfo(
+		[
+			NTPNodeSetting("text", ST.STRING),
+		],
+		min_version_ = (5, 3, 0)
+	),
+
 	'NodeEnableOutput' : NodeInfo(
 		[
 			NTPNodeSetting("data_type", ST.ENUM),
@@ -3070,8 +3186,35 @@ node_settings : dict[str, NodeInfo] = {
 		[]
 	),
 
+	'ShaderNodeLightAccumulation' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'ShaderNodeLightEvaluation' : NodeInfo(
+		[
+			NTPNodeSetting("mode", ST.ENUM),
+		],
+		min_version_ = (5, 3, 0)
+	),
+
 	'ShaderNodeLightFalloff' : NodeInfo(
 		[]
+	),
+
+	'ShaderNodeLightInfo' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'ShaderNodeLightIterInternalInput' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
+	),
+
+	'ShaderNodeLightIterInternalOutput' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
 	),
 
 	'ShaderNodeLightPath' : NodeInfo(
@@ -3250,6 +3393,11 @@ node_settings : dict[str, NodeInfo] = {
 
 	'ShaderNodeShaderToRGB' : NodeInfo(
 		[]
+	),
+
+	'ShaderNodeShadowRaycast' : NodeInfo(
+		[],
+		min_version_ = (5, 3, 0)
 	),
 
 	'ShaderNodeSqueeze' : NodeInfo(

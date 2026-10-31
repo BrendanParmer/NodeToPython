@@ -835,6 +835,10 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                 self._raycast_attr_items(attr, setting_str)
             elif st == ST.MENU_INPUT:
                 self._menu_input(attr, setting_str)
+            elif st == ST.RASTERIZE_POINTS_ITEMS:
+                self._rasterize_points_items(attr, setting_str)
+            elif st == ST.COMBINE_LIST_ITEMS:
+                self._combine_list_items(attr, setting_str)
 
     def _set_if_in_blend_file(self, attr, setting_str: str, data_type: str
                               ) -> None:
@@ -1505,7 +1509,37 @@ class NodeTreeExporter(metaclass=abc.ABCMeta):
                         self._write(f"{_menu_input_str} = {_menu_input_value}")
                 )
 
+    if bpy.app.version >= (5, 3, 0):
+        def _combine_list_items(
+            self,
+            combine_list_items: bpy.types.NodeCombineListItems,
+            combine_list_items_str: str
+        ) -> None:
+            if combine_list_items is None:
+                return
+            
+            self._write(f"{combine_list_items_str}.clear()")
+            for _ in combine_list_items:
+                self._write(f"{combine_list_items_str}.new()")
 
+        def _rasterize_points_items(
+            self,
+            rasterize_points_items: bpy.types.NodeGeometryRasterizePointsItems | None,
+            rasterize_points_items_str: str
+        ) -> None:
+            if rasterize_points_items is None:
+                return
+
+            self._write(f"{rasterize_points_items_str}.clear()")
+            for i, item in enumerate(rasterize_points_items):
+                self._write(f"{rasterize_points_items_str}.new("
+                            f"{str_to_py_str(item.name)})")
+
+                items_str = f"{rasterize_points_items_str}[{i}]"
+
+                data_type = enum_to_py_str(item.type)
+                self._write(f"{items_str}.type = {data_type}")
+            
     def _hide_hidden_sockets(self, node: bpy.types.Node) -> None:
         """
         Hide hidden sockets
