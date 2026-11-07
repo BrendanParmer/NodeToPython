@@ -333,7 +333,8 @@ class NTP_OT_Export(bpy.types.Operator):
         for group_type, groups in gatherer.node_groups.items():
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
-                self._topological_sort(base_tree)
+                if base_tree is not None:
+                    self._topological_sort(base_tree)
 
         # Probably a better way algorithmically of handling this,
         # need to move on though. Should be fast enough for reasonably sized
@@ -349,6 +350,8 @@ class NTP_OT_Export(bpy.types.Operator):
 
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
+                if base_tree is None:
+                    continue
                 nt_info = self._node_trees[base_tree]
                 self._modules[nt_info._module] = []
                 for dependency in nt_info._dependencies.keys():
@@ -613,16 +616,20 @@ class NTP_OT_Export(bpy.types.Operator):
         object (str): the copied node tree or encapsulating structure
             (geometry node modifier, material, scene, etc.)
         """
+        level = 'INFO'
         if self._mode == 'SCRIPT':
             location = "clipboard"
             if self._num_objs > 1:
                 save_obj = f"{self._num_objs} objects"
+            elif len(self._export_order) > 0:
+                save_obj = self._export_order[-1]._obj.name
             else:
-                save_obj = self._export_order[0]._obj.name
+                save_obj = "no node groups"
+                level = 'WARNING'
         else:
             location = self._dir_path
             save_obj = self._name
-        self.report({'INFO'}, f"NodeToPython: Saved {save_obj} to {location}")
+        self.report({level}, f"NodeToPython: Saved {save_obj} to {location}")
 
 classes = [
     NTP_OT_Export
