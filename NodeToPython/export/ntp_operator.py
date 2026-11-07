@@ -313,6 +313,8 @@ class NTP_OT_Export(bpy.types.Operator):
         for group_type, groups in gatherer.node_groups.items():
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
+                if base_tree is None:
+                    continue
                 if base_tree not in self._node_trees:
                     self._node_trees[base_tree] = NodeTreeInfo()
                 node_info = self._node_trees[base_tree]

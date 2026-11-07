@@ -51,11 +51,17 @@ NTPObject = (
 
 def get_base_node_tree(
     ntp_obj: NTPObject, group_type: NodeGroupType
- ) -> bpy.types.NodeTree:
+ ) -> bpy.types.NodeTree | None:
     if group_type.is_group():
         return ntp_obj
-    elif group_type == NodeGroupType.SCENE and bpy.app.version >= (5, 0, 0):
-        return getattr(ntp_obj, "compositing_node_group")
+    elif group_type == NodeGroupType.SCENE:
+        if bpy.app.version >= (5, 0, 0) and bpy.app.version < (5, 3, 0):
+            return getattr(ntp_obj, "compositing_node_group")
+        elif bpy.app.version >= (5, 3, 0):
+            if len(ntp_obj.compositor_effects) == 0:
+                return None
+            else:
+                return ntp_obj.compositor_effects[0].node_group
     else:
         return getattr(ntp_obj, "node_tree")
 
