@@ -389,6 +389,9 @@ class NTP_OT_Export(bpy.types.Operator):
 
         node_info = self._node_trees[node_tree]
 
+        # Node groups from libraries we can't simply append
+        deep_copied_libs : set[bpy.types.NodeTree] = set()
+
         def dfs(nt: bpy.types.NodeTree) -> None:
             """
             Helper function to perform depth-first search on a NodeTree
@@ -419,6 +422,7 @@ class NTP_OT_Export(bpy.types.Operator):
                     node_info._lib_dependencies[relative_path].append(nt)
                     return
                 else:
+                    deep_copied_libs.add(nt)
                     self.report(
                         {'WARNING'},
                         f"Performing deep copy of node group \"{nt.name}\". "
@@ -449,6 +453,7 @@ class NTP_OT_Export(bpy.types.Operator):
                     if node_nt not in self._visited:
                         dfs(node_nt)
                     if (node_nt.library is None or 
+                        node_nt in deep_copied_libs or
                         (not self._link_external_node_groups)
                     ):
                         self._node_trees[nt]._dependencies[node_nt] = None
