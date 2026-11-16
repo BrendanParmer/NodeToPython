@@ -114,7 +114,6 @@ class NTP_OT_Export(bpy.types.Operator):
                 "\t\thttps://github.com/BrendanParmer/NodeToPython/blob/main/"
                 "docs/README.md#supported-versions "
             )
-            return {'CANCELLED'}
         elif bpy.app.version < MIN_BLENDER_VERSION:
             self.report(
                 {'WARNING'},
