@@ -8,10 +8,16 @@ from ..ntp_operator import NTP_OT_Export, NodeTreeInfo
 from ..utils import *
 
 BASE_NAME = "base_name"
+COMPOSITOR_EFFECT = "compositor_effect"
 END_NAME = "end_name"
 NODE = "node"
 
-COMP_OP_RESERVED_NAMES = {BASE_NAME, END_NAME, NODE} 
+COMP_OP_RESERVED_NAMES = {
+    BASE_NAME, 
+    COMPOSITOR_EFFECT, 
+    END_NAME, 
+    NODE
+} 
 
 class CompositorExporter(NodeTreeExporter):
     def __init__(
@@ -125,7 +131,7 @@ class CompositorExporter(NodeTreeExporter):
             self._write("if bpy.app.version < (5, 0, 0):")
             self._write(f"{ntp_node_tree._var} = {self._obj_var}.node_tree",
                         self._operator._inner_indent_level + 1)
-            self._write("else:")
+            self._write("elif bpy.app.version < (5, 3, 0):")
             self._write((f"{self._obj_var}.compositing_node_group = "
                          f"bpy.data.node_groups.new("
                          f"type = \'CompositorNodeTree\', "
@@ -133,11 +139,56 @@ class CompositorExporter(NodeTreeExporter):
                          self._operator._inner_indent_level + 1)
             self._write(f"{ntp_node_tree._var} = {self._obj_var}.compositing_node_group",
                         self._operator._inner_indent_level + 1)
-            self._write("", 0)
-            self._write(f"# Start with a clean node tree")
-            self._write(f"for {NODE} in {ntp_node_tree._var}.nodes:")
-            self._write(f"{ntp_node_tree._var}.nodes.remove({NODE})", 
-                        self._operator._inner_indent_level + 1)
+            if bpy.app.version >= (5, 3, 0):
+                scene = self._node_tree_info._obj
+                if len(scene.compositor_effects) > 1:
+                    self._operator.report(
+                        {'WARNING'},
+                        f"Multiple compositor effects not supported yet! "
+                        f"Exporting first in stack"
+                    )
+                if len(scene.compositor_effects) > 0:
+                    self._write("elif bpy.app.version >= (5, 3, 0):")
+                    effect = scene.compositor_effects[0]
+                    self._write(
+                        f"{COMPOSITOR_EFFECT} = "
+                        f"{self._obj_var}.compositor_effects.new("
+                        f"{str_to_py_str(effect.name)})",
+                        self._operator._inner_indent_level + 1
+                    )
+
+                    effect_attrs = {
+                        "enable_for_preview",
+                        "enable_for_render",
+                        "is_active",
+                        "show_expanded",
+                        "show_node_group_selector"
+                    }
+                    for attr in effect_attrs:
+                        self._write(
+                            f"{COMPOSITOR_EFFECT}.{attr} = "
+                            f"{getattr(effect, attr)}",
+                            self._operator._inner_indent_level + 1
+                        )
+                    self._write(
+                        f"{COMPOSITOR_EFFECT}.node_group = "
+                        f"bpy.data.node_groups.new("
+                        f"type = \'CompositorNodeTree\', "
+                        f"name = {str_to_py_str(nt_name)})",
+                        self._operator._inner_indent_level + 1
+                    )
+                    self._write(
+                        f"{ntp_node_tree._var} = {COMPOSITOR_EFFECT}.node_group",
+                        self._operator._inner_indent_level + 1
+                    )
+                    
+                    
+            else:
+                self._write("", 0)
+                self._write(f"# Start with a clean node tree")
+                self._write(f"for {NODE} in {ntp_node_tree._var}.nodes:")
+                self._write(f"{ntp_node_tree._var}.nodes.remove({NODE})", 
+                            self._operator._inner_indent_level + 1)
         else:
             self._write((f"{ntp_node_tree._var} = bpy.data.node_groups.new("
                          f"type = \'CompositorNodeTree\', "

@@ -27,7 +27,7 @@ RESERVED_NAMES = {
 }
 
 MIN_BLENDER_VERSION = (4, 2, 0)
-MAX_BLENDER_VERSION = (5, 3, 0)
+MAX_BLENDER_VERSION = (5, 4, 0)
 
 class NodeTreeInfo():
     def __init__(self):
@@ -114,7 +114,6 @@ class NTP_OT_Export(bpy.types.Operator):
                 "\t\thttps://github.com/BrendanParmer/NodeToPython/blob/main/"
                 "docs/README.md#supported-versions "
             )
-            return {'CANCELLED'}
         elif bpy.app.version < MIN_BLENDER_VERSION:
             self.report(
                 {'WARNING'},
@@ -313,6 +312,8 @@ class NTP_OT_Export(bpy.types.Operator):
         for group_type, groups in gatherer.node_groups.items():
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
+                if base_tree is None:
+                    continue
                 if base_tree not in self._node_trees:
                     self._node_trees[base_tree] = NodeTreeInfo()
                 node_info = self._node_trees[base_tree]
@@ -331,7 +332,8 @@ class NTP_OT_Export(bpy.types.Operator):
         for group_type, groups in gatherer.node_groups.items():
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
-                self._topological_sort(base_tree)
+                if base_tree is not None:
+                    self._topological_sort(base_tree)
 
         # Probably a better way algorithmically of handling this,
         # need to move on though. Should be fast enough for reasonably sized
@@ -347,6 +349,8 @@ class NTP_OT_Export(bpy.types.Operator):
 
             for obj in groups:
                 base_tree = get_base_node_tree(obj, group_type)
+                if base_tree is None:
+                    continue
                 nt_info = self._node_trees[base_tree]
                 self._modules[nt_info._module] = []
                 for dependency in nt_info._dependencies.keys():
@@ -384,6 +388,9 @@ class NTP_OT_Export(bpy.types.Operator):
 
         node_info = self._node_trees[node_tree]
 
+        # Node groups from libraries we can't simply append
+        deep_copied_libs : set[bpy.types.NodeTree] = set()
+
         def dfs(nt: bpy.types.NodeTree) -> None:
             """
             Helper function to perform depth-first search on a NodeTree
@@ -414,6 +421,7 @@ class NTP_OT_Export(bpy.types.Operator):
                     node_info._lib_dependencies[relative_path].append(nt)
                     return
                 else:
+                    deep_copied_libs.add(nt)
                     self.report(
                         {'WARNING'},
                         f"Performing deep copy of node group \"{nt.name}\". "
@@ -444,6 +452,7 @@ class NTP_OT_Export(bpy.types.Operator):
                     if node_nt not in self._visited:
                         dfs(node_nt)
                     if (node_nt.library is None or 
+                        node_nt in deep_copied_libs or
                         (not self._link_external_node_groups)
                     ):
                         self._node_trees[nt]._dependencies[node_nt] = None
@@ -611,16 +620,20 @@ class NTP_OT_Export(bpy.types.Operator):
         object (str): the copied node tree or encapsulating structure
             (geometry node modifier, material, scene, etc.)
         """
+        level = 'INFO'
         if self._mode == 'SCRIPT':
             location = "clipboard"
             if self._num_objs > 1:
                 save_obj = f"{self._num_objs} objects"
+            elif len(self._export_order) > 0:
+                save_obj = self._export_order[-1]._obj.name
             else:
-                save_obj = self._export_order[0]._obj.name
+                save_obj = "no node groups"
+                level = 'WARNING'
         else:
             location = self._dir_path
             save_obj = self._name
-        self.report({'INFO'}, f"NodeToPython: Saved {save_obj} to {location}")
+        self.report({level}, f"NodeToPython: Saved {save_obj} to {location}")
 
 classes = [
     NTP_OT_Export
